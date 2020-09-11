@@ -94,6 +94,7 @@
     <script type="text/javascript">
     $(document).ready(function() {
       $("#signup").click(function() {
+        console.log($("#signupForm").serialize());
         $.post( "/signup", $("#signupForm").serialize(),
                 function(data) {
                   $("#signupSuccess").show();
@@ -106,6 +107,8 @@
                     break;
                   default:
                     $("#signupError").show();
+                    console.log("hello");
+                    console.log($("#signupForm").serialize());
                 }
               })
               .always(function() {

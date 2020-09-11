@@ -23,6 +23,8 @@ if (cluster.isMaster) {
 
 // Code to run if we're in a worker process
 } else {
+    var isDevelopmentMachine = process.env.IS_DEVELOPMENT_MACHINE;
+
     var AWS = require('aws-sdk');
     var express = require('express');
     var bodyParser = require('body-parser');
@@ -38,8 +40,13 @@ if (cluster.isMaster) {
 
     app.set('view engine', 'ejs');
     app.set('views', __dirname + '/views');
-    app.use(bodyParser.urlencoded({extended:false}));
-
+    if (isDevelopmentMachine.localeCompare("TRUE") == 0) {
+        app.use(express.static('.'));
+        app.use(bodyParser.urlencoded({extended:false}));
+    } else {
+        app.use(bodyParser.urlencoded({extended:false}));
+    }
+    
     app.get('/', function(req, res) {
         res.render('index', {
             static_path: 'static',
