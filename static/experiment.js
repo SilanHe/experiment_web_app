@@ -1,5 +1,34 @@
 /* get filenames for all our stimulus ahead of time */
-var data = getExperimentSet1ObjectList(s3);
+function preloadStimulus() {
+
+  $.get('/listexperimentimages', function(data, status, xhr){
+    // get the list of resutls from data
+
+    var test_stimuli = [];
+
+    for (let i = 0; i < data.mydata.shuffledPairedImages.length; i++) {
+      let testInfo = data.mydata.shuffledPairedImages[0];
+
+      $.get('/experimentimage', {key: testInfo[0].Key}, function(imageData1){
+        var imageData1 = imageData1;
+        $.get('/experimentimage', {key: testInfo[1].Key}, function(imageData2) {
+          let trial = {
+            stimulus1_name: testInfo[0].Key,
+            stimulus2_name: testInfo[1].Key,
+            stimulus1: imageData1.img,
+            stimulus2: imageData2.img
+          };
+
+          test_stimuli.push(trial);
+        });
+      }); 
+    }
+  }); 
+
+  return test_stimuli; 
+}
+
+var test_stimuli = [];
 
 /* create timeline */
 var timeline = [];
@@ -39,13 +68,6 @@ var instructions = {
 };
 timeline.push(instructions);
 
-var fixation = {
-  type: 'html-keyboard-response',
-  stimulus: '<div class=\"display_text\" style="font-size:60px;">+</div>',
-  choices: jsPsych.NO_KEYS,
-  trial_duration: 1000,
-}
-
 var pre_test = {
   type: 'image-keyboard-response',
   stimulus_name: jsPsych.timelineVariable('stimulus1_name'),
@@ -63,7 +85,7 @@ var test = {
 }
 
 var test_procedure = {
-  timeline: [fixation, pre_test, test],
+  timeline: [pre_test, test],
   timeline_variables: test_stimuli
 }
 
