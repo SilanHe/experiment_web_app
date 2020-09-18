@@ -86,7 +86,7 @@ jsPsych.plugins["image-keyboard-response"] = (function() {
   plugin.trial = function(display_element, trial) {
 
     // display stimulus
-    var html = '<img src="data:image/png;base64,' + trial.stimulus + ' + id="jspsych-image-keyboard-response-stimulus" style="';
+    var html = '<img src="data:image/png;base64,' + trial.stimulus + '" id="jspsych-image-keyboard-response-stimulus" style="';
     if(trial.stimulus_height !== null){
       html += 'height:'+trial.stimulus_height+'px; '
       if(trial.stimulus_width == null && trial.maintain_aspect_ratio){
@@ -130,7 +130,6 @@ jsPsych.plugins["image-keyboard-response"] = (function() {
       var trial_data = {
         "rt": response.rt,
         "filename": trial.stimulus_name,
-        "stimulus": trial.stimulus,
         "key_press": response.key
       };
 
