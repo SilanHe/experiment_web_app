@@ -1,11 +1,19 @@
-
 $.get('/allexperimentimages').then(
   function(data) {
+    $("#loadingMessage").hide();
+
     var test_stimuli = data.pairedImages;
-    console.log(test_stimuli);
 
     /* create timeline */
     var timeline = [];
+
+    /* define identification message trial */
+    var identification = {
+      type: "survey-html-form",
+      preamble: '<p> What is your <b>Mechanical Turk ID?</b>. Please ensure you have entered the correct ID or we will not be able to pay you.</p>',
+      html: '<p> My MTurk ID is <input name="id" type="text" />.</p>'
+    };
+    timeline.push(identification);
 
     timeline.push({
       type: 'fullscreen',
@@ -23,7 +31,7 @@ $.get('/allexperimentimages').then(
     var welcome = {
       type: "html-keyboard-response",
       stimulus: "<div class=\"display_text\">" +
-      "Welcome to the experiment. Press any key on the keyboard to begin." +
+      "Welcome to the visual perception experiment. Press any key on the keyboard to begin." +
       "<\div>"
     };
     timeline.push(welcome);
@@ -32,20 +40,35 @@ $.get('/allexperimentimages').then(
     var instructions = {
       type: "html-keyboard-response",
       stimulus: "<div class=\"display_text\">" +
-          "<p>In this experiment, a red sphere will appear near the center of the screen on top of some hills and valleys.</p>" +
-          "<p>If you believe the point is located on a hill, press the letter F on the keyboard as fast as you can.</p>" +
-          "<p>If you believe the point is located in a valley, press the letter J as fast as you can.</p>" +
-          "<p>Press any key on the keyboard to begin.</p>" +
+          "<p>In this experiment, a large <b style=\"color:red;\">red</b> disk will appear near the center of the screen on top of some hills or valleys.</p>" +
+          "<p>Please look at the large <b style=\"color:red;\">red</b> disk. After a few milliseconds, a much smaller red sphere will mark either a hill or a valley.</p>" +
+          "<p>If you believe the point is located on a <b style=\"color:red;\">hill</b>, press the letter <b style=\"color:red;\">F</b> on the keyboard as fast as you can.</p>" +
+          "<p>If you believe the point is located in a <b style=\"color:blue;\">valley</b>, press the letter <b style=\"color:blue;\">J</b> as fast as you can.</p>" +
+          "<p>Press the <b style=\"color:red;\">hill</b> key on the keyboard to begin.</p>" +
           "<\div>",
-      post_trial_gap: 2000
+      choices: ['f'],
+      post_trial_gap: 500
 
     };
     timeline.push(instructions);
+
+    /* define instructions trial */
+    var instructionsValley = {
+      type: "html-keyboard-response",
+      stimulus: "<div class=\"display_text\">" +
+          "<p>Press the <b style=\"color:blue;\">valley</b> key on the keyboard to begin.</p>" +
+          "<\div>",
+      choices: ['j'],
+      post_trial_gap: 500
+
+    };
+    timeline.push(instructionsValley);
 
     var pre_test = {
       type: 'image-keyboard-response',
       stimulus_name: jsPsych.timelineVariable('stimulus1_name'),
       stimulus: jsPsych.timelineVariable('stimulus1'),
+      stimulus_height: window.innerHeight,
       choices: jsPsych.NO_KEYS,
       trial_duration: 350,
     }
@@ -54,6 +77,7 @@ $.get('/allexperimentimages').then(
       type: "image-keyboard-response",
       stimulus_name: jsPsych.timelineVariable('stimulus2_name'),
       stimulus: jsPsych.timelineVariable('stimulus2'),
+      stimulus_height: window.innerHeight,
       choices: ['f', 'j'],
       trial_duration: 3150,
     }
@@ -71,11 +95,45 @@ $.get('/allexperimentimages').then(
       fullscreen_mode: false
     });
 
+    var exit = {
+      type: "html-keyboard-response",
+      stimulus: "<div class=\"display_text\">" +
+      "You have finished! Press any key on the keyboard to continue." +
+      "<\div>",
+      trial_duration: 5000
+    };
+    timeline.push(exit);
+
     /* start the experiment */
     jsPsych.init({
       timeline: timeline,
+      exclusions: {
+        min_width: 800,
+        min_height: 600
+      },
       on_finish: function() {
-        jsPsych.data.displayData();
+        let all_data = JSON.parse(jsPsych.data.get().json());
+        let interaction_data = JSON.parse(jsPsych.data.getInteractionData().json());
+        console.log(all_data);
+        console.log(interaction_data);
+
+        // publish data to dynamodb
+        let experimentData = new Object();
+        experimentData.id = JSON.parse(all_data[0].responses).id;
+        experimentData.data = new Object();
+        experimentData.data.all_data = all_data;
+        experimentData.data.interaction_data = interaction_data;
+
+        console.log(experimentData);
+
+        $.post('/submitexperiment',experimentData).then(
+          function(data2) {
+            $("#postDataSuccess").show();
+          },
+          function(error2) {
+            $("#postDataFail").show();
+          }
+          );
       }
     });
   },

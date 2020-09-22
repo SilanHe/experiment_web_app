@@ -36,18 +36,21 @@ if (cluster.isMaster) {
     var ddb = new AWS.DynamoDB();
     var s3 = new AWS.S3();
 
-    var ddbTable =  process.env.STARTUP_SIGNUP_TABLE;
-    var snsTopic =  process.env.NEW_SIGNUP_TOPIC;
+    var ddbTable =  process.env.EXPERIMENT_DATA_TABLE;
+    var snsTopic =  process.env.EXPERIMENT_SUBJECT_TOPIC;
     var app = express();
 
     app.set('view engine', 'ejs');
     app.set('views', __dirname + '/views');
     if (isDevelopmentMachine.localeCompare("TRUE") == 0) {
         app.use(express.static('.'));
-        app.use(bodyParser.urlencoded({extended:false}));
-    } else {
-        app.use(bodyParser.urlencoded({extended:false}));
     }
+
+    app.use(bodyParser.urlencoded({ 
+        limit: '50mb',
+        extended: false,
+        parameterLimit: 1000000 // experiment with this parameter and tweak
+    }));
     
     app.get('/', function(req, res) {
         res.render('index', {
@@ -132,16 +135,18 @@ if (cluster.isMaster) {
     });
 
     app.post('/submitexperiment', function(req, res) {
+
+        console.log(req);
         let item = {
-            'id': {'S': req.body.id},
-            'code': {'S': req.body.code},
-            'data': {'M': req.body.previewAccess}
+            'Id': {'S': req.body.id},
+            'data': {'S': JSON.stringify(req.body)}
         };
+
+        console.log(item);
 
         ddb.putItem({
             'TableName': ddbTable,
-            'Item': item,
-            'Expected': { email: { Exists: false } }        
+            'Item': item,       
         }, function(err, data) {
             if (err) {
                 var returnStatus = 500;

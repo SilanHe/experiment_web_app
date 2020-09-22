@@ -21,7 +21,11 @@
     <script src="<%= static_path + "/jspsych-6.1.0/jspsych.js" %>"></script>
     <script src="<%= static_path + "/jspsych-6.1.0/plugins/jspsych-html-keyboard-response.js" %>"></script>
     <script src="<%= static_path + "/jspsych-6.1.0/plugins/jspsych-fullscreen.js" %>"></script>
+    <script src="<%= static_path + "/jspsych-6.1.0/plugins/jspsych-survey-html-form.js" %>"></script>
     <script src="<%= static_path + "/my-jspsych-image-keyboard-response.js" %>"></script>
     <script src="<%= static_path + "/experiment.js" %>"></script> 
+    <h1 id="loadingMessage">Loading the experiment. This may take a few minutes... Thank you for your patience.</h1>
+    <h1 id="postDataSuccess" style="display: none;">Success! Your experiment data has been successfully submitted. Feel free to close this browser.</h1>
+    <h1 id="postDataFail" style="display: none;">Well this is embarrassing. It looks like we're having trouble submitting your experiment data.</h1>
   </body>
 </html>
