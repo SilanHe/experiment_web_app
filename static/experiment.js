@@ -2,7 +2,6 @@
 $.get('/allexperimentimages').then(
   function(data) {
     var test_stimuli = data.pairedImages;
-    console.log(test_stimuli);
 
     /* create timeline */
     var timeline = [];
@@ -32,20 +31,34 @@ $.get('/allexperimentimages').then(
     var instructions = {
       type: "html-keyboard-response",
       stimulus: "<div class=\"display_text\">" +
-          "<p>In this experiment, a red sphere will appear near the center of the screen on top of some hills and valleys.</p>" +
-          "<p>If you believe the point is located on a hill, press the letter F on the keyboard as fast as you can.</p>" +
-          "<p>If you believe the point is located in a valley, press the letter J as fast as you can.</p>" +
-          "<p>Press any key on the keyboard to begin.</p>" +
+          "<p>In this experiment, a large <b style=\"color:red;\">red</b> disk will appear near the center of the screen on top of some hills or valleys.</p>" +
+          "<p>Please look at the large <b style=\"color:red;\">red</b> disk. After a few milliseconds, a much smaller red sphere will mark either a hill or a valley.</p>" +
+          "<p>If you believe the point is located on a <b style=\"color:red;\">hill</b>, press the letter <b style=\"color:red;\">F</b> on the keyboard as fast as you can.</p>" +
+          "<p>If you believe the point is located in a <b style=\"color:blue;\">valley</b>, press the letter <b style=\"color:blue;\">J</b> as fast as you can.</p>" +
+          "<p>Press the <b style=\"color:red;\">hill</b> key on the keyboard to begin.</p>" +
           "<\div>",
-      post_trial_gap: 2000
+      choices: ['f'],
+      post_trial_gap: 500
 
     };
     timeline.push(instructions);
+
+    /* define instructions trial */
+    var instructions = {
+      type: "html-keyboard-response",
+      stimulus: "<div class=\"display_text\">" +
+          "<p>Press the <b style=\"color:blue;\">valley</b> key on the keyboard to begin.</p>" +
+          "<\div>",
+      choices: ['j'],
+      post_trial_gap: 500
+
+    };
 
     var pre_test = {
       type: 'image-keyboard-response',
       stimulus_name: jsPsych.timelineVariable('stimulus1_name'),
       stimulus: jsPsych.timelineVariable('stimulus1'),
+      stimulus_height: window.innerHeight,
       choices: jsPsych.NO_KEYS,
       trial_duration: 350,
     }
@@ -54,6 +67,7 @@ $.get('/allexperimentimages').then(
       type: "image-keyboard-response",
       stimulus_name: jsPsych.timelineVariable('stimulus2_name'),
       stimulus: jsPsych.timelineVariable('stimulus2'),
+      stimulus_height: window.innerHeight,
       choices: ['f', 'j'],
       trial_duration: 3150,
     }
@@ -74,6 +88,10 @@ $.get('/allexperimentimages').then(
     /* start the experiment */
     jsPsych.init({
       timeline: timeline,
+      exclusions: {
+        min_width: 800,
+        min_height: 600
+      },
       on_finish: function() {
         jsPsych.data.displayData();
       }

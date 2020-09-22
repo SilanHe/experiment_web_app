@@ -36,8 +36,8 @@ if (cluster.isMaster) {
     var ddb = new AWS.DynamoDB();
     var s3 = new AWS.S3();
 
-    var ddbTable =  process.env.STARTUP_SIGNUP_TABLE;
-    var snsTopic =  process.env.NEW_SIGNUP_TOPIC;
+    var ddbTable =  process.env.EXPERIMENT_DATA_TABLE;
+    var snsTopic =  process.env.EXPERIMENT_SUBJECT_TOPIC;
     var app = express();
 
     app.set('view engine', 'ejs');
