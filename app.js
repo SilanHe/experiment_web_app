@@ -159,7 +159,7 @@ if (cluster.isMaster) {
                 console.log('DDB Error: ' + err);
             } else {
                 sns.publish({
-                    'Message': 'MTurk ID: ' + req.body.name + "\r\nCode: " + req.body.code,
+                    'Message': 'MTurk ID: ' + req.body.id,
                     'Subject': 'New subject experiment!',
                     'TopicArn': snsTopic
                 }, function(err, data) {
