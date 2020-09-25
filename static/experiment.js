@@ -1,3 +1,5 @@
+var SPLICE_SIZE = 50;
+
 $.get('/allexperimentimages').then(
   function(data) {
     $("#loadingMessage").hide();
@@ -53,6 +55,16 @@ $.get('/allexperimentimages').then(
     timeline.push(instructions);
 
     /* define instructions trial */
+    var instructionsHill = {
+      type: "html-keyboard-response",
+      stimulus: "<div class=\"display_text\">" +
+          "<p>Press the <b style=\"color:red;\">hill</b> key on the keyboard to begin.</p>" +
+          "<\div>",
+      choices: ['f'],
+      post_trial_gap: 500
+    };
+
+    /* define instructions trial */
     var instructionsValley = {
       type: "html-keyboard-response",
       stimulus: "<div class=\"display_text\">" +
@@ -82,12 +94,36 @@ $.get('/allexperimentimages').then(
       trial_duration: 3150,
     }
 
-    var test_procedure = {
-      timeline: [pre_test, test],
-      timeline_variables: test_stimuli
-    }
+    let pushPauseMessage = false;
 
-    timeline.push(test_procedure);
+    while (test_stimuli.length > 0) {
+      if (pushPauseMessage) {
+        // add pause message only if not first set of images
+        var breakInstructions = {
+          type: "html-keyboard-response",
+          stimulus: "<div class=\"display_text\">" +
+              "<p>You have finished the first set of images! Stay on this page to take a break." +
+              "<p>Press the <b>space</b> key on the keyboard to resume the experiment.</p>" +
+              "<\div>",
+          choices: [32],
+          post_trial_gap: 500
+        };
+        timeline.push(breakInstructions);
+
+        timeline.push(instructionsHill);
+        timeline.push(instructionsValley);
+      } else {
+        pushPauseMessage = true;
+      }
+
+      let spliced_stimuli = test_stimuli.splice(0, SPLICE_SIZE);
+
+      let test_procedure = {
+        timeline: [pre_test, test],
+        timeline_variables: spliced_stimuli
+      }
+      timeline.push(test_procedure);
+    }
 
     // exit fullscreen mode
     timeline.push({
@@ -126,12 +162,19 @@ $.get('/allexperimentimages').then(
 
         console.log(experimentData);
 
+        function createH1(text) {
+          var h = document.createElement("h1");
+            var t = document.createTextNode(text); 
+            h.appendChild(t); 
+            document.body.appendChild(h);
+        }
+
         $.post('/submitexperiment',experimentData).then(
           function(data2) {
-            $("#postDataSuccess").show();
+            createH1("Success! Your experiment data has been successfully submitted. Feel free to close this browser.");
           },
           function(error2) {
-            $("#postDataFail").show();
+            createH1("Well this is embarrassing. It looks like we're having trouble submitting your experiment data.");
           }
           );
       }
