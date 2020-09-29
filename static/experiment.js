@@ -96,13 +96,15 @@ $.get('/allexperimentimages').then(
 
     let pushPauseMessage = false;
 
+    var numSetsImages = Math.ceil(test_stimuli.length / SPLICE_SIZE);
+    var setNum = 0;
     while (test_stimuli.length > 0) {
       if (pushPauseMessage) {
         // add pause message only if not first set of images
         var breakInstructions = {
           type: "html-keyboard-response",
           stimulus: "<div class=\"display_text\">" +
-              "<p>You have finished the first set of images! Stay on this page to take a break." +
+              "<p>You have finished " + setNum + "/" + numSetsImages + " set of images! Stay on this page to take a break." +
               "<p>Press the <b>space</b> key on the keyboard to resume the experiment.</p>" +
               "<\div>",
           choices: [32],
@@ -123,6 +125,7 @@ $.get('/allexperimentimages').then(
         timeline_variables: spliced_stimuli
       }
       timeline.push(test_procedure);
+      setNum ++;
     }
 
     // exit fullscreen mode
@@ -160,7 +163,9 @@ $.get('/allexperimentimages').then(
         experimentData.data.all_data = all_data;
         experimentData.data.interaction_data = interaction_data;
 
-        console.log(experimentData);
+        let experimentDataString = JSON.stringify(experimentData);
+
+        console.log(experimentDataString);
 
         function createH1(text) {
           var h = document.createElement("h1");
@@ -169,7 +174,7 @@ $.get('/allexperimentimages').then(
             document.body.appendChild(h);
         }
 
-        $.post('/submitexperiment',experimentData).then(
+        $.post('/submitexperiment',experimentDataString).then(
           function(data2) {
             createH1("Success! Your experiment data has been successfully submitted. Feel free to close this browser.");
           },
