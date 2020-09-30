@@ -42,7 +42,7 @@ if (cluster.isMaster) {
 
     app.set('view engine', 'ejs');
     app.set('views', __dirname + '/views');
-    if (isDevelopmentMachine.localeCompare("TRUE") == 0) {
+    if (typeof isDevelopmentMachine !== "undefined" && isDevelopmentMachine.localeCompare("TRUE") == 0) {
         app.use(express.static('.'));
     }
 
@@ -55,7 +55,6 @@ if (cluster.isMaster) {
     app.get('/', function(req, res) {
         res.render('index', {
             static_path: 'static',
-            theme: process.env.THEME || 'flatly',
             flask_debug: process.env.FLASK_DEBUG || 'false',
             s3: s3
         });
@@ -136,10 +135,11 @@ if (cluster.isMaster) {
 
     app.post('/submitexperiment', function(req, res) {
 
-        console.log(req);
+        console.log(req.body);
+        console.log(req.body.S);
         let item = {
             'Id': {'S': req.body.id},
-            'data': {'S': req.body}
+            'data': {'S': req.body.data}
         };
 
         console.log(item);
@@ -159,6 +159,7 @@ if (cluster.isMaster) {
                 console.log('DDB Error: ' + err);
             } else {
                 console.log('Success: MTurk ID: ' + req.body.id);
+                res.status(200).end();
             }
         });
     });

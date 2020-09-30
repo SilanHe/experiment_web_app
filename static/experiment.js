@@ -80,7 +80,7 @@ $.get('/allexperimentimages').then(
       type: 'image-keyboard-response',
       stimulus_name: jsPsych.timelineVariable('stimulus1_name'),
       stimulus: jsPsych.timelineVariable('stimulus1'),
-      stimulus_height: window.innerHeight,
+      stimulus_height: screen.height,
       choices: jsPsych.NO_KEYS,
       trial_duration: 350,
     }
@@ -89,7 +89,7 @@ $.get('/allexperimentimages').then(
       type: "image-keyboard-response",
       stimulus_name: jsPsych.timelineVariable('stimulus2_name'),
       stimulus: jsPsych.timelineVariable('stimulus2'),
-      stimulus_height: window.innerHeight,
+      stimulus_height: screen.height,
       choices: ['f', 'j'],
       trial_duration: 3150,
     }
@@ -126,6 +126,7 @@ $.get('/allexperimentimages').then(
       }
       timeline.push(test_procedure);
       setNum ++;
+      break;
     }
 
     // exit fullscreen mode
@@ -147,8 +148,8 @@ $.get('/allexperimentimages').then(
     jsPsych.init({
       timeline: timeline,
       exclusions: {
-        min_width: 800,
-        min_height: 600
+        min_width: screen.width*0.8,
+        min_height: screen.height*0.8
       },
       on_finish: function() {
         let all_data = JSON.parse(jsPsych.data.get().json());
@@ -162,10 +163,7 @@ $.get('/allexperimentimages').then(
         experimentData.data = new Object();
         experimentData.data.all_data = all_data;
         experimentData.data.interaction_data = interaction_data;
-
-        let experimentDataString = JSON.stringify(experimentData);
-
-        console.log(experimentDataString);
+        experimentData.data = JSON.stringify(experimentData.data);
 
         function createH1(text) {
           var h = document.createElement("h1");
@@ -174,7 +172,7 @@ $.get('/allexperimentimages').then(
             document.body.appendChild(h);
         }
 
-        $.post('/submitexperiment',experimentDataString).then(
+        $.post('/submitexperiment',experimentData).then(
           function(data2) {
             createH1("Success! Your experiment data has been successfully submitted. Feel free to close this browser.");
           },
