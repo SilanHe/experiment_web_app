@@ -74,75 +74,40 @@ if (cluster.isMaster) {
             data.Contents.sort(function (a,b) {
                 return a.Key.localeCompare(b.Key);
             });
-            return data.Contents;
+            
+            res.json({sortedKeys: data.Contents});
         },
         function(error) {
             console.log("S3 listObjectV2 Error:" + error);
-        }).then(
-        function(data) {
-            // fetch all images asyncrhonously
-            let trialImageRequests = [];
-            for (var i = 0; i < data.length; i++) {
-                let params = {
-                    Bucket: EXPERIMENT_BUCKET_NAME,
-                    Key: data[i].Key
-                };
-                let getObjectPromise = s3.getObject(params).promise();
-                trialImageRequests.push(getObjectPromise);
-            }
+        });
+    });
 
-            // nested promise then chaining. not sure if this is good practice
-            let trialImages = Promise.all(trialImageRequests).then(
-            function(s3Images) {
+    app.get('/getimage', function(req, res) {
 
-                function encode(data)
-                {
-                    return Buffer.from(data).toString('base64');
-                }
+        function encode(data)
+        {
+            return Buffer.from(data).toString('base64');
+        }
 
-                // shuffle the s3Images
-                function shuffle(array) {
-                    for (let i = array.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * i);
-                        const temp = array[i];
-                        array[i] = array[j];
-                        array[j] = temp;
-                    }
-                }
-                // pair up the images
-                let pairedImages = [];
-                for (var i = 0; i < s3Images.length; i += 2) {
-                    pairedImages.push({
-                        stimulus1_name: data[i].Key,
-                        stimulus2_name: data[i+1].Key,
-                        stimulus1: encode(s3Images[i].Body),
-                        stimulus2: encode(s3Images[i+1].Body)
-                    });
-                }
+        let getImageS3Promise = s3.getObject(req.query).promise();
 
-                
-                shuffle(pairedImages);
-                res.json({pairedImages:pairedImages});
+        getImageS3Promise.then(
+            function(data) {
+                res.json({s3Object: encode(data.Body)})
             },
             function(error) {
-                console.log("S3 getObject Promise All:" + error);
-            });
-        },
-        function(error) {
-            console.log("S3 listObjectsV2 Contents Sort Error:" + error);
-        });
+                console.log("S3 getObject Error:" + error);
+            }
+        );
+
     });
 
     app.post('/submitexperiment', function(req, res) {
 
-        console.log(req.body);
-        console.log(req.body.S);
         let item = {
             'Id': {'S': req.body.id},
             'data': {'S': req.body.data}
         };
-
-        console.log(item);
 
         ddb.putItem({
             'TableName': ddbTable,
