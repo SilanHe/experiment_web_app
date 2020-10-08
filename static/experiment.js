@@ -1,8 +1,302 @@
 var SPLICE_SIZE = 50;
 var EXPERIMENT_BUCKET_NAME = "experimentset1";
+var TUTORIAL_BUCKET_NAME = "tutorialset1";
 
-$.get('/allexperimentimages').then(
-  function(data) {
+function createH3(text) {
+  var h = document.createElement("h3");
+    var t = document.createTextNode(text); 
+    h.appendChild(t); 
+    document.body.appendChild(h);
+}
+
+function createH1(text) {
+  var h = document.createElement("h1");
+    var t = document.createTextNode(text); 
+    h.appendChild(t); 
+    document.body.appendChild(h);
+}
+
+function createButton(text, trigger_function) {
+  var b = document.createElement("BUTTON");
+  var t = document.createTextNode(text); 
+  b.appendChild(t);
+  b.onclick = function() {trigger_function();}
+  document.body.appendChild(b);
+}
+
+function createLoadingWheel() {
+  var spinner = document.createElement("div");
+  spinner.className = "loader";
+  var t = document.createTextNode("Loading..."); 
+  spinner.appendChild(t);
+  document.body.appendChild(spinner);
+}
+
+function clearDocumentBody() {
+  while(document.body.firstChild) {
+    document.body.removeChild(document.body.firstChild);
+  }
+}
+
+ /* define instructions trial */
+var instructionsHill = {
+  type: "html-keyboard-response",
+  stimulus: "<div class=\"display_text\">" +
+      "<p>Press the <b style=\"color:red;\">hill</b> key on the keyboard to begin.</p>" +
+      "<\div>",
+  choices: ['h'],
+  post_trial_gap: 500
+};
+
+/* define instructions trial */
+var instructionsValley = {
+  type: "html-keyboard-response",
+  stimulus: "<div class=\"display_text\">" +
+      "<p>Press the <b style=\"color:blue;\">valley</b> key on the keyboard to begin.</p>" +
+      "<\div>",
+  choices: ['v'],
+  post_trial_gap: 500
+};
+
+var pre_test = {
+  type: 'my-image-keyboard-response',
+  stimulus_name: jsPsych.timelineVariable('stimulus1_name'),
+  stimulus: jsPsych.timelineVariable('stimulus1'),
+  stimulus_height: screen.height,
+  choices: jsPsych.NO_KEYS,
+  trial_duration: 350,
+}
+
+var test = {
+  type: "my-image-keyboard-response",
+  stimulus_name: jsPsych.timelineVariable('stimulus2_name'),
+  stimulus: jsPsych.timelineVariable('stimulus2'),
+  stimulus_height: screen.height,
+  choices: ['v', 'h'],
+  trial_duration: 3150,
+}
+
+
+function tutorial() {
+  static_path = "static/images/tutorial/";
+  trialImages = [
+  static_path + 'DirectionalLightTest_Seed2201Hill_Matte_30_20_1.jpg',
+  static_path + 'DirectionalLightTest_Seed2201Hill_Matte_30_20_2.jpg',
+  static_path + 'DirectionalLightTest_Seed2241Valley_Glossy_60_120_1.jpg',
+  static_path + 'DirectionalLightTest_Seed2241Valley_Glossy_60_120_2.jpg',
+  static_path + 'MathematicaTest_Seed2251Valley_Matte_45_1.jpg',
+  static_path + 'MathematicaTest_Seed2251Valley_Matte_45_2.jpg',
+  ];
+
+  // pair up the images
+  let pairedImages = [];
+  for (var i = 0; i < trialImages.length; i += 2) {
+      pairedImages.push({
+          stimulus1_name: 'image1',
+          stimulus2_name: 'image2',
+          stimulus1: trialImages[i],
+          stimulus2: trialImages[i+1]
+      });
+  }
+
+  // tutorial
+  var timeline = [];
+  // enter fullscreen mode
+  timeline.push({
+    type: 'fullscreen',
+    fullscreen_mode: true
+  });
+
+  timeline.push({
+    type: 'html-keyboard-response',
+    stimulus: "<div class=\"display_text\">" +
+    "<p>This TUTORIAL trial will be in fullscreen mode. After the tutorial, you will be able to proceed with the ACTUAL experiment.</p>" +
+    " Press any key on the keyboard to begin." +
+    "<\div>"
+  });
+
+  console.log(pairedImages[0].stimulus1);
+
+  var instruction1 = {
+    type: 'image-keyboard-response',
+    stimulus_name: "instruction1",
+    stimulus: pairedImages[0].stimulus1,
+    prompt:"<p>In this experiment, you will be shown images of surfaces like the above. Notice there is a large red circle. Press h to continue.</p>",
+    stimulus_height: screen.height * 0.8,
+    choices: ['h'],
+    trial_duration: 5000,
+  }
+  timeline.push(instruction1);
+
+  var instruction2 = {
+    type: 'image-keyboard-response',
+    stimulus_name: "instruction2",
+    stimulus: pairedImages[0].stimulus2,
+    prompt:"<p>In this experiment, you will be shown images of surfaces like the above. Notice there is a small red circle where the large red circle was. Press v to continue.</p>",
+    stimulus_height: screen.height * 0.8,
+    choices: ['v'],
+    trial_duration: 10000,
+  }
+  timeline.push(instruction2);
+
+  var instruction3 = {
+    type: 'image-keyboard-response',
+    stimulus_name: "instruction3",
+    stimulus: pairedImages[0].stimulus1,
+    prompt:"<p>In this experiment, a large red disk will appear on top of some valleys or hills. Focus your attention on it. Press h to continue.</p>",
+    stimulus_height: screen.height * 0.8,
+    choices: ['h'],
+    trial_duration: 10000,
+  }
+  timeline.push(instruction3);
+
+  var instruction4 = {
+    type: 'image-keyboard-response',
+    stimulus_name: "instruction4",
+    stimulus: pairedImages[0].stimulus2,
+    prompt:"<p>After a few milliseconds (so very fast), a much smaller red sphere will mark a spot beneath the large red circle. Press v to continue.</p>",
+    stimulus_height: screen.height * 0.8,
+    choices: ['v'],
+    trial_duration: 10000,
+  }
+  timeline.push(instruction4);
+
+  var instruction41 = {
+    type: 'image-keyboard-response',
+    stimulus_name: "instruction4",
+    stimulus: pairedImages[1].stimulus1,
+    prompt:"<p>Let's try it. Look at the above. Press q to continue.</p>",
+    stimulus_height: screen.height * 0.8,
+    choices: ['q'],
+    trial_duration: 10000,
+  }
+  timeline.push(instruction41);
+
+  var instruction5 = {
+    type: 'image-keyboard-response',
+    stimulus_name: "instruction4",
+    stimulus: pairedImages[1].stimulus2,
+    prompt:"<p>You will now have to make a choice. Press q to continue.</p>",
+    stimulus_height: screen.height * 0.8,
+    choices: ['q'],
+    trial_duration: 10000,
+  }
+  timeline.push(instruction5);
+
+  var instruction6 = {
+    type: 'image-keyboard-response',
+    stimulus_name: "instruction4",
+    stimulus: pairedImages[1].stimulus2,
+    prompt:"<p>If you believe the point is located in a VALLEY, press the letter 'v' as quickly as you can. Try pressing v now.</p>",
+    stimulus_height: screen.height * 0.8,
+    choices: ['v'],
+  }
+  timeline.push(instruction6);
+
+  timeline.push({
+    type: 'html-keyboard-response',
+    stimulus: "<div class=\"display_text\">" +
+    "<p>Nice! You got it." +
+    "<\div>",
+    trial_duration: 3000,
+  });
+
+  var instruction7 = {
+    type: 'image-keyboard-response',
+    stimulus_name: "instruction4",
+    stimulus: pairedImages[1].stimulus2,
+    prompt:"<p>However, if you believe the point is located on a HILL, press the letter 'h' as quickly as you can. Try it now.</p>",
+    stimulus_height: screen.height * 0.8,
+    choices: ['h'],
+  }
+  timeline.push(instruction7);
+
+  timeline.push({
+    type: 'html-keyboard-response',
+    stimulus: "<div class=\"display_text\">" +
+    "<p>Nice! Remember press 'v' if you think the small red circle is in a VALLEY.</p>" +
+    "<p>'h' if you think the small red circle is on a HILL</p>" +
+    "<p>Press the VALLEY button to proceed to a little test run." +
+    "<\div>",
+    choices: ['v'],
+    post_trial_gap: 750
+  });
+
+  var tutorial_pre_test = {
+  type: 'image-keyboard-response',
+  stimulus_name: jsPsych.timelineVariable('stimulus1_name'),
+  stimulus: jsPsych.timelineVariable('stimulus1'),
+  stimulus_height: screen.height,
+  choices: jsPsych.NO_KEYS,
+  trial_duration: 350,
+}
+
+  var tutorial_test = {
+    type: "image-keyboard-response",
+    stimulus_name: jsPsych.timelineVariable('stimulus2_name'),
+    stimulus: jsPsych.timelineVariable('stimulus2'),
+    stimulus_height: screen.height,
+    choices: ['v', 'h'],
+    trial_duration: 3150,
+  }
+
+  let trial_procedure = {
+      timeline: [tutorial_pre_test, tutorial_test],
+      timeline_variables: pairedImages
+    }
+  timeline.push(trial_procedure);
+
+  var lastinstruction = {
+    type: "html-keyboard-response",
+    stimulus: "<div class=\"display_text\">" +
+    "<p>The images come pretty quick right? Make sure to stay focused. During the actual run, you will be given multiple breaks since there will be quite a few images to go through.</p>" + 
+    "<p>Press any key on the keyboard to continue.</p>" +
+    "<\div>",
+    trial_duration: 5000
+  };
+  timeline.push(lastinstruction);
+
+  // exit fullscreen mode
+  timeline.push({
+    type: 'fullscreen',
+    fullscreen_mode: false
+  });
+
+  var exit = {
+    type: "html-keyboard-response",
+    stimulus: "<div class=\"display_text\">" +
+    "You have finished the TUTORIAL! Press any key on the keyboard to continue." +
+    "<\div>",
+    trial_duration: 5000
+  };
+  timeline.push(exit);
+
+  jsPsych.init({
+    timeline: timeline,
+    exclusions: {
+      min_width: screen.width*0.8,
+      min_height: screen.height*0.8
+    },
+    on_finish: function() {
+      // retry tutorial button
+      createH3("Press the RETRY button below if you wish to view the tutorial again.");
+      createButton("RETRY", tutorial);
+
+      // start real experiment button
+      createH3("Press the PROCEED button below if you have understood the instructions and wish to proceed with the actual experiment.");
+      createButton("PROCEED", experiment);
+    }
+  });
+}
+
+function experiment() {
+  clearDocumentBody();
+  createH1("Loading the experiment. This may take a few minutes... Thank you for your patience.");
+  createLoadingWheel();
+  createH3("Hello and thank you for taking the time to participate in this experiment!");
+  createH3("The data collected will be used to help complete my Masters thesis in Computer Science.");
+
+  $.get('/allexperimentimages').then(function(data) {
     // fetch all images asyncrhonously
     let trialImageRequests = [];
     for (var i = 0; i < data.sortedKeys.length; i++) {
@@ -15,226 +309,162 @@ $.get('/allexperimentimages').then(
     }
 
     // nested promise then chaining. not sure if this is good practice
-    let trial_images = Promise.all(trialImageRequests);
-    trial_images.then(
-      function(s3Images) {
-
-        // shuffle the s3Images
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * i);
-                const temp = array[i];
-                array[i] = array[j];
-                array[j] = temp;
-            }
-        }
-        // pair up the images
-        let pairedImages = [];
-        for (var i = 0; i < s3Images.length; i += 2) {
-            pairedImages.push({
-                stimulus1_name: data.sortedKeys[i].Key,
-                stimulus2_name: data.sortedKeys[i+1].Key,
-                stimulus1: s3Images[i].s3Object,
-                stimulus2: s3Images[i+1].s3Object
-            });
-        }
-        
-        shuffle(pairedImages);
-        return pairedImages;
-      },
-      function(error) {
-          console.log("S3 getObject Promise All:" + error);
-      }).then(
-      function(data) {
-        $("#loadingMessage").hide();
-
-        var test_stimuli = data;
-
-        /* create timeline */
-        var timeline = [];
-
-        /* define identification message trial */
-        var identification = {
-          type: "survey-html-form",
-          preamble: '<p> What is your <b>Mechanical Turk ID?</b>. Please ensure you have entered the correct ID or we will not be able to pay you.</p>',
-          html: '<p> My MTurk ID is <input name="id" type="text" />.</p>'
-        };
-        timeline.push(identification);
-
-        timeline.push({
-          type: 'fullscreen',
-          fullscreen_mode: true
-        });
-
-        timeline.push({
-          type: 'html-keyboard-response',
-          stimulus: "<div class=\"display_text\">" +
-          "This trial will be in fullscreen mode. Press any key on the keyboard to begin." +
-          "<\div>"
-        });
-
-        /* define welcome message trial */
-        var welcome = {
-          type: "html-keyboard-response",
-          stimulus: "<div class=\"display_text\">" +
-          "Welcome to the visual perception experiment. Press any key on the keyboard to begin." +
-          "<\div>"
-        };
-        timeline.push(welcome);
-
-        /* define instructions trial */
-        var instructions = {
-          type: "html-keyboard-response",
-          stimulus: "<div class=\"display_text\">" +
-              "<p>In this experiment, a large <b style=\"color:red;\">red</b> disk will appear near the center of the screen on top of some hills or valleys.</p>" +
-              "<p>Please look at the large <b style=\"color:red;\">red</b> disk. After a few milliseconds, a much smaller red sphere will mark either a hill or a valley.</p>" +
-              "<p>If you believe the point is located on a <b style=\"color:red;\">hill</b>, press the letter <b style=\"color:red;\">F</b> on the keyboard as fast as you can.</p>" +
-              "<p>If you believe the point is located in a <b style=\"color:blue;\">valley</b>, press the letter <b style=\"color:blue;\">J</b> as fast as you can.</p>" +
-              "<p>Press the <b style=\"color:red;\">hill</b> key on the keyboard to begin.</p>" +
-              "<\div>",
-          choices: ['f'],
-          post_trial_gap: 500
-
-        };
-        timeline.push(instructions);
-
-        /* define instructions trial */
-        var instructionsHill = {
-          type: "html-keyboard-response",
-          stimulus: "<div class=\"display_text\">" +
-              "<p>Press the <b style=\"color:red;\">hill</b> key on the keyboard to begin.</p>" +
-              "<\div>",
-          choices: ['f'],
-          post_trial_gap: 500
-        };
-
-        /* define instructions trial */
-        var instructionsValley = {
-          type: "html-keyboard-response",
-          stimulus: "<div class=\"display_text\">" +
-              "<p>Press the <b style=\"color:blue;\">valley</b> key on the keyboard to begin.</p>" +
-              "<\div>",
-          choices: ['j'],
-          post_trial_gap: 500
-
-        };
-        timeline.push(instructionsValley);
-
-        var pre_test = {
-          type: 'image-keyboard-response',
-          stimulus_name: jsPsych.timelineVariable('stimulus1_name'),
-          stimulus: jsPsych.timelineVariable('stimulus1'),
-          stimulus_height: screen.height,
-          choices: jsPsych.NO_KEYS,
-          trial_duration: 350,
-        }
-
-        var test = {
-          type: "image-keyboard-response",
-          stimulus_name: jsPsych.timelineVariable('stimulus2_name'),
-          stimulus: jsPsych.timelineVariable('stimulus2'),
-          stimulus_height: screen.height,
-          choices: ['f', 'j'],
-          trial_duration: 3150,
-        }
-
-        let pushPauseMessage = false;
-
-        var numSetsImages = Math.ceil(test_stimuli.length / SPLICE_SIZE);
-        var setNum = 0;
-        while (test_stimuli.length > 0) {
-          if (pushPauseMessage) {
-            // add pause message only if not first set of images
-            var breakInstructions = {
-              type: "html-keyboard-response",
-              stimulus: "<div class=\"display_text\">" +
-                  "<p>You have finished " + setNum + "/" + numSetsImages + " set of images! Stay on this page to take a break." +
-                  "<p>Press the <b>space</b> key on the keyboard to resume the experiment.</p>" +
-                  "<\div>",
-              choices: [32],
-              post_trial_gap: 500
-            };
-            timeline.push(breakInstructions);
-
-            timeline.push(instructionsHill);
-            timeline.push(instructionsValley);
-          } else {
-            pushPauseMessage = true;
+    let trialImages =  Promise.all(trialImageRequests);
+    trialImages.then(function(s3Images) {
+      // shuffle the s3Images
+      function shuffle(array) {
+          for (let i = array.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * i);
+              const temp = array[i];
+              array[i] = array[j];
+              array[j] = temp;
           }
-
-          let spliced_stimuli = test_stimuli.splice(0, SPLICE_SIZE);
-
-          let test_procedure = {
-            timeline: [pre_test, test],
-            timeline_variables: spliced_stimuli
-          }
-          timeline.push(test_procedure);
-          setNum ++;
-          break;
-        }
-
-        // exit fullscreen mode
-        timeline.push({
-          type: 'fullscreen',
-          fullscreen_mode: false
-        });
-
-        var exit = {
-          type: "html-keyboard-response",
-          stimulus: "<div class=\"display_text\">" +
-          "You have finished! Press any key on the keyboard to continue." +
-          "<\div>",
-          trial_duration: 5000
-        };
-        timeline.push(exit);
-
-        /* start the experiment */
-        jsPsych.init({
-          timeline: timeline,
-          exclusions: {
-            min_width: screen.width*0.8,
-            min_height: screen.height*0.8
-          },
-          on_finish: function() {
-            let all_data = JSON.parse(jsPsych.data.get().json());
-            let interaction_data = JSON.parse(jsPsych.data.getInteractionData().json());
-            console.log(all_data);
-            console.log(interaction_data);
-
-            // publish data to dynamodb
-            let experimentData = new Object();
-            experimentData.id = JSON.parse(all_data[0].responses).id;
-            experimentData.data = new Object();
-            experimentData.data.all_data = all_data;
-            experimentData.data.interaction_data = interaction_data;
-            experimentData.data = JSON.stringify(experimentData.data);
-
-            function createH1(text) {
-              var h = document.createElement("h1");
-                var t = document.createTextNode(text); 
-                h.appendChild(t); 
-                document.body.appendChild(h);
-            }
-
-            $.post('/submitexperiment',experimentData).then(
-            function(data2) {
-              createH1("Success! Your experiment data has been successfully submitted. Feel free to close this browser.");
-            },
-            function(error2) {
-              createH1("Well this is embarrassing. It looks like we're having trouble submitting your experiment data.");
-            });
-          }
-        });
-      },
-      function(error) {
-        console.log("experiment js" + error);
       }
-    );
-  },
-  function(error) {
-      console.log("S3 listObjectsV2 Error:" + error);
-  }
-);
+      // pair up the images
+      let pairedImages = [];
+      for (var i = 0; i < s3Images.length; i += 2) {
+          pairedImages.push({
+              stimulus1_name: data.sortedKeys[i].Key,
+              stimulus2_name: data.sortedKeys[i+1].Key,
+              stimulus1: s3Images[i].s3Object,
+              stimulus2: s3Images[i+1].s3Object
+          });
+      }
+      
+      shuffle(pairedImages);
+      return pairedImages;
+    }).then(function(data) {
+
+      var test_stimuli = data;
+
+      /* create timeline */
+      var timeline = [];
+
+      /* define identification message trial */
+      var identification = {
+        type: "survey-html-form",
+        preamble: '<p> What is your <b>Mechanical Turk ID?</b>. Please ensure you have entered the correct ID or we will not be able to pay you.</p>',
+        html: '<p> My MTurk ID is <input name="id" type="text" />.</p>'
+      };
+      timeline.push(identification);
+
+      timeline.push({
+        type: 'fullscreen',
+        fullscreen_mode: true
+      });
+
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: "<div class=\"display_text\">" +
+        "This trial will be in fullscreen mode. Press any key on the keyboard to begin." +
+        "<\div>"
+      });
+
+      /* define welcome message trial */
+      var welcome = {
+        type: "html-keyboard-response",
+        stimulus: "<div class=\"display_text\">" +
+        "Welcome to the ACTUAL visual perception experiment. Press any key on the keyboard to begin." +
+        "<\div>"
+      };
+      timeline.push(welcome);
+
+      /* define instructions trial */
+      timeline.push(instructionsHill);
+      timeline.push(instructionsValley);
+
+      let pushPauseMessage = false;
+
+      var numSetsImages = Math.ceil(test_stimuli.length / SPLICE_SIZE);
+      var setNum = 0;
+      while (test_stimuli.length > 0) {
+        if (pushPauseMessage) {
+          // add pause message only if not first set of images
+          var breakInstructions = {
+            type: "html-keyboard-response",
+            stimulus: "<div class=\"display_text\">" +
+                "<p>You have finished " + setNum + "/" + numSetsImages + " set of images! Stay on this page to take a break." +
+                "<p>Press the <b>space</b> key on the keyboard to resume the experiment.</p>" +
+                "<\div>",
+            choices: [32],
+            post_trial_gap: 500
+          };
+          timeline.push(breakInstructions);
+          timeline.push(instructionsHill);
+          timeline.push(instructionsValley);
+        } else {
+          pushPauseMessage = true;
+        }
+
+        let spliced_stimuli = test_stimuli.splice(0, SPLICE_SIZE);
+
+        let test_procedure = {
+          timeline: [pre_test, test],
+          timeline_variables: spliced_stimuli
+        }
+        timeline.push(test_procedure);
+        setNum ++;
+        break; //TODO
+      }
+
+      // exit fullscreen mode
+      timeline.push({
+        type: 'fullscreen',
+        fullscreen_mode: false
+      });
+
+      var exit = {
+        type: "html-keyboard-response",
+        stimulus: "<div class=\"display_text\">" +
+        "You have finished! Press any key on the keyboard to continue." +
+        "<\div>",
+        trial_duration: 5000
+      };
+      timeline.push(exit);
+
+      /* start the experiment */
+      jsPsych.init({
+        timeline: timeline,
+        exclusions: {
+          min_width: screen.width*0.8,
+          min_height: screen.height*0.8
+        },
+        on_finish: function() {
+          let all_data = JSON.parse(jsPsych.data.get().json());
+          let interaction_data = JSON.parse(jsPsych.data.getInteractionData().json());
+          console.log(all_data);
+          console.log(interaction_data);
+
+          // publish data to dynamodb
+          let experimentData = new Object();
+          experimentData.id = JSON.parse(all_data[0].responses).id;
+          experimentData.data = new Object();
+          experimentData.data.all_data = all_data;
+          experimentData.data.interaction_data = interaction_data;
+          experimentData.data = JSON.stringify(experimentData.data);
+
+          function createH1(text) {
+            var h = document.createElement("h1");
+              var t = document.createTextNode(text); 
+              h.appendChild(t); 
+              document.body.appendChild(h);
+          }
+
+          $.post('/submitexperiment',experimentData).then(
+         function(data2) {
+            createH1("Success! Your experiment data has been successfully submitted. Feel free to close this browser.");
+          },
+         function(error2) {
+            createH1("Well this is embarrassing. It looks like we're having trouble submitting your experiment data.");
+          });
+        }
+      });
+    });
+  });
+}
+
+tutorial();
+
 
 
 

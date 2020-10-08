@@ -1,6 +1,7 @@
 // Include the cluster module
 var cluster = require('cluster');
 var EXPERIMENT_BUCKET_NAME = 'experimentset1';
+var TUTORIAL_BUCKET_NAME = 'tutorialset1';
 
 // Code to run if we're in the master process
 if (cluster.isMaster) {
@@ -57,6 +58,28 @@ if (cluster.isMaster) {
             static_path: 'static',
             flask_debug: process.env.FLASK_DEBUG || 'false',
             s3: s3
+        });
+    });
+
+    app.get('/tutorialimages', function(req, res) {
+
+        // first fetch the whole list of images from s3
+        let listObjectV2Promise = s3.listObjectsV2({
+                Bucket: TUTORIAL_BUCKET_NAME, 
+                MaxKeys: 1000 // 1000 should be enough for our use case
+            }).promise();
+
+        listObjectV2Promise.then(
+        function(data) {
+            // take our list of images and sort them
+            data.Contents.sort(function (a,b) {
+                return a.Key.localeCompare(b.Key);
+            });
+            
+            res.json({sortedKeys: data.Contents});
+        },
+        function(error) {
+            console.log("S3 listObjectV2 Error:" + error);
         });
     });
 

@@ -9,11 +9,11 @@
  **/
 
 
-jsPsych.plugins["image-keyboard-response"] = (function() {
+jsPsych.plugins["my-image-keyboard-response"] = (function() {
 
   var plugin = {};
 
-  jsPsych.pluginAPI.registerPreload('image-keyboard-response', 'stimulus', 'image');
+  jsPsych.pluginAPI.registerPreload('my-image-keyboard-response', 'stimulus', 'image');
 
   plugin.info = {
     name: 'image-keyboard-response',
@@ -86,7 +86,7 @@ jsPsych.plugins["image-keyboard-response"] = (function() {
   plugin.trial = function(display_element, trial) {
 
     // display stimulus
-    var html = '<img src="data:image/png;base64,' + trial.stimulus + '" id="jspsych-image-keyboard-response-stimulus" style="';
+    var html = '<img src="data:image/jpeg;base64,' + trial.stimulus + '" id="jspsych-image-keyboard-response-stimulus" style="';
     if(trial.stimulus_height !== null){
       html += 'height:'+trial.stimulus_height+'px; '
       if(trial.stimulus_width == null && trial.maintain_aspect_ratio){
