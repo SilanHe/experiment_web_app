@@ -78,8 +78,8 @@ var test = {
 
 
 function tutorial() {
-  static_path = "static/images/tutorial/";
-  trialImages = [
+  var static_path = "static/images/tutorial/";
+  var trialImages = [
   static_path + 'DirectionalLightTest_Seed2201Hill_Matte_30_20_1.jpg',
   static_path + 'DirectionalLightTest_Seed2201Hill_Matte_30_20_2.jpg',
   static_path + 'DirectionalLightTest_Seed2241Valley_Glossy_60_120_1.jpg',
@@ -87,6 +87,8 @@ function tutorial() {
   static_path + 'MathematicaTest_Seed2251Valley_Matte_45_1.jpg',
   static_path + 'MathematicaTest_Seed2251Valley_Matte_45_2.jpg',
   ];
+
+  var ergonomicsImage = static_path + 'ergonomics.jpg';
 
   // pair up the images
   let pairedImages = [];
@@ -115,7 +117,19 @@ function tutorial() {
     "<\div>"
   });
 
-  console.log(pairedImages[0].stimulus1);
+  var ergonomicInstruction = {
+    type: 'image-keyboard-response',
+    stimulus_name: "sitting position",
+    stimulus: ergonomicsImage,
+    prompt:"<p>For this experiment, try to position your monitor at a reasonable height such that you do not need to hunch or strain yourself to see the monitor.</p>" +
+   "<p>Ideally, position your eyes 0.53 m away from the screen. So within about half a meter or within 1 foot and 7 inches of the screen.</p>" +
+   "<p>Once you are comfortable, press any key on the keyboard to continue.</p>" + 
+   "<br>" +
+   "<p>(image credits to Grand Valley State University)</p>",
+    stimulus_height: screen.height * 0.8,
+  };
+  timeline.push(ergonomicInstruction);
+
 
   var instruction1 = {
     type: 'image-keyboard-response',
@@ -124,8 +138,7 @@ function tutorial() {
     prompt:"<p>In this experiment, you will be shown images of surfaces like the above. Notice there is a large red circle. Press h to continue.</p>",
     stimulus_height: screen.height * 0.8,
     choices: ['h'],
-    trial_duration: 5000,
-  }
+  };
   timeline.push(instruction1);
 
   var instruction2 = {
@@ -135,8 +148,7 @@ function tutorial() {
     prompt:"<p>In this experiment, you will be shown images of surfaces like the above. Notice there is a small red circle where the large red circle was. Press v to continue.</p>",
     stimulus_height: screen.height * 0.8,
     choices: ['v'],
-    trial_duration: 10000,
-  }
+  };
   timeline.push(instruction2);
 
   var instruction3 = {
@@ -146,8 +158,7 @@ function tutorial() {
     prompt:"<p>In this experiment, a large red disk will appear on top of some valleys or hills. Focus your attention on it. Press h to continue.</p>",
     stimulus_height: screen.height * 0.8,
     choices: ['h'],
-    trial_duration: 10000,
-  }
+  };
   timeline.push(instruction3);
 
   var instruction4 = {
@@ -157,8 +168,7 @@ function tutorial() {
     prompt:"<p>After a few milliseconds (so very fast), a much smaller red sphere will mark a spot beneath the large red circle. Press v to continue.</p>",
     stimulus_height: screen.height * 0.8,
     choices: ['v'],
-    trial_duration: 10000,
-  }
+  };
   timeline.push(instruction4);
 
   var instruction41 = {
@@ -168,8 +178,7 @@ function tutorial() {
     prompt:"<p>Let's try it. Look at the above. Press q to continue.</p>",
     stimulus_height: screen.height * 0.8,
     choices: ['q'],
-    trial_duration: 10000,
-  }
+  };
   timeline.push(instruction41);
 
   var instruction5 = {
@@ -179,8 +188,7 @@ function tutorial() {
     prompt:"<p>You will now have to make a choice. Press q to continue.</p>",
     stimulus_height: screen.height * 0.8,
     choices: ['q'],
-    trial_duration: 10000,
-  }
+  };
   timeline.push(instruction5);
 
   var instruction6 = {
@@ -196,7 +204,7 @@ function tutorial() {
   timeline.push({
     type: 'html-keyboard-response',
     stimulus: "<div class=\"display_text\">" +
-    "<p>Nice! You got it." +
+    "<p>Nice! You got it. Press any key on the keyboard to continue." +
     "<\div>",
     trial_duration: 3000,
   });
@@ -252,7 +260,6 @@ function tutorial() {
     "<p>The images come pretty quick right? Make sure to stay focused. During the actual run, you will be given multiple breaks since there will be quite a few images to go through.</p>" + 
     "<p>Press any key on the keyboard to continue.</p>" +
     "<\div>",
-    trial_duration: 5000
   };
   timeline.push(lastinstruction);
 
@@ -266,8 +273,7 @@ function tutorial() {
     type: "html-keyboard-response",
     stimulus: "<div class=\"display_text\">" +
     "You have finished the TUTORIAL! Press any key on the keyboard to continue." +
-    "<\div>",
-    trial_duration: 5000
+    "<\div>"
   };
   timeline.push(exit);
 
@@ -401,10 +407,9 @@ function experiment() {
         let test_procedure = {
           timeline: [pre_test, test],
           timeline_variables: spliced_stimuli
-        }
+        };
         timeline.push(test_procedure);
         setNum ++;
-        break; //TODO
       }
 
       // exit fullscreen mode
