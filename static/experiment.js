@@ -1,4 +1,4 @@
-var SPLICE_SIZE = 50;
+var SPLICE_SIZE = 2;
 var EXPERIMENT_BUCKET_NAME = "experimentset1";
 var TUTORIAL_BUCKET_NAME = "tutorialset1";
 
@@ -206,7 +206,6 @@ function tutorial() {
     stimulus: "<div class=\"display_text\">" +
     "<p>Nice! You got it. Press any key on the keyboard to continue." +
     "<\div>",
-    trial_duration: 3000,
   });
 
   var instruction7 = {
@@ -272,7 +271,7 @@ function tutorial() {
   var exit = {
     type: "html-keyboard-response",
     stimulus: "<div class=\"display_text\">" +
-    "You have finished the TUTORIAL! Press any key on the keyboard to continue." +
+    "You have finished the TUTORIAL! Press any key on the keyboard to continue. " +
     "<\div>"
   };
   timeline.push(exit);
@@ -301,6 +300,7 @@ function experiment() {
   createLoadingWheel();
   createH3("Hello and thank you for taking the time to participate in this experiment!");
   createH3("The data collected will be used to help complete my Masters thesis in Computer Science.");
+  createH3("You must complete this next section in order to get paid.");
 
   $.get('/allexperimentimages').then(function(data) {
     // fetch all images asyncrhonously
@@ -410,6 +410,7 @@ function experiment() {
         };
         timeline.push(test_procedure);
         setNum ++;
+        break;
       }
 
       // exit fullscreen mode
@@ -417,15 +418,6 @@ function experiment() {
         type: 'fullscreen',
         fullscreen_mode: false
       });
-
-      var exit = {
-        type: "html-keyboard-response",
-        stimulus: "<div class=\"display_text\">" +
-        "You have finished! Press any key on the keyboard to continue." +
-        "<\div>",
-        trial_duration: 5000
-      };
-      timeline.push(exit);
 
       /* start the experiment */
       jsPsych.init({
