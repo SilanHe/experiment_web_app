@@ -1,4 +1,4 @@
-var SPLICE_SIZE = 2;
+var SPLICE_SIZE = 50;
 var EXPERIMENT_BUCKET_NAME = "experimentset1";
 var TUTORIAL_BUCKET_NAME = "tutorialset1";
 
@@ -410,7 +410,6 @@ function experiment() {
         };
         timeline.push(test_procedure);
         setNum ++;
-        break;
       }
 
       // exit fullscreen mode
