@@ -268,14 +268,6 @@ function tutorial() {
     fullscreen_mode: false
   });
 
-  var exit = {
-    type: "html-keyboard-response",
-    stimulus: "<div class=\"display_text\">" +
-    "You have finished the TUTORIAL! Press any key on the keyboard to continue. " +
-    "<\div>"
-  };
-  timeline.push(exit);
-
   jsPsych.init({
     timeline: timeline,
     exclusions: {
@@ -284,6 +276,7 @@ function tutorial() {
     },
     on_finish: function() {
       // retry tutorial button
+      createH3("You have finished the TUTORIAL! Press any key on the keyboard to continue.");
       createH3("Press the RETRY button below if you wish to view the tutorial again.");
       createButton("RETRY", tutorial);
 
