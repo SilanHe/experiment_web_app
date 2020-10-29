@@ -115,8 +115,8 @@ function tutorial() {
     type: 'image-keyboard-response',
     stimulus_name: "sitting position",
     stimulus: ergonomicsImage,
-    prompt:"<p>For this experiment, try to position your monitor at a reasonable height such that you do not need to hunch or strain yourself to see the monitor.</p>" +
-   "<p>Ideally, position your eyes 0.53 m away from the screen. So within about half a meter or within 1 foot and 7 inches of the screen.</p>" +
+    prompt:"<p>For this experiment, try to position your monitor at a reasonable height such that </p><p>you do not need to hunch or strain yourself to see the monitor.</p>" +
+   "<p>Ideally, position your eyes 0.53 m away from the screen. </p><p>So within about half a meter or within 1 foot and 7 inches of the screen.</p>" +
    "<p>Once you are comfortable, press any key on the keyboard to continue.</p>" + 
    "<br>" +
    "<p>(image credits to Grand Valley State University)</p>",
@@ -129,7 +129,7 @@ function tutorial() {
     type: 'image-keyboard-response',
     stimulus_name: "instruction1",
     stimulus: pairedImages[0].stimulus1,
-    prompt:"<p>In this experiment, you will be shown images of surfaces like the above. Notice there is a large red circle. Press h to continue.</p>",
+    prompt:"<p>In this experiment, you will be shown images of surfaces like the above.</p> <p> Notice there is a large red circle. Press h to continue.</p>",
     stimulus_height: screen.height * 0.8,
     choices: ['h'],
   };
@@ -139,7 +139,7 @@ function tutorial() {
     type: 'image-keyboard-response',
     stimulus_name: "instruction2",
     stimulus: pairedImages[0].stimulus2,
-    prompt:"<p>In this experiment, you will be shown images of surfaces like the above. Notice there is a small red circle where the large red circle was. Press v to continue.</p>",
+    prompt:"<p>In this experiment, you will be shown images of surfaces like the above.</p><p> Notice there is a small red circle where the large red circle was. Press v to continue.</p>",
     stimulus_height: screen.height * 0.8,
     choices: ['v'],
   };
@@ -149,7 +149,7 @@ function tutorial() {
     type: 'image-keyboard-response',
     stimulus_name: "instruction3",
     stimulus: pairedImages[0].stimulus1,
-    prompt:"<p>In this experiment, a large red disk will appear on top of some valleys or hills. Focus your attention on it. Press h to continue.</p>",
+    prompt:"<p>In this experiment, a large red disk will appear on top of some valleys or hills.</p><p> Focus your attention on it. Press h to continue.</p>",
     stimulus_height: screen.height * 0.8,
     choices: ['h'],
   };
@@ -189,7 +189,7 @@ function tutorial() {
     type: 'image-keyboard-response',
     stimulus_name: "instruction4",
     stimulus: pairedImages[1].stimulus2,
-    prompt:"<p>If you believe the point is located in a VALLEY, press the letter 'v' as quickly as you can. Try pressing v now.</p>",
+    prompt:"<p>If you believe the point is located in a VALLEY, press the letter 'v' as quickly as you can.</p><p> Try pressing v now.</p>",
     stimulus_height: screen.height * 0.8,
     choices: ['v'],
   }
@@ -206,7 +206,7 @@ function tutorial() {
     type: 'image-keyboard-response',
     stimulus_name: "instruction4",
     stimulus: pairedImages[1].stimulus2,
-    prompt:"<p>However, if you believe the point is located on a HILL, press the letter 'h' as quickly as you can. Try it now.</p>",
+    prompt:"<p>However, if you believe the point is located on a HILL, press the letter 'h' as quickly as you can.</p><p> Try it now.</p>",
     stimulus_height: screen.height * 0.8,
     choices: ['h'],
   }
@@ -217,6 +217,7 @@ function tutorial() {
     stimulus: "<div class=\"display_text\">" +
     "<p>Nice! Remember press 'v' if you think the small red circle is in a VALLEY.</p>" +
     "<p>'h' if you think the small red circle is on a HILL</p>" +
+    "<p>Place your fingers on the 'v' and 'h' key.</p>" +
     "<p>Press the VALLEY button to proceed to a little test run." +
     "<\div>",
     choices: ['v'],
