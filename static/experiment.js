@@ -80,6 +80,10 @@ function tutorial() {
   static_path + 'DirectionalLightTest_Seed2241Valley_Glossy_60_120_2.jpg',
   static_path + 'MathematicaTest_Seed2251Valley_Matte_45_1.jpg',
   static_path + 'MathematicaTest_Seed2251Valley_Matte_45_2.jpg',
+  static_path + 'DirectionalLightTest_Seed6012Hill_Matte_45_100_1.jpeg',
+  static_path + 'DirectionalLightTest_Seed6012Hill_Matte_45_100_2.jpeg',
+  static_path + 'DirectionalLightTest_Seed6065Valley_Glossy_30_60_1.jpeg',
+  static_path + 'DirectionalLightTest_Seed6065Valley_Glossy_30_60_2.jpeg',
   ];
 
   var ergonomicsImage = static_path + 'ergonomics.jpg';
@@ -120,7 +124,7 @@ function tutorial() {
    "<p>Once you are comfortable, press any key on the keyboard to continue.</p>" + 
    "<br>" +
    "<p>(image credits to Grand Valley State University)</p>",
-    stimulus_height: screen.height * 0.8,
+    stimulus_height: screen.height * 0.6,
   };
   timeline.push(ergonomicInstruction);
 
@@ -169,9 +173,9 @@ function tutorial() {
     type: 'image-keyboard-response',
     stimulus_name: "instruction4",
     stimulus: pairedImages[1].stimulus1,
-    prompt:"<p>Let's try it. Look at the above. Press q to continue.</p>",
+    prompt:"<p>Let's try it. Look at the above. Press h to continue.</p>",
     stimulus_height: screen.height * 0.8,
-    choices: ['q'],
+    choices: ['h'],
   };
   timeline.push(instruction41);
 
@@ -179,9 +183,9 @@ function tutorial() {
     type: 'image-keyboard-response',
     stimulus_name: "instruction4",
     stimulus: pairedImages[1].stimulus2,
-    prompt:"<p>You will now have to make a choice. Press q to continue.</p>",
+    prompt:"<p>You will now have to make a choice. Press v to continue.</p>",
     stimulus_height: screen.height * 0.8,
-    choices: ['q'],
+    choices: ['v'],
   };
   timeline.push(instruction5);
 
@@ -205,7 +209,7 @@ function tutorial() {
   var instruction7 = {
     type: 'image-keyboard-response',
     stimulus_name: "instruction4",
-    stimulus: pairedImages[1].stimulus2,
+    stimulus: pairedImages[0].stimulus2,
     prompt:"<p>However, if you believe the point is located on a HILL, press the letter 'h' as quickly as you can.</p><p> Try it now.</p>",
     stimulus_height: screen.height * 0.8,
     choices: ['h'],
@@ -221,7 +225,7 @@ function tutorial() {
     "<p>Press the VALLEY button to proceed to a little test run." +
     "<\div>",
     choices: ['v'],
-    post_trial_gap: 750
+    post_trial_gap: 500
   });
 
   var tutorial_pre_test = {
@@ -267,7 +271,7 @@ function tutorial() {
     timeline: timeline,
     on_finish: function() {
       // retry tutorial button
-      createH3("You have finished the TUTORIAL! Press any key on the keyboard to continue.");
+      createH3("You have finished the TUTORIAL!");
       createH3("Press the RETRY button below if you wish to view the tutorial again.");
       createButton("RETRY", tutorial);
 
@@ -351,7 +355,7 @@ function experiment(data) {
   var welcome = {
     type: "html-keyboard-response",
     stimulus: "<div class=\"display_text\">" +
-    "Welcome to the ACTUAL visual perception experiment. Put your fingers on the 'v' and 'h' keys. Press 'v' or 'h' to continue." +
+    "<p>Welcome to the ACTUAL visual perception experiment.</p><p>Put your fingers on the 'v' and 'h' keys.</p><p>Press 'v' or 'h' to continue.</p>" +
     "<\div>"
   };
   timeline.push(welcome);
