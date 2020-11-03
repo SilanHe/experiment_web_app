@@ -120,7 +120,7 @@ function tutorial() {
     stimulus_name: "sitting position",
     stimulus: ergonomicsImage,
     prompt:"<p>For this experiment, try to position your monitor at a reasonable height such that </p><p>you do not need to hunch or strain yourself to see the monitor.</p>" +
-   "<p>Ideally, position your eyes 0.53 m away from the screen. </p><p>So within about half a meter or within 1 foot and 7 inches of the screen.</p>" +
+   "<p>Ideally, position your eyes at around 2 screen widths away from the screen.</p><p>So typically around about <b>1/2 a meter</b> or around <b>1 foot and 7 inches</b> of the screen.</p>" +
    "<p>Once you are comfortable, press any key on the keyboard to continue.</p>" + 
    "<br>" +
    "<p>(image credits to Grand Valley State University)</p>",
@@ -269,6 +269,7 @@ function tutorial() {
 
   jsPsych.init({
     timeline: timeline,
+    show_preload_progress_bar: false,
     preload_images: trialImages,
     on_finish: function() {
       // retry tutorial button
@@ -337,9 +338,9 @@ function experiment(data) {
     stimulus: "<div class=\"display_text\">" +
     "<p>By submitting your responses to this task, you are consenting to be in this research study as described before.</p>" +
     "<br>" + 
-    "<p>If you decide at any time to withdraw from the study before the data is submitted, you may do so without any negative consequences</p>" + 
+    "<p>If you decide at any time to withdraw from the study before the data is submitted, you may do so without any negative consequences.</p>" + 
     "<p>Simply close the experiment browser window. Your data will not be submitted until you reach the end of the experiment.</p>" + 
-    "<p>Once the data is submitted, it cannot withdrawn.</p>" + 
+    "<p>Once the data is submitted, it cannot be withdrawn.</p>" + 
     "<\div>",
     choices: ["OK, I understand."]
   }
@@ -428,8 +429,6 @@ function experiment(data) {
     on_finish: function() {
       let all_data = JSON.parse(jsPsych.data.get().json());
       let interaction_data = JSON.parse(jsPsych.data.getInteractionData().json());
-      console.log(all_data);
-      console.log(interaction_data);
 
       // publish data to dynamodb
       let experimentData = new Object();
@@ -465,7 +464,6 @@ function loadingScreen() {
   createH3("The data collected will be used to help complete my Masters thesis in Computer Science.");
   createH3("You must complete this next section in order to get paid.");
 
-  console.log(pairedImagesPromise);
   pairedImagesPromise.then(function(data) {
     data.then(function(data2) {
       experiment(data2);
