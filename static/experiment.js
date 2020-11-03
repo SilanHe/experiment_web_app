@@ -73,24 +73,24 @@ var test = {
 
 function tutorial() {
   var static_path = "static/images/tutorial/";
+  var ergonomicsImage = static_path + 'ergonomics.jpg';
   var trialImages = [
+  static_path + 'DirectionalLightTest_Seed6012Hill_Matte_45_100_1.jpg',
+  static_path + 'DirectionalLightTest_Seed6012Hill_Matte_45_100_2.jpg',
+  static_path + 'DirectionalLightTest_Seed6065Valley_Glossy_30_60_1.jpg',
+  static_path + 'DirectionalLightTest_Seed6065Valley_Glossy_30_60_2.jpg',
   static_path + 'DirectionalLightTest_Seed2201Hill_Matte_30_20_1.jpg',
   static_path + 'DirectionalLightTest_Seed2201Hill_Matte_30_20_2.jpg',
   static_path + 'DirectionalLightTest_Seed2241Valley_Glossy_60_120_1.jpg',
   static_path + 'DirectionalLightTest_Seed2241Valley_Glossy_60_120_2.jpg',
   static_path + 'MathematicaTest_Seed2251Valley_Matte_45_1.jpg',
   static_path + 'MathematicaTest_Seed2251Valley_Matte_45_2.jpg',
-  static_path + 'DirectionalLightTest_Seed6012Hill_Matte_45_100_1.jpeg',
-  static_path + 'DirectionalLightTest_Seed6012Hill_Matte_45_100_2.jpeg',
-  static_path + 'DirectionalLightTest_Seed6065Valley_Glossy_30_60_1.jpeg',
-  static_path + 'DirectionalLightTest_Seed6065Valley_Glossy_30_60_2.jpeg',
+  ergonomicsImage,
   ];
-
-  var ergonomicsImage = static_path + 'ergonomics.jpg';
 
   // pair up the images
   let pairedImages = [];
-  for (var i = 0; i < trialImages.length; i += 2) {
+  for (var i = 0; i < trialImages.length - 1; i += 2) {
       pairedImages.push({
           stimulus1_name: 'image1',
           stimulus2_name: 'image2',
@@ -269,6 +269,7 @@ function tutorial() {
 
   jsPsych.init({
     timeline: timeline,
+    preload_images: trialImages,
     on_finish: function() {
       // retry tutorial button
       createH3("You have finished the TUTORIAL!");
@@ -331,13 +332,37 @@ function experiment(data) {
   /* create timeline */
   var timeline = [];
 
+  var consent = {
+    type: "html-button-response",
+    stimulus: "<div class=\"display_text\">" +
+    "<p>By submitting your responses to this task, you are consenting to be in this research study as described before.</p>" +
+    "<br>" + 
+    "<p>If you decide at any time to withdraw from the study before the data is submitted, you may do so without any negative consequences</p>" + 
+    "<p>Simply close the experiment browser window. Your data will not be submitted until you reach the end of the experiment.</p>" + 
+    "<p>Once the data is submitted, it cannot withdrawn.</p>" + 
+    "<\div>",
+    choices: ["OK, I understand."]
+  }
+  timeline.push(consent);
+
   /* define identification message trial */
   var identification = {
     type: "html-submit-form",
-    preamble: '<p> What is your <b>Mechanical Turk ID?</b>. Please ensure you have entered the correct ID or we will not be able to pay you.</p>',
+    preamble: '<br><p> What is your <b>Mechanical Turk ID?</b>. Please ensure you have entered the correct ID or we will not be able to pay you.</p>',
     html: '<p> My MTurk ID is <input name="id" type="text" onkeyup="EnableDisable(this)"/>.</p>'
   };
   timeline.push(identification);
+
+  var payme = {
+    type: "html-button-response",
+    stimulus: "<div class=\"display_text\">" +
+    "<br>" + 
+    "<p>In ordered to get payed, you must complete the experiment truthfully and to the best of your ability.</p>" +
+    "<p>We will be screening the data before approving payment.</p>" +
+    "<\div>",
+    choices: ["OK, I understand."]
+  }
+  timeline.push(payme);
 
   timeline.push({
     type: 'fullscreen',
