@@ -8,44 +8,32 @@
  *
  * */
 
-jsPsych.plugins['my-image-keyboard-response'] = (function () {
+jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
   const plugin = {};
 
-  jsPsych.pluginAPI.registerPreload('my-image-keyboard-response', 'stimulus', 'image');
+  jsPsych.pluginAPI.registerPreload('my-canvas-keyboard-response', 'stimulus', 'image');
 
   plugin.info = {
-    name: 'image-keyboard-response',
+    name: 'my-canvas-keyboard-response',
     description: '',
     parameters: {
       stimulus_name: {
         type: jsPsych.plugins.parameterType.STRING,
-        pretty_name: 'Stimulus NAme',
+        pretty_name: 'Stimulus Name',
         default: undefined,
         description: 'The name of the image to be displayed',
       },
       stimulus: {
-        type: jsPsych.plugins.parameterType.IMAGE,
+        type: jsPsych.plugins.parameterType.OBJECT,
         pretty_name: 'Stimulus',
         default: undefined,
-        description: 'The image to be displayed',
+        description: 'The image to be rendered',
       },
-      stimulus_height: {
-        type: jsPsych.plugins.parameterType.INT,
-        pretty_name: 'Image height',
-        default: null,
-        description: 'Set the image height in pixels',
-      },
-      stimulus_width: {
-        type: jsPsych.plugins.parameterType.INT,
-        pretty_name: 'Image width',
-        default: null,
-        description: 'Set the image width in pixels',
-      },
-      maintain_aspect_ratio: {
+      is_pretest: {
         type: jsPsych.plugins.parameterType.BOOL,
-        pretty_name: 'Maintain aspect ratio',
+        pretty_name: 'Is the PreTest',
         default: true,
-        description: 'Maintain the aspect ratio after setting width or height',
+        description: 'If true, this is the image with the large disk. If not, this image should contain the small pip',
       },
       choices: {
         type: jsPsych.plugins.parameterType.KEYCODE,
@@ -53,12 +41,6 @@ jsPsych.plugins['my-image-keyboard-response'] = (function () {
         pretty_name: 'Choices',
         default: jsPsych.ALL_KEYS,
         description: 'The keys the subject is allowed to press to respond to the stimulus.',
-      },
-      prompt: {
-        type: jsPsych.plugins.parameterType.STRING,
-        pretty_name: 'Prompt',
-        default: null,
-        description: 'Any content here will be displayed below the stimulus.',
       },
       stimulus_duration: {
         type: jsPsych.plugins.parameterType.INT,
@@ -82,34 +64,84 @@ jsPsych.plugins['my-image-keyboard-response'] = (function () {
   };
 
   plugin.trial = function (display_element, trial) {
-    // display stimulus
-    let html = `<img src="data:image/jpeg;base64,${trial.stimulus}" id="jspsych-image-keyboard-response-stimulus" style="`;
-    if (trial.stimulus_height !== null) {
-      html += `height:${trial.stimulus_height}px; `;
-      if (trial.stimulus_width == null && trial.maintain_aspect_ratio) {
-        html += 'width: auto; ';
+    console.log(trial.stimulus_name);
+    console.log(stimulus.surfaceData);
+    const disk = (() => {
+      if (trial.is_pretest) {
+        return DISK;
+      }
+      return PIP;
+    });
+
+    if (trial.is_pretest) {
+      // set our mesh geometry
+      // change positions
+      setMeshGeometryVerticesIndices(stimulus.surfaceData.vertices, INDICES);
+      // change material
+      if (stimulus.material === MATERIALS.MATTE) {
+        setMeshMaterial(MATTEMATERIAL);
+      } else {
+        setMeshMaterial(GLOSSYMATERIAL);
+      }
+      // rotate
+      MESH.rotateX(-THREE.Math.degToRad(stimulus.surfaceSlant));
+      MESH.geometry.computeVertexNormals();
+      MESH.updateMatrixWorld();
+      
+      // set disk locations
+      const [x, y, z] = stimulus.surfaceData.vertices[stimulus.extremaIndex];
+      const diskLocation = new THREE.Vector3(x, y, z);
+      MESH.localToWorld(diskLocation);
+      // disk position
+      DISK.translateX(diskLocation.x);
+      DISK.translateY(diskLocation.y);
+      DISK.translateZ(diskLocation.z + DISKS_DISTANCES.DISK);
+      // pip position
+      PIP.translateX(diskLocation.x);
+      PIP.translateY(diskLocation.y);
+      PIP.translateZ(diskLocation.z + DISKS_DISTANCES.PIP);
+
+      // make the light in question visible
+      if (stimulus.light === LIGHTS.MATLAB) {
+        MATLABLIGHT.visible = true;
+      } else if (stimulus.light === LIGHTS.MATHEMATICA) {
+        setMathematicaLightsVisibility(true);
+      } else {
+        // directional
+        DIRECTIONALLIGHTS[stimulus.surfaceSlant][stimulus.lightSlant] = true;
       }
     }
-    if (trial.stimulus_width !== null) {
-      html += `width:${trial.stimulus_width}px; `;
-      if (trial.stimulus_height == null && trial.maintain_aspect_ratio) {
-        html += 'height: auto; ';
-      }
-    }
-    html += '"></img>';
 
-    // add prompt
-    if (trial.prompt !== null) {
-      html += trial.prompt;
-    }
-
-    // render
-    display_element.innerHTML = html;
+    disk.visible = true;
+    trial.renderer.render(SCENE, CAMERA);
+    display_element.appendChild(trial.canvas);
 
     // store response
     let response = {
       rt: null,
       key: null,
+    };
+
+    // function to rotate stuff back to their original positions
+    const resetObjects = function () {
+      disk.visible = false;
+      if (!stimulus.is_pretest) {
+        // reset mesh rotation
+        MESH.rotation.set(0, 0, 0);
+        // reset disk and pip location
+        DISK.position.set(0, 0, 0);
+        PIP.position.set(0, 0, 0);
+
+        // make the light in question non visible
+        if (stimulus.light === LIGHTS.MATLAB) {
+          MATLABLIGHT.visible = false;
+        } else if (stimulus.light === LIGHTS.MATHEMATICA) {
+          setMathematicaLightsVisibility(false);
+        } else {
+          // directional
+          DIRECTIONALLIGHTS[stimulus.surfaceSlant][stimulus.lightSlant] = false;
+        }
+      }
     };
 
     // function to end trial when it is time
@@ -132,6 +164,8 @@ jsPsych.plugins['my-image-keyboard-response'] = (function () {
       // clear the display
       display_element.innerHTML = '';
 
+      resetObjects();
+
       // move on to the next trial
       jsPsych.finishTrial(trial_data);
     };
@@ -140,7 +174,7 @@ jsPsych.plugins['my-image-keyboard-response'] = (function () {
     const after_response = function (info) {
       // after a valid response, the stimulus will have the CSS class 'responded'
       // which can be used to provide visual feedback that a response was recorded
-      display_element.querySelector('#jspsych-image-keyboard-response-stimulus').className += ' responded';
+      display_element.querySelector('#jspsych-canvas-keyboard-response-stimulus').className += ' responded';
 
       // only record the first response
       if (response.key == null) {
@@ -166,7 +200,7 @@ jsPsych.plugins['my-image-keyboard-response'] = (function () {
     // hide stimulus if stimulus_duration is set
     if (trial.stimulus_duration !== null) {
       jsPsych.pluginAPI.setTimeout(() => {
-        display_element.querySelector('#jspsych-image-keyboard-response-stimulus').style.visibility = 'hidden';
+        display_element.querySelector('#jspsych-canvas-keyboard-response-stimulus').style.visibility = 'hidden';
       }, trial.stimulus_duration);
     }
 
