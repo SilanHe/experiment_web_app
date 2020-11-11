@@ -54,10 +54,6 @@ const pre_test = {
   type: 'my-canvas-keyboard-response',
   stimulus_name: jsPsych.timelineVariable('stimulus1_name'),
   stimulus: jsPsych.timelineVariable('stimulus'),
-  renderer: RENDERER,
-  canvas: CANVAS,
-  scene: SCENE,
-  camera, CAMERA,
   is_pretest: true,
   stimulus_height: screen.height,
   choices: jsPsych.NO_KEYS,
@@ -68,10 +64,6 @@ const test = {
   type: 'my-canvas-keyboard-response',
   stimulus_name: jsPsych.timelineVariable('stimulus2_name'),
   stimulus: jsPsych.timelineVariable('stimulus'),
-  renderer: RENDERER,
-  canvas: CANVAS,
-  scene: SCENE,
-  camera: CAMERA,
   is_pretest: false,
   stimulus_height: screen.height,
   choices: ['v', 'h'],
@@ -292,7 +284,6 @@ function tutorial() {
 
 function generateImageData() {
   const [surfaceDataList, testDataList] = getSurfaceDataList();
-
   const pairedImagesPromise = Promise.all(surfaceDataList).then((surfaceDataArray) => {
     // shuffle the s3Images
     function shuffle(array) {
@@ -458,9 +449,7 @@ function loadingScreen() {
   createH3('You must complete this next section in order to get paid.');
 
   pairedImagesPromise.then((data) => {
-    data.then((data2) => {
-      experiment(data2);
-    });
+      experiment(data);
   });
 }
 

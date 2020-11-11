@@ -65,31 +65,33 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
 
   plugin.trial = function (display_element, trial) {
     console.log(trial.stimulus_name);
-    console.log(stimulus.surfaceData);
+    // const t0 = performance.now();
     const disk = (() => {
       if (trial.is_pretest) {
         return DISK;
       }
       return PIP;
-    });
+    })();
 
     if (trial.is_pretest) {
       // set our mesh geometry
       // change positions
-      setMeshGeometryVerticesIndices(stimulus.surfaceData.vertices, INDICES);
+      const stimulusData = trial.stimulus.surfaceData.responseJSON;
+      setMeshGeometryVerticesIndices(stimulusData.vertices, INDICES);
       // change material
-      if (stimulus.material === MATERIALS.MATTE) {
+      if (trial.stimulus.material === MATERIALS.MATTE) {
         setMeshMaterial(MATTEMATERIAL);
       } else {
         setMeshMaterial(GLOSSYMATERIAL);
       }
       // rotate
-      MESH.rotateX(-THREE.Math.degToRad(stimulus.surfaceSlant));
+      MESH.rotateX(-THREE.Math.degToRad(trial.stimulus.surfaceSlant));
       MESH.geometry.computeVertexNormals();
       MESH.updateMatrixWorld();
-      
       // set disk locations
-      const [x, y, z] = stimulus.surfaceData.vertices[stimulus.extremaIndex];
+      const x = stimulusData.vertices[stimulusData.extremaIndex];
+      const y = stimulusData.vertices[stimulusData.extremaIndex + 1];
+      const z = stimulusData.vertices[stimulusData.extremaIndex + 2];
       const diskLocation = new THREE.Vector3(x, y, z);
       MESH.localToWorld(diskLocation);
       // disk position
@@ -102,19 +104,21 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
       PIP.translateZ(diskLocation.z + DISKS_DISTANCES.PIP);
 
       // make the light in question visible
-      if (stimulus.light === LIGHTS.MATLAB) {
+      if (trial.stimulus.light === LIGHTS.MATLAB) {
         MATLABLIGHT.visible = true;
-      } else if (stimulus.light === LIGHTS.MATHEMATICA) {
+      } else if (trial.stimulus.light === LIGHTS.MATHEMATICA) {
         setMathematicaLightsVisibility(true);
       } else {
         // directional
-        DIRECTIONALLIGHTS[stimulus.surfaceSlant][stimulus.lightSlant] = true;
+        DIRECTIONALLIGHTS.map[trial.stimulus.surfaceSlant][trial.stimulus.lightSlant] = true;
       }
     }
 
     disk.visible = true;
-    trial.renderer.render(SCENE, CAMERA);
-    display_element.appendChild(trial.canvas);
+    RENDERER.render(SCENE, CAMERA);
+    display_element.appendChild(RENDERERCANVAS);
+    // const t1 = performance.now();
+    // console.log("Call to render took " + (t1 - t0) + " milliseconds.");
 
     // store response
     let response = {
@@ -125,7 +129,7 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
     // function to rotate stuff back to their original positions
     const resetObjects = function () {
       disk.visible = false;
-      if (!stimulus.is_pretest) {
+      if (!trial.stimulus.is_pretest) {
         // reset mesh rotation
         MESH.rotation.set(0, 0, 0);
         // reset disk and pip location
@@ -133,13 +137,13 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
         PIP.position.set(0, 0, 0);
 
         // make the light in question non visible
-        if (stimulus.light === LIGHTS.MATLAB) {
+        if (trial.stimulus.light === LIGHTS.MATLAB) {
           MATLABLIGHT.visible = false;
-        } else if (stimulus.light === LIGHTS.MATHEMATICA) {
+        } else if (trial.stimulus.light === LIGHTS.MATHEMATICA) {
           setMathematicaLightsVisibility(false);
         } else {
           // directional
-          DIRECTIONALLIGHTS[stimulus.surfaceSlant][stimulus.lightSlant] = false;
+          DIRECTIONALLIGHTS.map[trial.stimulus.surfaceSlant][trial.stimulus.lightSlant] = false;
         }
       }
     };
@@ -162,6 +166,7 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
       };
 
       // clear the display
+      display_element.removeChild(RENDERERCANVAS);
       display_element.innerHTML = '';
 
       resetObjects();
