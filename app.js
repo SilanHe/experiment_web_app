@@ -54,11 +54,10 @@ if (cluster.isMaster) {
   });
 
   app.get('/getsurface', (req, res) => {
-    console.time("getsurface");
-    const vertices = webgl.hillsAndValleys(webgl.AMPLITUDES[req.body.surfaceSlant], req.body.seed);
+    const vertices = webgl.hillsAndValleys(webgl.AMPLITUDES[req.query.surfaceSlant],
+      req.query.seed);
     const extremaIndex = webgl.getLocalExtremaInCenter(vertices,
-      webgl.UMBRELLATHRESHHOLD[req.body.surfaceSlant], req.body.choice);
-    console.timeEnd("getsurface");
+      webgl.UMBRELLATHRESHHOLD[req.query.surfaceSlant], req.query.choice);
     res.json({ vertices, extremaIndex });
   });
 

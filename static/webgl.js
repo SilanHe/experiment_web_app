@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-
 // CONSTANTS
 // -----------------------------------------------------------------------------
 
@@ -23,8 +21,10 @@ const INDICES = (() => {
       faces.push(index + 1, index + NUM_POINTS, index + 1 + NUM_POINTS);
     }
   }
-  return faces;
-});
+  let uint32 = new Int32Array;
+  uint32 = Int32Array.from(faces);
+  return new THREE.BufferAttribute(uint32, 3);
+})();
 
 const SURFACESLANTS = [30, 45, 60];
 const DIRECTIONALLIGHTSLANTS = (() => {
@@ -33,7 +33,7 @@ const DIRECTIONALLIGHTSLANTS = (() => {
   directionalLightSlants[45] = [30, 45, 60, 75, 90, 100];
   directionalLightSlants[60] = [90, 100, 110, 120, 130];
   return directionalLightSlants;
-});
+})();
 
 const CHOICE = {
   HILL: 'Hill',
@@ -66,31 +66,31 @@ const RED = (() => {
   const color = new THREE.Color(0xff0000);
   color.convertSRGBToLinear();
   return color;
-});
+})();
 
 const WHITE = (() => {
   const color = new THREE.Color(0x000000);
   color.convertSRGBToLinear();
   return color;
-});
+})();
 
 const GLOSSYCOLOR = (() => {
   const color = new THREE.Color(0xB2B2B2);
   color.convertSRGBToLinear();
   return color;
-});
+})();
 
 const GLOSSYSPECULAR = (() => {
   const color = new THREE.Color(0x202020);
   color.convertSRGBToLinear();
   return color;
-});
+})();
 
 const DARKGRAY = (() => {
   const color = new THREE.Color(0x111111);
   color.convertSRGBToLinear();
   return color;
-});
+})();
 
 // MATERIALS
 
@@ -125,14 +125,14 @@ const DISK = (() => {
   const disk = new THREE.Mesh(sphereGeometry, REDMATERIAL);
   disk.visible = false;
   return disk;
-});
+})();
 
 const PIP = (() => {
   const sphereGeometry = new THREE.SphereGeometry(0.05, 32, 32);
   const pip = new THREE.Mesh(sphereGeometry, REDMATERIAL);
   pip.visible = false;
   return pip;
-});
+})();
 
 // LIGHTS
 const MATLABLIGHT = (() => {
@@ -141,7 +141,7 @@ const MATLABLIGHT = (() => {
   matlabLight.position.set(LIGHT_Z_DISTANCE, 0, LIGHT_Z_DISTANCE);
   matlabLight.visible = false;
   return matlabLight;
-});
+})();
 
 const MATHEMATICALIGHTS = (() => {
   const redDirectionLight = new THREE.DirectionalLight(0xff0000, 0.9);
@@ -160,7 +160,7 @@ const MATHEMATICALIGHTS = (() => {
   ambientLight.visible = false;
 
   return [redDirectionLight, greenDirectionLight, blueDirectionLight, ambientLight];
-});
+})();
 
 const DIRECTIONALLIGHTS = (() => {
   function getDirectionalLight(lightSlant) {
@@ -210,23 +210,24 @@ const DIRECTIONALLIGHTS = (() => {
   }
 
   return { map, list };
-});
+})();
 
 const MESHGEOMETRY = (() => {
   const geometry = new THREE.BufferGeometry();
   const vertices = new Float32Array(TOTAL_NUM_POINTS * 3);
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-});
+  return geometry;
+})();
 
 const MESH = (() => {
   const mesh = new THREE.Mesh(MESHGEOMETRY, MATTEMATERIAL);
   return mesh;
-});
+})();
 
 /**
  * Generic scene generation function with my default camera settings
  */
-const [SCENE, CAMERA] = (() => {
+const SCENE = (() => {
   const scene = new THREE.Scene();
   scene.background = DARKGRAY;
 
@@ -244,12 +245,15 @@ const [SCENE, CAMERA] = (() => {
   scene.add(DISK);
   scene.add(PIP);
 
+  return scene;
+})();
+
+const CAMERA = (() => {
   const camera = new THREE.PerspectiveCamera(CAMERA_FOV, WINDOW_WIDTH / WINDOW_HEIGHT, 0.1, 1000);
   camera.position.set(0, 0, CAMERA_POSITION);
   camera.lookAt(0, 0, 0);
-
-  return [scene, camera];
-});
+  return camera;
+})();
 
 // create the one canvas we are using to preload
 const CANVAS = (() => {
@@ -258,26 +262,31 @@ const CANVAS = (() => {
   canvas.width = screen.width;
   canvas.height = screen.height;
   return canvas;
-});
+})();
 
 const RENDERER = (() => {
   const renderer = new THREE.WebGLRenderer({
-    CANVAS,
     powerPreference: 'high-performance',
-    gammaFactor: 2.2,
-    outputEncoding: THREE.sRGBEncoding,
-    physicallyCorrectLights: true,
   });
-
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.gammaFactor = 2.2;
+  renderer.physicallyCorrectLights = true;
   renderer.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
   return renderer;
-});
+})();
+
+const RENDERERCANVAS = (() => {
+  const canvas = RENDERER.domElement;
+  canvas.width = screen.width;
+  canvas.height = screen.height;
+  return canvas;
+})();
 
 // Functions
 // -----------------------------------------------------------------------------
 
 function setMathematicaLightsVisibility(value) {
-  for (let i = 0; MATHEMATICALIGHTS.length; i += 1) {
+  for (let i = 0; i < MATHEMATICALIGHTS.length; i += 1) {
     MATHEMATICALIGHTS[i].visible = value;
   }
 }
@@ -287,13 +296,11 @@ function setMeshGeometryVerticesIndices(vertices, indices) {
   MESHGEOMETRY.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
   MESH.geometry.attributes.position.needsUpdate = true; // update flag
   // If you change the position data values after the initial render
-  MESH.geometry.computeBoundingSphere();
+  MESH.geometry.computeBoundingBox();
 }
 
 function setMeshMaterial(material) {
-  MESH.material.color = material.color;
-  MESH.material.specular = material.specular;
-  MESH.material.shininess = material.shininess;
+  MESH.material = material;
 }
 
 function getTanFromDegrees(degrees) {
@@ -315,7 +322,6 @@ function getSurfaceData(seed, choice, surfaceSlant) {
     choice,
     surfaceSlant,
   };
-
   return $.get('/getsurface', surfaceDetails);
 }
 
@@ -389,11 +395,8 @@ function getSurfaceDataList() {
 }
 
 function getSurfaceInfoString(testData, additionalInfo) {
-  return `${testData.light}_
-  ${testData.seed}_
-  ${testData.choice}_
-  ${testData.material}_
-  ${testData.surfaceSlant}_
-  ${testData.lightSlant}_
-  ${additionalInfo}`;
+  if (testData.lightSlant) {
+    return `${testData.light}_${testData.seed}_${testData.choice}_${testData.material}_${testData.surfaceSlant}_${testData.lightSlant}_${additionalInfo}`;
+  }
+  return `${testData.light}_${testData.seed}_${testData.choice}_${testData.material}_${testData.surfaceSlant}_${additionalInfo}`;
 }

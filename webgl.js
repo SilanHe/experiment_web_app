@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+const THREE = require('three');
 
 // CONSTANTS
 // -----------------------------------------------------------------------------
@@ -20,7 +20,7 @@ const UMBRELLATHRESHHOLD = {
 };
 
 const NUM_POINTS = 350;
-const SIMPLEX = require('simplex-noise');
+const SimplexNoise = require('simplex-noise');
 
 // Functions
 // -----------------------------------------------------------------------------
@@ -29,14 +29,15 @@ const SIMPLEX = require('simplex-noise');
  * generate hills and valleys depending on seed
  */
 function hillsAndValleys(amplitude = 1, seed = 1) {
-  const simplex = new SIMPLEX.SimplexNoise(seed);
+  const simplex = new SimplexNoise(seed);
 
   const min = -9.4;
   const max = 9.4;
   const range = Math.abs(max - min);
   const increment = range / NUM_POINTS;
 
-  const vertices = [];
+  const vertices = new Float32Array(NUM_POINTS * NUM_POINTS * 3);
+  let counter = 0;
   for (let i = 0; i < NUM_POINTS; i += 1) {
     for (let j = 0; j < NUM_POINTS; j += 1) {
       // get point coordinates in plane's coordinate system
@@ -47,7 +48,12 @@ function hillsAndValleys(amplitude = 1, seed = 1) {
       // get height map / z
       const z = amplitude * simplex.noise2D(x / 2.3, y / 2.3);
 
-      vertices.push(x, y, z);
+      vertices[counter] = x;
+      counter += 1;
+      vertices[counter] = y;
+      counter += 1;
+      vertices[counter] = z;
+      counter += 1;
     }
   }
   return vertices;
@@ -65,13 +71,14 @@ function getLocalExtremaInCenter(vertices, umbrellaCurvatureThreshhold, extremaC
   const centerWidth = 200;
   const startRow = Math.abs(Math.floor(NUM_POINTS / 2 - centerWidth / 2));
   const endRow = startRow + centerWidth;
-
   function getUmbrellaCurvature(x, y, z, i, j, umbrellaCorners) {
     let kum = 0;// umbrella curvature
     for (let idx = 0; idx < umbrellaCorners.length; idx += 1) {
       const tup = umbrellaCorners[idx];
-      const indexNeighbor = (i - tup[0]) * NUM_POINTS + (j - tup[1]);
-      const [nX, nY, nZ] = vertices[indexNeighbor];
+      const indexNeighbor = ((i - tup[0]) * NUM_POINTS + (j - tup[1])) * 3;
+      const nX = vertices[indexNeighbor];
+      const nY = vertices[indexNeighbor + 1];
+      const nZ = vertices[indexNeighbor + 2];
       const distanceFromNeighborToP = distance(x, y, z, nX, nY, nZ);
       const vNZ = (z - nZ) / distanceFromNeighborToP;
       kum += Math.abs(vNZ);
@@ -114,11 +121,12 @@ function getLocalExtremaInCenter(vertices, umbrellaCurvatureThreshhold, extremaC
     for (let i = startRow; i < endRow; i += 1) {
       for (let j = startRow; j < endRow; j += 1) {
         // convert from rowXcol to index in vertices list
-        const curIndex = i * NUM_POINTS + j;
+        const curIndex = (i * NUM_POINTS + j) * 3;
 
         // update local min and local max
-
-        const [x, y, z] = vertices[curIndex];
+        const x = vertices[curIndex];
+        const y = vertices[curIndex + 1];
+        const z = vertices[curIndex + 2];
 
         // check local local area for other max local points
         if (extremaChoice === CHOICE.HILL && z > localMax) {
