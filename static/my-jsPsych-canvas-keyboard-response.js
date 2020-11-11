@@ -73,45 +73,50 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
       return PIP;
     })();
 
-    if (trial.is_pretest) {
-      // set our mesh geometry
-      // change positions
-      const stimulusData = trial.stimulus.surfaceData.responseJSON;
-      setMeshGeometryVerticesIndices(stimulusData.vertices, INDICES);
-      // change material
-      if (trial.stimulus.material === MATERIALS.MATTE) {
-        setMeshMaterial(MATTEMATERIAL);
-      } else {
-        setMeshMaterial(GLOSSYMATERIAL);
-      }
-      // rotate
-      MESH.rotateX(-THREE.Math.degToRad(trial.stimulus.surfaceSlant));
-      MESH.geometry.computeVertexNormals();
-      MESH.updateMatrixWorld();
-      // set disk locations
-      const x = stimulusData.vertices[stimulusData.extremaIndex];
-      const y = stimulusData.vertices[stimulusData.extremaIndex + 1];
-      const z = stimulusData.vertices[stimulusData.extremaIndex + 2];
-      const diskLocation = new THREE.Vector3(x, y, z);
-      MESH.localToWorld(diskLocation);
-      // disk position
-      DISK.translateX(diskLocation.x);
-      DISK.translateY(diskLocation.y);
-      DISK.translateZ(diskLocation.z + DISKS_DISTANCES.DISK);
-      // pip position
-      PIP.translateX(diskLocation.x);
-      PIP.translateY(diskLocation.y);
-      PIP.translateZ(diskLocation.z + DISKS_DISTANCES.PIP);
 
-      // make the light in question visible
-      if (trial.stimulus.light === LIGHTS.MATLAB) {
-        MATLABLIGHT.visible = true;
-      } else if (trial.stimulus.light === LIGHTS.MATHEMATICA) {
-        setMathematicaLightsVisibility(true);
-      } else {
-        // directional
-        DIRECTIONALLIGHTS.map[trial.stimulus.surfaceSlant][trial.stimulus.lightSlant] = true;
-      }
+    // set our mesh geometry
+    // change positions
+    const stimulusData = trial.stimulus.surfaceData.responseJSON;
+    setMeshGeometryVerticesIndices(stimulusData.vertices, INDICES);
+    // change material
+    if (trial.stimulus.material === MATERIALS.MATTE) {
+      setMeshMaterial(MATTEMATERIAL);
+      MATTEMATERIAL.needsUpdate = true;
+    } else {
+      setMeshMaterial(GLOSSYMATERIAL);
+      GLOSSYMATERIAL.needsUpdate = true;
+    }
+    // rotate
+    MESH.rotateX(-THREE.Math.degToRad(trial.stimulus.surfaceSlant));
+    MESH.geometry.computeVertexNormals();
+    MESH.updateMatrixWorld();
+    // set disk locations
+    const x = stimulusData.vertices[stimulusData.extremaIndex];
+    const y = stimulusData.vertices[stimulusData.extremaIndex + 1];
+    const z = stimulusData.vertices[stimulusData.extremaIndex + 2];
+    const diskLocation = new THREE.Vector3(x, y, z);
+    MESH.localToWorld(diskLocation);
+    
+    if (trial.is_pretest === true) {
+      // disk position
+      DISK.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.DISK);
+      DISK.updateMatrix();
+    } else {
+      // pip position
+      PIP.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.PIP);
+      PIP.updateMatrix();
+    }
+
+    // make the light in question visible
+    if (trial.stimulus.light === LIGHTS.MATLAB) {
+      MATLABLIGHT.visible = true;
+    } else if (trial.stimulus.light === LIGHTS.MATHEMATICA) {
+      setMathematicaLightsVisibility(true);
+    } else {
+      // directional
+      DIRECTIONALLIGHTS.map.get(trial.stimulus.surfaceSlant)
+        .get(trial.stimulus.lightSlant)
+        .visible = true;
     }
 
     disk.visible = true;
@@ -129,12 +134,11 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
     // function to rotate stuff back to their original positions
     const resetObjects = function () {
       disk.visible = false;
-      if (!trial.stimulus.is_pretest) {
+      if (trial.stimulus.is_pretest !== false) {
         // reset mesh rotation
-        MESH.rotation.set(0, 0, 0);
-        // reset disk and pip location
-        DISK.position.set(0, 0, 0);
-        PIP.position.set(0, 0, 0);
+        resetObject(MESH);
+        resetObject(DISK);
+        resetObject(PIP);
 
         // make the light in question non visible
         if (trial.stimulus.light === LIGHTS.MATLAB) {
@@ -143,7 +147,9 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
           setMathematicaLightsVisibility(false);
         } else {
           // directional
-          DIRECTIONALLIGHTS.map[trial.stimulus.surfaceSlant][trial.stimulus.lightSlant] = false;
+          DIRECTIONALLIGHTS.map.get(trial.stimulus.surfaceSlant)
+            .get(trial.stimulus.lightSlant)
+            .visible = false;
         }
       }
     };

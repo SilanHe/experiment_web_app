@@ -20,6 +20,7 @@ const UMBRELLATHRESHHOLD = {
 };
 
 const NUM_POINTS = 350;
+const ARRAY_LENGTH = NUM_POINTS * NUM_POINTS * 3;
 const SimplexNoise = require('simplex-noise');
 
 // Functions
@@ -36,7 +37,7 @@ function hillsAndValleys(amplitude = 1, seed = 1) {
   const range = Math.abs(max - min);
   const increment = range / NUM_POINTS;
 
-  const vertices = new Float32Array(NUM_POINTS * NUM_POINTS * 3);
+  const vertices = [];
   let counter = 0;
   for (let i = 0; i < NUM_POINTS; i += 1) {
     for (let j = 0; j < NUM_POINTS; j += 1) {
@@ -48,12 +49,7 @@ function hillsAndValleys(amplitude = 1, seed = 1) {
       // get height map / z
       const z = amplitude * simplex.noise2D(x / 2.3, y / 2.3);
 
-      vertices[counter] = x;
-      counter += 1;
-      vertices[counter] = y;
-      counter += 1;
-      vertices[counter] = z;
-      counter += 1;
+      vertices.push(x, y, z);
     }
   }
   return vertices;
