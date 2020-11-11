@@ -2,7 +2,7 @@
 // -----------------------------------------------------------------------------
 
 const NUM_POINTS = 350;
-const TOTAL_NUM_POINTS = NUM_POINTS * NUM_POINTS;
+const TOTAL_NUM_POINTS = NUM_POINTS * NUM_POINTS * 3;
 const WINDOW_WIDTH = 1920;
 const WINDOW_HEIGHT = 1200;
 
@@ -12,18 +12,18 @@ const CAMERA_POSITION = 53;
 
 const INDICES = (() => {
   const faces = [];
-  // hacky way of generating triangles because I know how the points are split, pretty standard
   for (let i = 0; i < NUM_POINTS - 1; i += 1) {
     for (let j = 0; j < NUM_POINTS - 1; j += 1) {
-      const index = i * NUM_POINTS + j;
-      // counter clockwise order
-      faces.push(index, index + NUM_POINTS, index + 1);
-      faces.push(index + 1, index + NUM_POINTS, index + 1 + NUM_POINTS);
+      const a = i * NUM_POINTS + j;
+      const b = a + NUM_POINTS;
+      const c = a + 1;
+      const d = a + 1 + NUM_POINTS;
+
+      faces.push(a, b, c); // face one
+      faces.push(c, b, d); // face two
     }
   }
-  let uint32 = new Int32Array;
-  uint32 = Int32Array.from(faces);
-  return new THREE.BufferAttribute(uint32, 3);
+  return faces;
 })();
 
 const SURFACESLANTS = [30, 45, 60];
@@ -69,7 +69,7 @@ const RED = (() => {
 })();
 
 const WHITE = (() => {
-  const color = new THREE.Color(0x000000);
+  const color = new THREE.Color(0xffffff);
   color.convertSRGBToLinear();
   return color;
 })();
@@ -185,27 +185,27 @@ const DIRECTIONALLIGHTS = (() => {
     return directionalLight;
   }
 
-  const map = {};
+  const map = new Map();
   const list = [];
 
-  map[30] = {};
+  map.set(30, new Map());
   for (let i = 0; i < DIRECTIONALLIGHTSLANTS[30].length; i += 1) {
     const curLight = getDirectionalLight(DIRECTIONALLIGHTSLANTS[30][i]);
-    map[30][i] = curLight;
+    map.get(30).set(DIRECTIONALLIGHTSLANTS[30][i], curLight);
     list.push(curLight);
   }
 
-  map[45] = {};
+  map.set(45, new Map());
   for (let i = 0; i < DIRECTIONALLIGHTSLANTS[45].length; i += 1) {
     const curLight = getDirectionalLight(DIRECTIONALLIGHTSLANTS[45][i]);
-    map[45][i] = curLight;
+    map.get(45).set(DIRECTIONALLIGHTSLANTS[45][i], curLight);
     list.push(curLight);
   }
 
-  map[60] = {};
+  map.set(60, new Map());
   for (let i = 0; i < DIRECTIONALLIGHTSLANTS[60].length; i += 1) {
     const curLight = getDirectionalLight(DIRECTIONALLIGHTSLANTS[60][i]);
-    map[60][i] = curLight;
+    map.get(60).set(DIRECTIONALLIGHTSLANTS[60][i], curLight);
     list.push(curLight);
   }
 
@@ -214,14 +214,27 @@ const DIRECTIONALLIGHTS = (() => {
 
 const MESHGEOMETRY = (() => {
   const geometry = new THREE.BufferGeometry();
-  const vertices = new Float32Array(TOTAL_NUM_POINTS * 3);
+  const vertices = [];
+  for (let i = 0; i < TOTAL_NUM_POINTS; i += 1) {
+    vertices.push(0.134758724358);
+  }
+  geometry.setIndex(INDICES);
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.attributes.position.needsUpdate = true; // update flag
   return geometry;
 })();
 
 const MESH = (() => {
   const mesh = new THREE.Mesh(MESHGEOMETRY, MATTEMATERIAL);
   return mesh;
+})();
+
+const CAMERA = (() => {
+  const camera = new THREE.PerspectiveCamera(CAMERA_FOV, 
+    window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 0, CAMERA_POSITION);
+  camera.lookAt(0, 0, 0);
+  return camera;
 })();
 
 /**
@@ -240,28 +253,12 @@ const SCENE = (() => {
     scene.add(DIRECTIONALLIGHTS.list[i]);
   }
 
-  // add the disk and pip
   scene.add(MESH);
   scene.add(DISK);
   scene.add(PIP);
+  scene.add(CAMERA);
 
   return scene;
-})();
-
-const CAMERA = (() => {
-  const camera = new THREE.PerspectiveCamera(CAMERA_FOV, WINDOW_WIDTH / WINDOW_HEIGHT, 0.1, 1000);
-  camera.position.set(0, 0, CAMERA_POSITION);
-  camera.lookAt(0, 0, 0);
-  return camera;
-})();
-
-// create the one canvas we are using to preload
-const CANVAS = (() => {
-  const canvas = document.createElement('canvas');
-  canvas.id = 'c1';
-  canvas.width = screen.width;
-  canvas.height = screen.height;
-  return canvas;
 })();
 
 const RENDERER = (() => {
@@ -271,19 +268,28 @@ const RENDERER = (() => {
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.gammaFactor = 2.2;
   renderer.physicallyCorrectLights = true;
-  renderer.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+  renderer.setSize(window.innerWidth, window.innerHeight);
   return renderer;
 })();
 
 const RENDERERCANVAS = (() => {
   const canvas = RENDERER.domElement;
-  canvas.width = screen.width;
-  canvas.height = screen.height;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.id = 'jspsych-canvas-keyboard-response-stimulus';
   return canvas;
 })();
 
 // Functions
 // -----------------------------------------------------------------------------
+window.addEventListener('resize', onWindowResize, false);
+function onWindowResize() {
+  CAMERA.aspect = window.innerWidth / window.innerHeight;
+  CAMERA.updateProjectionMatrix();
+  RENDERER.setSize(window.innerWidth, window.innerHeight);
+  RENDERERCANVAS.width = window.innerWidth;
+  RENDERERCANVAS.height = window.innerHeight;
+}
 
 function setMathematicaLightsVisibility(value) {
   for (let i = 0; i < MATHEMATICALIGHTS.length; i += 1) {
@@ -292,15 +298,27 @@ function setMathematicaLightsVisibility(value) {
 }
 
 function setMeshGeometryVerticesIndices(vertices, indices) {
-  MESHGEOMETRY.setIndex(indices);
-  MESHGEOMETRY.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  const bufferVertices = MESH.geometry.attributes.position.array;
+  for (let i = 0; i < TOTAL_NUM_POINTS; i += 1) {
+    bufferVertices[i] = vertices[i];
+  }
   MESH.geometry.attributes.position.needsUpdate = true; // update flag
   // If you change the position data values after the initial render
-  MESH.geometry.computeBoundingBox();
+  MESH.geometry.computeBoundingSphere();
+  MESH.geometry.computeVertexNormals();
 }
 
 function setMeshMaterial(material) {
   MESH.material = material;
+}
+
+function resetObject(object) {
+  // object.updateMatrix();
+  // object.geometry.applyMatrix(object.matrix);
+  object.position.set(0, 0, 0);
+  object.rotation.set(0, 0, 0);
+  object.scale.set(1, 1, 1);
+  object.updateMatrix();
 }
 
 function getTanFromDegrees(degrees) {
@@ -400,3 +418,5 @@ function getSurfaceInfoString(testData, additionalInfo) {
   }
   return `${testData.light}_${testData.seed}_${testData.choice}_${testData.material}_${testData.surfaceSlant}_${additionalInfo}`;
 }
+
+console.log(DIRECTIONALLIGHTS.map);
