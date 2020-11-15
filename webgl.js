@@ -38,17 +38,15 @@ function hillsAndValleys(amplitude = 1, seed = 1) {
   const increment = range / NUM_POINTS;
 
   const vertices = [];
-  let counter = 0;
   for (let i = 0; i < NUM_POINTS; i += 1) {
+    const x = min + increment * i;
     for (let j = 0; j < NUM_POINTS; j += 1) {
       // get point coordinates in plane's coordinate system
       // in the plane coordinate system we are using z as the height for the height map
-      const x = min + increment * i;
       const y = min + increment * j;
 
       // get height map / z
       const z = amplitude * simplex.noise2D(x / 2.3, y / 2.3);
-
       vertices.push(x, y, z);
     }
   }
@@ -57,6 +55,18 @@ function hillsAndValleys(amplitude = 1, seed = 1) {
 
 function distance(x1, y1, z1, x2, y2, z2) {
   return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2);
+}
+
+/**
+ * take our 3 d points and only store our z since the x
+ * and y coordinates are constant accross all surfaces
+ */
+function hillsAndValleysZ(vertices) {
+  const compressedVertices = [];
+  for (let i = 2; i < vertices.length; i += 3) {
+    compressedVertices.push(vertices[i]);
+  }
+  return compressedVertices;
 }
 
 /**
@@ -158,6 +168,7 @@ function getLocalExtremaInCenter(vertices, umbrellaCurvatureThreshhold, extremaC
 module.exports = {
   hillsAndValleys,
   getLocalExtremaInCenter,
+  hillsAndValleysZ,
   AMPLITUDES,
   UMBRELLATHRESHHOLD,
 };

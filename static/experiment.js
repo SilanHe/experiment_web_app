@@ -1,4 +1,5 @@
 const SPLICE_SIZE = 50;
+var pairedImagesPromise;
 
 function createH3(text) {
   const h = document.createElement('h3');
@@ -104,6 +105,9 @@ function tutorial() {
   timeline.push({
     type: 'fullscreen',
     fullscreen_mode: true,
+    on_load: () => {
+      pairedImagesPromise = generateImageData();
+    },
   });
 
   timeline.push({
@@ -297,6 +301,7 @@ function generateImageData() {
     // pair up the images
     const pairedImages = [];
     for (let i = 0; i < testDataList.length; i += 1) {
+      testDataList[i].surfaceData = surfaceDataArray[i];
       pairedImages.push({
         stimulus1_name: getSurfaceInfoString(testDataList[i], 1),
         stimulus2_name: getSurfaceInfoString(testDataList[i], 2),
@@ -415,7 +420,7 @@ function experiment(data) {
 
       // publish data to dynamodb
       const experimentData = new Object();
-      experimentData.id = JSON.parse(all_data[0].responses).id;
+      experimentData.id = JSON.parse(all_data[1].responses).id; // id page is the second of the experiment now
       experimentData.data = new Object();
       experimentData.data.all_data = all_data;
       experimentData.data.interaction_data = interaction_data;
@@ -449,9 +454,7 @@ function loadingScreen() {
   createH3('You must complete this next section in order to get paid.');
 
   pairedImagesPromise.then((data) => {
-      experiment(data);
+    experiment(data);
   });
 }
-
-var pairedImagesPromise = generateImageData();
 tutorial();

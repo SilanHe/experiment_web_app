@@ -64,7 +64,6 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
   };
 
   plugin.trial = function (display_element, trial) {
-    console.log(trial.stimulus_name);
     // const t0 = performance.now();
     const disk = (() => {
       if (trial.is_pretest) {
@@ -73,10 +72,9 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
       return PIP;
     })();
 
-
     // set our mesh geometry
     // change positions
-    const stimulusData = trial.stimulus.surfaceData.responseJSON;
+    const stimulusData = trial.stimulus.surfaceData;
     setMeshGeometryVerticesIndices(stimulusData.vertices, INDICES);
     // change material
     if (trial.stimulus.material === MATERIALS.MATTE) {
@@ -96,7 +94,7 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
     const z = stimulusData.vertices[stimulusData.extremaIndex + 2];
     const diskLocation = new THREE.Vector3(x, y, z);
     MESH.localToWorld(diskLocation);
-    
+
     if (trial.is_pretest === true) {
       // disk position
       DISK.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.DISK);
