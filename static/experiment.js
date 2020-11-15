@@ -1,4 +1,5 @@
 const SPLICE_SIZE = 50;
+var pairedImagesPromise;
 
 function createH3(text) {
   const h = document.createElement('h3');
@@ -104,6 +105,9 @@ function tutorial() {
   timeline.push({
     type: 'fullscreen',
     fullscreen_mode: true,
+    on_load: () => {
+      pairedImagesPromise = generateImageData();
+    },
   });
 
   timeline.push({
@@ -112,6 +116,7 @@ function tutorial() {
     + '<p>This TUTORIAL trial will be in fullscreen mode. After the tutorial, you will be able to proceed with the ACTUAL experiment.</p>'
     + ' Press any key on the keyboard to begin.'
     + '<\div>',
+
   });
 
   const ergonomicInstruction = {
@@ -450,10 +455,8 @@ function loadingScreen() {
   createH3('You must complete this next section in order to get paid.');
 
   pairedImagesPromise.then((data) => {
-      experiment(data);
+    experiment(data);
   });
 }
 
-var pairedImagesPromise;
 tutorial();
-pairedImagesPromise = generateImageData();
