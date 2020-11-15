@@ -297,6 +297,7 @@ function generateImageData() {
     // pair up the images
     const pairedImages = [];
     for (let i = 0; i < testDataList.length; i += 1) {
+      testDataList[i].surfaceData = surfaceDataArray[i];
       pairedImages.push({
         stimulus1_name: getSurfaceInfoString(testDataList[i], 1),
         stimulus2_name: getSurfaceInfoString(testDataList[i], 2),
@@ -415,7 +416,7 @@ function experiment(data) {
 
       // publish data to dynamodb
       const experimentData = new Object();
-      experimentData.id = JSON.parse(all_data[0].responses).id;
+      experimentData.id = JSON.parse(all_data[1].responses).id; // id page is the second of the experiment now
       experimentData.data = new Object();
       experimentData.data.all_data = all_data;
       experimentData.data.interaction_data = interaction_data;
@@ -453,5 +454,6 @@ function loadingScreen() {
   });
 }
 
-var pairedImagesPromise = generateImageData();
+var pairedImagesPromise;
 tutorial();
+pairedImagesPromise = generateImageData();

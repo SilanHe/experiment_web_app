@@ -2,9 +2,12 @@
 // -----------------------------------------------------------------------------
 
 const NUM_POINTS = 350;
+const RANGEMAX = 9.4;
+const RANGEMIN = -9.4;
+const RANGE = Math.abs(RANGEMAX - RANGEMIN);
+const INCREMENT = RANGE / NUM_POINTS;
+
 const TOTAL_NUM_POINTS = NUM_POINTS * NUM_POINTS * 3;
-const WINDOW_WIDTH = 1920;
-const WINDOW_HEIGHT = 1200;
 
 const LIGHT_Z_DISTANCE = 100;
 const CAMERA_FOV = 20;
@@ -81,7 +84,7 @@ const GLOSSYCOLOR = (() => {
 })();
 
 const GLOSSYSPECULAR = (() => {
-  const color = new THREE.Color(0x202020);
+  const color = new THREE.Color(0x4B4B4B);
   color.convertSRGBToLinear();
   return color;
 })();
@@ -98,7 +101,6 @@ const MATTEMATERIAL = new THREE.MeshPhongMaterial(
   {
     side: THREE.FrontSide,
     color: WHITE,
-    specular: WHITE,
     shininess: 0,
   },
 );
@@ -108,7 +110,7 @@ const GLOSSYMATERIAL = new THREE.MeshPhongMaterial(
     side: THREE.FrontSide,
     color: GLOSSYCOLOR,
     specular: GLOSSYSPECULAR,
-    shininess: 18,
+    shininess: 51,
   },
 );
 
@@ -267,7 +269,7 @@ const RENDERER = (() => {
   });
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.gammaFactor = 2.2;
-  renderer.physicallyCorrectLights = true;
+  renderer.physicallyCorrectLights = false;
   renderer.setSize(window.innerWidth, window.innerHeight);
   return renderer;
 })();
@@ -340,7 +342,28 @@ function getSurfaceData(seed, choice, surfaceSlant) {
     choice,
     surfaceSlant,
   };
-  return $.get('/getsurface', surfaceDetails);
+  return $.get('/getsurface', surfaceDetails).then((data) => {
+    data.vertices = getVertices(data.heightMap);
+    return data;
+  });
+}
+
+function getVertices(heightmap) {
+  const vertices = [];
+  let counter = 0;
+  for (let i = 0; i < NUM_POINTS; i += 1) {
+    const x = RANGEMIN + INCREMENT * i;
+    for (let j = 0; j < NUM_POINTS; j += 1) {
+      // get point coordinates in plane's coordinate system
+      // in the plane coordinate system we are using z as the height for the height map
+      const y = RANGEMIN + INCREMENT * j;
+
+      // get height map / z
+      vertices.push(x, y, heightmap[counter]);
+      counter += 1;
+    }
+  }
+  return vertices;
 }
 
 function getSurfaceDataList() {
@@ -365,7 +388,6 @@ function getSurfaceDataList() {
             choices[choiceIndex][1], SURFACESLANTS[surfaceIndex]);
           const testData = {
             seed,
-            surfaceData,
             choice: choices[choiceIndex][1],
             material: materials[materialIndex][1],
             light: LIGHTS.DIRECTIONAL,
@@ -383,7 +405,6 @@ function getSurfaceDataList() {
           choices[choiceIndex][1], SURFACESLANTS[surfaceIndex]);
         const testData = {
           seed,
-          surfaceData,
           choice: choices[choiceIndex][1],
           material: materials[materialIndex][1],
           light: LIGHTS.MATLAB,
@@ -399,7 +420,6 @@ function getSurfaceDataList() {
         choices[choiceIndex][1], SURFACESLANTS[surfaceIndex]);
       const testData = {
         seed,
-        surfaceData,
         choice: choices[choiceIndex][1],
         material: MATERIALS.MATTE,
         light: LIGHTS.MATHEMATICA,
@@ -418,5 +438,3 @@ function getSurfaceInfoString(testData, additionalInfo) {
   }
   return `${testData.light}_${testData.seed}_${testData.choice}_${testData.material}_${testData.surfaceSlant}_${additionalInfo}`;
 }
-
-console.log(DIRECTIONALLIGHTS.map);

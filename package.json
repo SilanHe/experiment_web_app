@@ -7,6 +7,7 @@
     "body-parser": "^1.19.0",
     "ejs": "latest",
     "express": "^4.17.1",
+    "object-sizeof": "^1.6.1",
     "simplex-noise": "^2.4.0",
     "three": "^0.122.0"
   },
