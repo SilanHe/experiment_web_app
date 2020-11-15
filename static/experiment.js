@@ -116,7 +116,6 @@ function tutorial() {
     + '<p>This TUTORIAL trial will be in fullscreen mode. After the tutorial, you will be able to proceed with the ACTUAL experiment.</p>'
     + ' Press any key on the keyboard to begin.'
     + '<\div>',
-
   });
 
   const ergonomicInstruction = {
@@ -458,5 +457,4 @@ function loadingScreen() {
     experiment(data);
   });
 }
-
 tutorial();

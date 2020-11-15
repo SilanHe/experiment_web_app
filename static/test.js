@@ -67,4 +67,3 @@ getSurfaceData(seed, choice, surfaceSlant).then((stimulusData) => {
   RENDERER.render(SCENE, CAMERA);
   document.body.appendChild(RENDERERCANVAS);
 });
-

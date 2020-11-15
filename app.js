@@ -26,7 +26,6 @@ if (cluster.isMaster) {
   const AWS = require('aws-sdk');
   const express = require('express');
   const bodyParser = require('body-parser');
-  const sizeof = require('object-sizeof');
 
   AWS.config.region = process.env.REGION;
 
@@ -64,7 +63,6 @@ if (cluster.isMaster) {
   });
 
   app.post('/submitexperiment', (req, res) => {
-    console.log(req.body);
     const item = {
       Id: { S: req.body.id },
       data: { S: req.body.data },
