@@ -106,7 +106,7 @@ function tutorial() {
     type: 'fullscreen',
     fullscreen_mode: true,
     on_load: () => {
-      pairedImagesPromise = generateImageData();
+      pairedImagesPromise = generateImageData(2);
     },
   });
 
@@ -115,7 +115,7 @@ function tutorial() {
     stimulus: '<div class="display_text">'
     + '<p>This TUTORIAL trial will be in fullscreen mode. After the tutorial, you will be able to proceed with the ACTUAL experiment.</p>'
     + ' Press any key on the keyboard to begin.'
-    + '<\div>',
+    + '</div>',
   });
 
   const ergonomicInstruction = {
@@ -205,7 +205,7 @@ function tutorial() {
     type: 'html-keyboard-response',
     stimulus: '<div class="display_text">'
     + '<p>Nice! You got it. Press any key on the keyboard to continue.'
-    + '<\div>',
+    + '</div>',
   });
 
   const instruction7 = {
@@ -225,7 +225,7 @@ function tutorial() {
     + "<p>'h' if you think the small red circle is on a HILL</p>"
     + "<p>Place your fingers on the 'v' and 'h' key.</p>"
     + '<p>Press the VALLEY button to proceed to a little test run.'
-    + '<\div>',
+    + '</div>',
     choices: ['v'],
     post_trial_gap: 500,
   });
@@ -286,8 +286,8 @@ function tutorial() {
   });
 }
 
-function generateImageData() {
-  const [surfaceDataList, testDataList] = getSurfaceDataList();
+function generateImageData(numSets = 1) {
+  const [surfaceDataList, testDataList] = getSurfaceDataList(numSets);
   const pairedImagesPromise = Promise.all(surfaceDataList).then((surfaceDataArray) => {
     // shuffle the s3Images
     function shuffle(array) {
@@ -329,7 +329,7 @@ function experiment(data) {
     + '<p>If you decide at any time to withdraw from the study before the data is submitted, you may do so without any negative consequences.</p>'
     + '<p>Simply close the experiment browser window. Your data will not be submitted until you reach the end of the experiment.</p>'
     + '<p>Once the data is submitted, it cannot be withdrawn.</p>'
-    + '<\div>',
+    + '</div>',
     choices: ['OK, I understand.'],
   };
   timeline.push(consent);
@@ -346,9 +346,9 @@ function experiment(data) {
     type: 'html-button-response',
     stimulus: '<div class="display_text">'
     + '<br>'
-    + '<p>In ordered to get payed, you must complete the experiment truthfully and to the best of your ability.</p>'
-    + '<p>We will be screening the data before approving payment.</p>'
-    + '<\div>',
+    + '<p>There will be 172 examples. If you do not answer within 3 seconds on an example, a random guess will be provided for you.</p>'
+    + '<p>The experiment will take less than 10 minutes in total, including a practice phase at the start.</p>'
+    + '</div>',
     choices: ['OK, I understand.'],
   };
   timeline.push(payme);
@@ -362,7 +362,7 @@ function experiment(data) {
     type: 'html-keyboard-response',
     stimulus: '<div class="display_text">'
     + 'This trial will be in fullscreen mode. Press any key on the keyboard to begin.'
-    + '<\div>',
+    + '</div>',
   });
 
   /* define welcome message trial */
@@ -370,7 +370,7 @@ function experiment(data) {
     type: 'html-keyboard-response',
     stimulus: '<div class="display_text">'
     + "<p>Welcome to the ACTUAL visual perception experiment.</p><p>Put your fingers on the 'v' and 'h' keys.</p><p>Press 'v' or 'h' to continue.</p>"
-    + '<\div>',
+    + '</div>',
   };
   timeline.push(welcome);
 
@@ -386,7 +386,7 @@ function experiment(data) {
         stimulus: `${'<div class="display_text">'
             + '<p>You have finished '}${setNum}/${numSetsImages} set of images! Stay on this page to take a break.`
             + '<p>Place your fingers on the \'v\' and \'h\' key. Press \'v\' or \'h\' to continue.</p>'
-            + '<\div>',
+            + '</div>',
         choices: ['h', 'v'],
         post_trial_gap: 500,
       };

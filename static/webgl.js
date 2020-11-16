@@ -366,22 +366,40 @@ function getVertices(heightmap) {
   return vertices;
 }
 
-function getSurfaceDataList() {
+function getSurfaceDataList(numSets = 1) {
   const choices = Object.entries(CHOICE);
   const materials = Object.entries(MATERIALS);
 
   const surfaceDataList = [];
   const testDataList = [];
   // for each surface slant
-  for (let surfaceIndex = 0; surfaceIndex < SURFACESLANTS.length; surfaceIndex += 1) {
-    // choice
-    for (let choiceIndex = 0; choiceIndex < choices.length; choiceIndex += 1) {
-      // material
-      for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
-        // directional light slants
-        for (let lightSlantIndex = 0;
-          lightSlantIndex < DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]].length;
-          lightSlantIndex += 1) {
+  for (let i = 0; i < numSets; i += 1) {
+    for (let surfaceIndex = 0; surfaceIndex < SURFACESLANTS.length; surfaceIndex += 1) {
+      // choice
+      for (let choiceIndex = 0; choiceIndex < choices.length; choiceIndex += 1) {
+        // material
+        for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
+          // directional light slants
+          for (let lightSlantIndex = 0;
+            lightSlantIndex < DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]].length;
+            lightSlantIndex += 1) {
+            // pretest and test image surface data
+            const seed = getRandomSeed();
+            const surfaceData = getSurfaceData(seed,
+              choices[choiceIndex][1], SURFACESLANTS[surfaceIndex]);
+            const testData = {
+              seed,
+              choice: choices[choiceIndex][1],
+              material: materials[materialIndex][1],
+              light: LIGHTS.DIRECTIONAL,
+              lightSlant: DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex],
+              surfaceSlant: SURFACESLANTS[surfaceIndex],
+            };
+            surfaceDataList.push(surfaceData);
+            testDataList.push(testData);
+          }
+
+          // matlab light
           // pretest and test image surface data
           const seed = getRandomSeed();
           const surfaceData = getSurfaceData(seed,
@@ -390,15 +408,13 @@ function getSurfaceDataList() {
             seed,
             choice: choices[choiceIndex][1],
             material: materials[materialIndex][1],
-            light: LIGHTS.DIRECTIONAL,
-            lightSlant: DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex],
+            light: LIGHTS.MATLAB,
             surfaceSlant: SURFACESLANTS[surfaceIndex],
           };
           surfaceDataList.push(surfaceData);
           testDataList.push(testData);
         }
-
-        // matlab light
+        // mathematica light
         // pretest and test image surface data
         const seed = getRandomSeed();
         const surfaceData = getSurfaceData(seed,
@@ -406,27 +422,13 @@ function getSurfaceDataList() {
         const testData = {
           seed,
           choice: choices[choiceIndex][1],
-          material: materials[materialIndex][1],
-          light: LIGHTS.MATLAB,
+          material: MATERIALS.MATTE,
+          light: LIGHTS.MATHEMATICA,
           surfaceSlant: SURFACESLANTS[surfaceIndex],
         };
         surfaceDataList.push(surfaceData);
         testDataList.push(testData);
       }
-      // mathematica light
-      // pretest and test image surface data
-      const seed = getRandomSeed();
-      const surfaceData = getSurfaceData(seed,
-        choices[choiceIndex][1], SURFACESLANTS[surfaceIndex]);
-      const testData = {
-        seed,
-        choice: choices[choiceIndex][1],
-        material: MATERIALS.MATTE,
-        light: LIGHTS.MATHEMATICA,
-        surfaceSlant: SURFACESLANTS[surfaceIndex],
-      };
-      surfaceDataList.push(surfaceData);
-      testDataList.push(testData);
     }
   }
   return [surfaceDataList, testDataList];
