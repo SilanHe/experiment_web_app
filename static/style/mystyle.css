@@ -24,14 +24,22 @@ canvas { display: block; }
 
 .display_text {
 	height: 300px;
-    width: 600px;
-    background: black;
+  width: 600px;
+  background: black;
 
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    margin-top: -150px;
-    margin-left: -300px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  margin-top: -150px;
+  margin-left: -300px;
+}
+
+.display_text2 {
+  margin-top: auto;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: auto;
+  width: 50%;
 }
 
 .center {

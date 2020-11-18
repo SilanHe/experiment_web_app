@@ -1,34 +1,43 @@
 const SPLICE_SIZE = 50;
-var pairedImagesPromise;
+let pairedImagesPromise;
 
-function createH3(text) {
+const CONSENTFORM = '<p>This MTurk experiment is part of a research project at McGill University in Montreal, Canada. The research examines how well people can judge the shape of surfaces that are rendered with computer graphics. The researchers are Silan He and Prof. Michael Langer in the School of Computer Science. The study is funded by the Natural Science and Engineering Research Council of Canada (NSERC).</p><p>The experiment will take less than 10 minutes, including a practice phase at the start. You will be shown a sequence of 172 rendered images and you will have to make a quick judgment about the surface shown in each image, by pressing one of two keys on your keyboard. If you do not answer within 2 seconds, we will provide a random guess answer for you and move on to the next image.</p><p>You will be paid 1 USD for this work. To receive this payment, you must answer correctly on at least 55% of the examples (score 95 or better out of 172). We also require that your answers and the correct MTurk ID are successfully posted at the end of the experiment.</p><p>Since MTurk terms of use do not allow us to collect your name, your responses are anonymous.</p><p>By submitting your responses to this task, you are consenting to be in this research study.</p><p>If you have questions, you may contact Prof. Langer by email at langer@cim.mcgill.ca. If you have any ethical concerns and wish to speak with someone not on the research team, please contact the McGill Ethics Manager at lynda.mcneil@mcgill.ca.</p>';
+
+function createDisplayText() {
+  const d = document.createElement('div');
+  d.className = 'display_text';
+  document.body.appendChild(d);
+  return d;
+}
+
+function createH3(element = document.body, text) {
   const h = document.createElement('h3');
   const t = document.createTextNode(text);
   h.appendChild(t);
-  document.body.appendChild(h);
+  element.appendChild(h);
 }
 
-function createH1(text) {
+function createH1(element = document.body, text) {
   const h = document.createElement('h1');
   const t = document.createTextNode(text);
   h.appendChild(t);
-  document.body.appendChild(h);
+  element.appendChild(h);
 }
 
-function createButton(text, trigger_function) {
+function createButton(element = document.body, text, trigger_function) {
   const b = document.createElement('BUTTON');
   const t = document.createTextNode(text);
   b.appendChild(t);
   b.onclick = function () { trigger_function(); };
-  document.body.appendChild(b);
+  element.appendChild(b);
 }
 
-function createLoadingWheel() {
+function createLoadingWheel(element = document.body) {
   const spinner = document.createElement('div');
   spinner.className = 'loader';
   const t = document.createTextNode('Loading...');
   spinner.appendChild(t);
-  document.body.appendChild(spinner);
+  element.appendChild(spinner);
 }
 
 function clearDocumentBody() {
@@ -51,7 +60,7 @@ function EnableDisable(id) {
   }
 }
 
-const pre_test = {
+const preTest = {
   type: 'my-canvas-keyboard-response',
   stimulus_name: jsPsych.timelineVariable('stimulus1_name'),
   stimulus: jsPsych.timelineVariable('stimulus'),
@@ -72,19 +81,19 @@ const test = {
 };
 
 function tutorial() {
-  const static_path = 'static/images/tutorial/';
-  const ergonomicsImage = `${static_path}ergonomics.jpg`;
+  const staticPath = 'static/images/tutorial/';
+  const ergonomicsImage = `${staticPath}ergonomics.jpg`;
   const trialImages = [
-    `${static_path}DirectionalLightTest_Seed6012Hill_Matte_45_100_1.jpg`,
-    `${static_path}DirectionalLightTest_Seed6012Hill_Matte_45_100_2.jpg`,
-    `${static_path}DirectionalLightTest_Seed6065Valley_Glossy_30_60_1.jpg`,
-    `${static_path}DirectionalLightTest_Seed6065Valley_Glossy_30_60_2.jpg`,
-    `${static_path}DirectionalLightTest_Seed2201Hill_Matte_30_20_1.jpg`,
-    `${static_path}DirectionalLightTest_Seed2201Hill_Matte_30_20_2.jpg`,
-    `${static_path}DirectionalLightTest_Seed2241Valley_Glossy_60_120_1.jpg`,
-    `${static_path}DirectionalLightTest_Seed2241Valley_Glossy_60_120_2.jpg`,
-    `${static_path}MathematicaTest_Seed2251Valley_Matte_45_1.jpg`,
-    `${static_path}MathematicaTest_Seed2251Valley_Matte_45_2.jpg`,
+    `${staticPath}DirectionalLightTest_Seed6012Hill_Matte_45_100_1.jpg`,
+    `${staticPath}DirectionalLightTest_Seed6012Hill_Matte_45_100_2.jpg`,
+    `${staticPath}DirectionalLightTest_Seed6065Valley_Glossy_30_60_1.jpg`,
+    `${staticPath}DirectionalLightTest_Seed6065Valley_Glossy_30_60_2.jpg`,
+    `${staticPath}DirectionalLightTest_Seed2201Hill_Matte_30_20_1.jpg`,
+    `${staticPath}DirectionalLightTest_Seed2201Hill_Matte_30_20_2.jpg`,
+    `${staticPath}DirectionalLightTest_Seed2241Valley_Glossy_60_120_1.jpg`,
+    `${staticPath}DirectionalLightTest_Seed2241Valley_Glossy_60_120_2.jpg`,
+    `${staticPath}MathematicaTest_Seed2251Valley_Matte_45_1.jpg`,
+    `${staticPath}MathematicaTest_Seed2251Valley_Matte_45_2.jpg`,
     ergonomicsImage,
   ];
 
@@ -230,7 +239,7 @@ function tutorial() {
     post_trial_gap: 500,
   });
 
-  const tutorial_pre_test = {
+  const tutorialPreTest = {
     type: 'image-keyboard-response',
     stimulus_name: jsPsych.timelineVariable('stimulus1_name'),
     stimulus: jsPsych.timelineVariable('stimulus1'),
@@ -239,7 +248,7 @@ function tutorial() {
     trial_duration: 350,
   };
 
-  const tutorial_test = {
+  const tutorialTest = {
     type: 'image-keyboard-response',
     stimulus_name: jsPsych.timelineVariable('stimulus2_name'),
     stimulus: jsPsych.timelineVariable('stimulus2'),
@@ -248,11 +257,11 @@ function tutorial() {
     trial_duration: 3150,
   };
 
-  const trial_procedure = {
-    timeline: [tutorial_pre_test, tutorial_test],
+  const trialProcedure = {
+    timeline: [tutorialPreTest, tutorialTest],
     timeline_variables: pairedImages,
   };
-  timeline.push(trial_procedure);
+  timeline.push(trialProcedure);
 
   const lastinstruction = {
     type: 'html-keyboard-response',
@@ -275,20 +284,21 @@ function tutorial() {
     preload_images: trialImages,
     on_finish() {
       // retry tutorial button
-      createH3('You have finished the TUTORIAL!');
-      createH3('Press the RETRY button below if you wish to view the tutorial again.');
-      createButton('RETRY', tutorial);
+      const displayText = createDisplayText();
+      createH3(displayText, 'You have finished the TUTORIAL!');
+      createH3(displayText, 'Press the RETRY button below if you wish to view the tutorial again.');
+      createButton(displayText, 'RETRY', tutorial);
 
       // start real experiment button
-      createH3('Press the PROCEED button below if you have understood the instructions and wish to proceed with the actual experiment.');
-      createButton('PROCEED', loadingScreen);
+      createH3(displayText, 'Press the PROCEED button below if you have understood the instructions and wish to proceed with the actual experiment.');
+      createButton(displayText, 'PROCEED', loadingScreen);
     },
   });
 }
 
 function generateImageData(numSets = 1) {
   const [surfaceDataList, testDataList] = getSurfaceDataList(numSets);
-  const pairedImagesPromise = Promise.all(surfaceDataList).then((surfaceDataArray) => {
+  const promise = Promise.all(surfaceDataList).then((surfaceDataArray) => {
     // shuffle the s3Images
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i -= 1) {
@@ -312,24 +322,16 @@ function generateImageData(numSets = 1) {
     shuffle(pairedImages);
     return pairedImages;
   });
-  return pairedImagesPromise;
+  return promise;
 }
 
 function experiment(data) {
-  const test_stimuli = data;
-
   /* create timeline */
   const timeline = [];
 
   const consent = {
-    type: 'html-button-response',
-    stimulus: '<div class="display_text">'
-    + '<p>By submitting your responses to this task, you are consenting to be in this research study as described before.</p>'
-    + '<br>'
-    + '<p>If you decide at any time to withdraw from the study before the data is submitted, you may do so without any negative consequences.</p>'
-    + '<p>Simply close the experiment browser window. Your data will not be submitted until you reach the end of the experiment.</p>'
-    + '<p>Once the data is submitted, it cannot be withdrawn.</p>'
-    + '</div>',
+    type: 'my-html-button-response',
+    stimulus: CONSENTFORM,
     choices: ['OK, I understand.'],
   };
   timeline.push(consent);
@@ -341,17 +343,6 @@ function experiment(data) {
     html: '<p> My MTurk ID is <input name="id" type="text" onkeyup="EnableDisable(this)"/>.</p>',
   };
   timeline.push(identification);
-
-  const payme = {
-    type: 'html-button-response',
-    stimulus: '<div class="display_text">'
-    + '<br>'
-    + '<p>There will be 172 examples. If you do not answer within 3 seconds on an example, a random guess will be provided for you.</p>'
-    + '<p>The experiment will take less than 10 minutes in total, including a practice phase at the start.</p>'
-    + '</div>',
-    choices: ['OK, I understand.'],
-  };
-  timeline.push(payme);
 
   timeline.push({
     type: 'fullscreen',
@@ -376,9 +367,9 @@ function experiment(data) {
 
   let pushPauseMessage = false;
 
-  const numSetsImages = Math.ceil(test_stimuli.length / SPLICE_SIZE);
+  const numSetsImages = Math.ceil(data.length / SPLICE_SIZE);
   let setNum = 0;
-  while (test_stimuli.length > 0) {
+  while (data.length > 0) {
     if (pushPauseMessage) {
       // add pause message only if not first set of images
       const breakInstructions = {
@@ -395,14 +386,14 @@ function experiment(data) {
       pushPauseMessage = true;
     }
 
-    const spliced_stimuli = test_stimuli.splice(0, SPLICE_SIZE);
+    const splicedStimuli = data.splice(0, SPLICE_SIZE);
 
-    const test_procedure = {
-      timeline: [pre_test, test],
-      timeline_variables: spliced_stimuli,
+    const testProcedure = {
+      timeline: [preTest, test],
+      timeline_variables: splicedStimuli,
     };
-    timeline.push(test_procedure);
-    setNum++;
+    timeline.push(testProcedure);
+    setNum += 1;
   }
 
   // exit fullscreen mode
@@ -414,16 +405,19 @@ function experiment(data) {
   /* start the experiment */
   jsPsych.init({
     timeline,
+    min_width: 1920,
+    min_height: 1200,
     on_finish() {
-      const all_data = JSON.parse(jsPsych.data.get().json());
-      const interaction_data = JSON.parse(jsPsych.data.getInteractionData().json());
+      const allData = JSON.parse(jsPsych.data.get().json());
+      const interactionData = JSON.parse(jsPsych.data.getInteractionData().json());
 
       // publish data to dynamodb
-      const experimentData = new Object();
-      experimentData.id = JSON.parse(all_data[1].responses).id; // id page is the second of the experiment now
-      experimentData.data = new Object();
-      experimentData.data.all_data = all_data;
-      experimentData.data.interaction_data = interaction_data;
+      const experimentData = {};
+      // id page is the second of the experiment now
+      experimentData.id = JSON.parse(allData[1].responses).id;
+      experimentData.data = {};
+      experimentData.data.all_data = allData;
+      experimentData.data.interaction_data = interactionData;
       experimentData.data = JSON.stringify(experimentData.data);
 
       function createH1(text) {
@@ -447,11 +441,9 @@ function experiment(data) {
 
 function loadingScreen() {
   clearDocumentBody();
-  createH1('Loading the experiment. This may take a few minutes... Thank you for your patience.');
-  createLoadingWheel();
-  createH3('Hello and thank you for taking the time to participate in this experiment!');
-  createH3('The data collected will be used to help complete my Masters thesis in Computer Science.');
-  createH3('You must complete this next section in order to get paid.');
+  createH1(document.body, 'Loading the experiment. This may take a few minutes... Thank you for your patience.');
+  createLoadingWheel(document.body);
+  createH3(document.body, 'Thank you for taking the time to participate in this experiment!');
 
   pairedImagesPromise.then((data) => {
     experiment(data);
