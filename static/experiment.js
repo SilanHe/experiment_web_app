@@ -1,4 +1,6 @@
 const SPLICE_SIZE = 50;
+const HILL_BUTTON = 72
+const VALLEY_BUTTON = 86
 let pairedImagesPromise;
 
 const CONSENTFORM = '<p>This MTurk experiment is part of a research project at McGill University in Montreal, Canada. The research examines how well people can judge the shape of surfaces that are rendered with computer graphics. The researchers are Silan He and Prof. Michael Langer in the School of Computer Science. The study is funded by the Natural Science and Engineering Research Council of Canada (NSERC).</p><p>The experiment will take less than 10 minutes, including a practice phase at the start. You will be shown a sequence of 172 rendered images and you will have to make a quick judgment about the surface shown in each image, by pressing one of two keys on your keyboard. If you do not answer within 2 seconds, we will provide a random guess answer for you and move on to the next image.</p><p>You will be paid 1 USD for this work. To receive this payment, you must answer correctly on at least 55% of the examples (score 95 or better out of 172). We also require that your answers and the correct MTurk ID are successfully posted at the end of the experiment.</p><p>Since MTurk terms of use do not allow us to collect your name, your responses are anonymous.</p><p>By submitting your responses to this task, you are consenting to be in this research study.</p><p>If you have questions, you may contact Prof. Langer by email at langer@cim.mcgill.ca. If you have any ethical concerns and wish to speak with someone not on the research team, please contact the McGill Ethics Manager at lynda.mcneil@mcgill.ca.</p>';
@@ -58,6 +60,28 @@ function EnableDisable(id) {
     // Disable the TextBox when TextBox is empty.
     btnSubmit.disabled = true;
   }
+}
+
+function getScore(data) {
+  let total = 0;
+  let correct = 0;
+  for (let i = 0; i < data.length; i += 1) {
+    if (data[i].trial_type === 'my-canvas-keyboard-response') {
+      const filenameList = data[i].filename.split('_');
+
+      if (filenameList[filenameList.length - 1] === '2') {
+        if (filenameList[2] === 'Hill'
+        && data[i].key_press === HILL_BUTTON) {
+          correct += 1;
+        } else if (filenameList[2] === 'Valley'
+        && data[i].key_press === VALLEY_BUTTON) {
+          correct += 1;
+        }
+        total += 1;
+      }
+    }
+  }
+  return (correct / total) * 100;
 }
 
 const preTest = {
@@ -282,6 +306,8 @@ function tutorial() {
     timeline,
     show_preload_progress_bar: false,
     preload_images: trialImages,
+    min_width: 1920,
+    min_height: 1200,
     on_finish() {
       // retry tutorial button
       const displayText = createDisplayText();
@@ -332,7 +358,7 @@ function experiment(data) {
   const consent = {
     type: 'my-html-button-response',
     stimulus: CONSENTFORM,
-    choices: ['OK, I understand.'],
+    choices: ['OK, I consent.'],
   };
   timeline.push(consent);
 
@@ -408,6 +434,10 @@ function experiment(data) {
     min_width: 1920,
     min_height: 1200,
     on_finish() {
+      createLoadingWheel(document.body);
+      createH1(document.body, 'Please do not close browser window yet, wait for submission confirmation message.');
+      createH1(document.body, 'This may take a few minutes.');
+
       const allData = JSON.parse(jsPsych.data.get().json());
       const interactionData = JSON.parse(jsPsych.data.getInteractionData().json());
 
@@ -420,19 +450,16 @@ function experiment(data) {
       experimentData.data.interaction_data = interactionData;
       experimentData.data = JSON.stringify(experimentData.data);
 
-      function createH1(text) {
-        const h = document.createElement('h1');
-        const t = document.createTextNode(text);
-        h.appendChild(t);
-        document.body.appendChild(h);
-      }
-
       $.post('/submitexperiment', experimentData).then(
         (data2) => {
-          createH1('Success! Your experiment data has been successfully submitted. Feel free to close this browser.');
+          clearDocumentBody();
+          createH1(document.body, 'Success! Your experiment data has been successfully submitted.');
+          // calculate score
+          const score = Math.round(getScore(allData));
+          createH3(document.body, `You scored ${score} %! You may now close this browser window.`);
         },
         (error2) => {
-          createH1("Well this is embarrassing. It looks like we're having trouble submitting your experiment data.");
+          createH1(document.body, "Well this is embarrassing. It looks like we're having trouble submitting your experiment data.");
         },
       );
     },

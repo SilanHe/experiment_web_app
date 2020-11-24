@@ -5,12 +5,12 @@ function clearDocumentBody() {
 }
 
 // change positions
-const seed = 11;
-const surfaceSlant = 30;
+const seed = 11435;
+const surfaceSlant = 60;
 const choice = CHOICE.HILL;
 const light = LIGHTS.DIRECTIONALLIGHTS;
-const lightSlant = 60;
-const material = MATERIALS.GLOSSY;
+const lightSlant = 90;
+const material = MATERIALS.MATTE;
 const is_pretest = false;
 
 getSurfaceData(seed, choice, surfaceSlant).then((stimulusData) => {

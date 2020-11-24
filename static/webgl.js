@@ -95,12 +95,19 @@ const DARKGRAY = (() => {
   return color;
 })();
 
+const BLACK = (() => {
+  const color = new THREE.Color(0x000000);
+  color.convertSRGBToLinear();
+  return color;
+})();
+
 // MATERIALS
 
 const MATTEMATERIAL = new THREE.MeshPhongMaterial(
   {
     side: THREE.FrontSide,
     color: WHITE,
+    specular: BLACK,
     shininess: 0,
   },
 );
