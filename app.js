@@ -54,10 +54,8 @@ if (cluster.isMaster) {
   });
 
   app.get('/getsurface', (req, res) => {
-    const verticesPoints = webgl.hillsAndValleys(webgl.AMPLITUDES[req.query.surfaceSlant],
-      req.query.seed);
-    const extremaIndex = webgl.getLocalExtremaInCenter(verticesPoints,
-      webgl.UMBRELLATHRESHHOLD[req.query.surfaceSlant], req.query.choice);
+    const verticesPoints = webgl.hillsAndValleys(req.query.seed);
+    const extremaIndex = webgl.getLocalExtremaInCenter(verticesPoints, req.query.choice);
     const heightMap = webgl.hillsAndValleysZ(verticesPoints);
     res.json({ heightMap, extremaIndex });
   });

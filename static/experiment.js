@@ -1,6 +1,6 @@
 const SPLICE_SIZE = 50;
-const HILL_BUTTON = 72
-const VALLEY_BUTTON = 86
+const HILL_BUTTON = 72;
+const VALLEY_BUTTON = 86;
 let pairedImagesPromise;
 
 const CONSENTFORM = '<p>This MTurk experiment is part of a research project at McGill University in Montreal, Canada. The research examines how well people can judge the shape of surfaces that are rendered with computer graphics. The researchers are Silan He and Prof. Michael Langer in the School of Computer Science. The study is funded by the Natural Science and Engineering Research Council of Canada (NSERC).</p><p>The experiment will take less than 10 minutes, including a practice phase at the start. You will be shown a sequence of 172 rendered images and you will have to make a quick judgment about the surface shown in each image, by pressing one of two keys on your keyboard. If you do not answer within 2 seconds, we will provide a random guess answer for you and move on to the next image.</p><p>You will be paid 1 USD for this work. To receive this payment, you must answer correctly on at least 55% of the examples (score 95 or better out of 172). We also require that your answers and the correct MTurk ID are successfully posted at the end of the experiment.</p><p>Since MTurk terms of use do not allow us to collect your name, your responses are anonymous.</p><p>By submitting your responses to this task, you are consenting to be in this research study.</p><p>If you have questions, you may contact Prof. Langer by email at langer@cim.mcgill.ca. If you have any ethical concerns and wish to speak with someone not on the research team, please contact the McGill Ethics Manager at lynda.mcneil@mcgill.ca.</p>';
@@ -456,7 +456,7 @@ function experiment(data) {
           createH1(document.body, 'Success! Your experiment data has been successfully submitted.');
           // calculate score
           const score = Math.round(getScore(allData));
-          createH3(document.body, `You scored ${score} %! You may now close this browser window.`);
+          createH3(document.body, `You scored ${score}%! You may now close this browser window.`);
         },
         (error2) => {
           createH1(document.body, "Well this is embarrassing. It looks like we're having trouble submitting your experiment data.");

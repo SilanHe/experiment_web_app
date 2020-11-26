@@ -7,17 +7,8 @@ const CHOICE = {
   HILL: 'Hill',
   VALLEY: 'Valley',
 };
-const AMPLITUDES = {
-  30: 0.45,
-  45: 0.35,
-  60: 0.18,
-};
 
-const UMBRELLATHRESHHOLD = {
-  30: 3,
-  45: 2.5,
-  60: 1.1,
-};
+const UMBRELLATHRESHHOLD = 4;
 
 const NUM_POINTS = 350;
 const ARRAY_LENGTH = NUM_POINTS * NUM_POINTS * 3;
@@ -29,7 +20,7 @@ const SimplexNoise = require('simplex-noise');
 /**
  * generate hills and valleys depending on seed
  */
-function hillsAndValleys(amplitude = 1, seed = 1) {
+function hillsAndValleys(seed = 1) {
   const simplex = new SimplexNoise(seed);
 
   const min = -9.4;
@@ -46,7 +37,7 @@ function hillsAndValleys(amplitude = 1, seed = 1) {
       const y = min + increment * j;
 
       // get height map / z
-      const z = amplitude * simplex.noise2D(x / 2.3, y / 2.3);
+      const z = simplex.noise2D(x / 2.3, y / 2.3);
       vertices.push(x, y, z);
     }
   }
@@ -73,7 +64,7 @@ function hillsAndValleysZ(vertices) {
  * Get both the hill and valley point in the center
  * @param {Array of Number} vertices
  */
-function getLocalExtremaInCenter(vertices, umbrellaCurvatureThreshhold, extremaChoice) {
+function getLocalExtremaInCenter(vertices, extremaChoice, umbrellaCurvatureThreshhold = UMBRELLATHRESHHOLD) {
   const centerWidth = 200;
   const startRow = Math.abs(Math.floor(NUM_POINTS / 2 - centerWidth / 2));
   const endRow = startRow + centerWidth;
@@ -169,6 +160,4 @@ module.exports = {
   hillsAndValleys,
   getLocalExtremaInCenter,
   hillsAndValleysZ,
-  AMPLITUDES,
-  UMBRELLATHRESHHOLD,
 };

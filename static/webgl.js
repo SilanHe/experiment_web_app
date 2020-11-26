@@ -1,6 +1,40 @@
 // CONSTANTS
 // -----------------------------------------------------------------------------
 
+const AMPLITUDES = {
+  30: {
+    20: 0.51,
+    30: 0.53,
+    40: 0.51,
+    50: 0.49,
+    60: 0.47,
+    70: 0.45,
+  },
+  45: {
+    30: 0.41,
+    45: 0.43,
+    60: 0.41,
+    75: 0.39,
+    90: 0.37,
+    100: 0.35,
+  },
+  60: {
+    90: 0.26,
+    100: 0.24,
+    110: 0.22,
+    120: 0.20,
+    130: 0.18,
+  },
+};
+
+const OTHER_AMPLITUDES = {
+  30: 0.45,
+  45: 0.35,
+  60: 0.19,
+};
+
+const GAMMA = 2.2;
+
 const NUM_POINTS = 350;
 const RANGEMAX = 9.4;
 const RANGEMIN = -9.4;
@@ -275,7 +309,7 @@ const RENDERER = (() => {
     powerPreference: 'high-performance',
   });
   renderer.outputEncoding = THREE.sRGBEncoding;
-  renderer.gammaFactor = 2.2;
+  renderer.gammaFactor = GAMMA;
   renderer.physicallyCorrectLights = false;
   renderer.setSize(window.innerWidth, window.innerHeight);
   return renderer;
@@ -343,19 +377,19 @@ function getRandomSeed() {
   return Math.floor(Math.random() * 10000);
 }
 
-function getSurfaceData(seed, choice, surfaceSlant) {
+function getSurfaceData(seed, choice, surfaceSlant, amplitude) {
   const surfaceDetails = {
     seed,
     choice,
     surfaceSlant,
   };
   return $.get('/getsurface', surfaceDetails).then((data) => {
-    data.vertices = getVertices(data.heightMap);
+    data.vertices = getVertices(data.heightMap, amplitude);
     return data;
   });
 }
 
-function getVertices(heightmap) {
+function getVertices(heightmap, amplitude) {
   const vertices = [];
   let counter = 0;
   for (let i = 0; i < NUM_POINTS; i += 1) {
@@ -366,7 +400,7 @@ function getVertices(heightmap) {
       const y = RANGEMIN + INCREMENT * j;
 
       // get height map / z
-      vertices.push(x, y, heightmap[counter]);
+      vertices.push(x, y, amplitude * heightmap[counter]);
       counter += 1;
     }
   }
@@ -392,8 +426,6 @@ function getSurfaceDataList(numSets = 1) {
             lightSlantIndex += 1) {
             // pretest and test image surface data
             const seed = getRandomSeed();
-            const surfaceData = getSurfaceData(seed,
-              choices[choiceIndex][1], SURFACESLANTS[surfaceIndex]);
             const testData = {
               seed,
               choice: choices[choiceIndex][1],
@@ -402,6 +434,9 @@ function getSurfaceDataList(numSets = 1) {
               lightSlant: DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex],
               surfaceSlant: SURFACESLANTS[surfaceIndex],
             };
+            const surfaceData = getSurfaceData(seed,
+              testData.choice, testData.surfaceSlant,
+              AMPLITUDES[testData.surfaceSlant][testData.lightSlant]);
             surfaceDataList.push(surfaceData);
             testDataList.push(testData);
           }
@@ -409,8 +444,6 @@ function getSurfaceDataList(numSets = 1) {
           // matlab light
           // pretest and test image surface data
           const seed = getRandomSeed();
-          const surfaceData = getSurfaceData(seed,
-            choices[choiceIndex][1], SURFACESLANTS[surfaceIndex]);
           const testData = {
             seed,
             choice: choices[choiceIndex][1],
@@ -418,14 +451,15 @@ function getSurfaceDataList(numSets = 1) {
             light: LIGHTS.MATLAB,
             surfaceSlant: SURFACESLANTS[surfaceIndex],
           };
+          const surfaceData = getSurfaceData(seed,
+            testData.choice, testData.surfaceSlant,
+            OTHER_AMPLITUDES[testData.surfaceSlant]);
           surfaceDataList.push(surfaceData);
           testDataList.push(testData);
         }
         // mathematica light
         // pretest and test image surface data
         const seed = getRandomSeed();
-        const surfaceData = getSurfaceData(seed,
-          choices[choiceIndex][1], SURFACESLANTS[surfaceIndex]);
         const testData = {
           seed,
           choice: choices[choiceIndex][1],
@@ -433,6 +467,9 @@ function getSurfaceDataList(numSets = 1) {
           light: LIGHTS.MATHEMATICA,
           surfaceSlant: SURFACESLANTS[surfaceIndex],
         };
+        const surfaceData = getSurfaceData(seed,
+          testData.choice, testData.surfaceSlant,
+          OTHER_AMPLITUDES[testData.surfaceSlant]);
         surfaceDataList.push(surfaceData);
         testDataList.push(testData);
       }
