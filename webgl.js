@@ -8,7 +8,7 @@ const CHOICE = {
   VALLEY: 'Valley',
 };
 
-const UMBRELLATHRESHHOLD = 4;
+const UMBRELLATHRESHHOLD = 3.5;
 
 const NUM_POINTS = 350;
 const ARRAY_LENGTH = NUM_POINTS * NUM_POINTS * 3;

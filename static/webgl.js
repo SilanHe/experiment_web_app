@@ -3,26 +3,26 @@
 
 const AMPLITUDES = {
   30: {
-    20: 0.51,
-    30: 0.53,
-    40: 0.51,
-    50: 0.49,
-    60: 0.47,
+    20: 0.50,
+    30: 0.49,
+    40: 0.48,
+    50: 0.47,
+    60: 0.46,
     70: 0.45,
   },
   45: {
-    30: 0.41,
-    45: 0.43,
-    60: 0.41,
-    75: 0.39,
-    90: 0.37,
+    30: 0.40,
+    45: 0.39,
+    60: 0.38,
+    75: 0.37,
+    90: 0.36,
     100: 0.35,
   },
   60: {
-    90: 0.26,
-    100: 0.24,
-    110: 0.22,
-    120: 0.20,
+    90: 0.22,
+    100: 0.21,
+    110: 0.20,
+    120: 0.19,
     130: 0.18,
   },
 };
@@ -377,11 +377,10 @@ function getRandomSeed() {
   return Math.floor(Math.random() * 10000);
 }
 
-function getSurfaceData(seed, choice, surfaceSlant, amplitude) {
+function getSurfaceData(seed, choice, amplitude) {
   const surfaceDetails = {
     seed,
     choice,
-    surfaceSlant,
   };
   return $.get('/getsurface', surfaceDetails).then((data) => {
     data.vertices = getVertices(data.heightMap, amplitude);

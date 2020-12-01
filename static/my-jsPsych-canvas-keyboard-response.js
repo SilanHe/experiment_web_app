@@ -132,7 +132,7 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
     // function to rotate stuff back to their original positions
     const resetObjects = function () {
       disk.visible = false;
-      if (trial.stimulus.is_pretest !== false) {
+      if (trial.stimulus.is_pretest) {
         // reset mesh rotation
         resetObject(MESH);
         resetObject(DISK);
