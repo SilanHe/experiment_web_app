@@ -152,7 +152,7 @@ function renderSurface2(heightMap, seed, surfaceSlant, choice, light, lightSlant
   }
 
   RENDERER.render(SCENE, CAMERA);
-  const rmsContrast = GetCenterContrast(460, 1250, 300, 700);
+  const rmsContrast = GetCenterContrast(500, 1400, 300, 700);
 
   // reset our renderering to prep for next one
   resetObject(MESH);
@@ -245,9 +245,9 @@ function findAmplitudes() {
   };
 
   const TARGET_RMS = {
-    30: 0.16,
-    45: 0.15,
-    60: 0.25,
+    30: 0.20,
+    45: 0.25,
+    60: 0.255,
   };
 
   const error = 0.0001;
@@ -259,9 +259,6 @@ function findAmplitudes() {
   return surface.then((surfaceInfo) => {
     function searchAmplitude(surfaceData, numCalls, targetRMS, l, r) {
       // additional exit condition
-      if (numCalls === 0) {
-        return (l + r / 2);
-      }
       const mid1 = l + (r - l) / 3;
       const mid2 = r - (r - l) / 3;
 
@@ -272,6 +269,17 @@ function findAmplitudes() {
         surfaceData.choice, surfaceData.light, surfaceData.lightSlant,
         surfaceData.material, mid2, surfaceData.isPretest);
       const rms = [rms1, rms2];
+
+      if (numCalls === 0) {
+        console.log(`surfaceSlant: ${surfaceData.surfaceSlant}, 
+        lightSlant: ${surfaceData.lightSlant}, 
+        mid1: ${mid1}
+        mid2: ${mid2}
+        rms1: ${rms1}
+        rms2: ${rms2}
+        numCalls ${numCalls}`);
+        return ((l + r) / 2);
+      }
 
       return Promise.all(rms).then((data) => {
         const difference1 = Math.abs(data[0] - targetRMS);
@@ -299,6 +307,7 @@ function findAmplitudes() {
         return searchAmplitude(surfaceData, numCalls - 1, targetRMS, newL, newR);
       });
     }
+    const amplitudes = [];
     for (let surfaceSlant = 30; surfaceSlant <= 60; surfaceSlant += 15) {
       const lightSlants = DIRECTIONALLIGHTSLANTS[surfaceSlant];
       for (let i = 0; i < lightSlants.length; i += 1) {
@@ -312,9 +321,11 @@ function findAmplitudes() {
           material,
           isPretest,
         };
-        console.log(surfaceData);
-        MY_AMPLITUDES[surfaceSlant][lightSlant] = searchAmplitude(surfaceData,
-          10000, TARGET_RMS[surfaceSlant], 0.1, 0.6);
+
+        const amplitude = searchAmplitude(surfaceData,
+          40, TARGET_RMS[surfaceSlant], 0.1, 0.6).then((data) => {
+          console.log(`surfaceSlant: ${surfaceSlant}, lightSlant: ${lightSlant}, amplitude: ${data}`)
+        });
       }
     }
     return MY_AMPLITUDES;
@@ -322,12 +333,3 @@ function findAmplitudes() {
 }
 
 const amplitudes = findAmplitudes();
-
-function logAmplitudes(amplitudes) {
-  Promise.all(amplitudes).then((data) => {
-    console.log(data);
-    logAmplitudes(data);
-  });
-}
-
-logAmplitudes(amplitudes);
