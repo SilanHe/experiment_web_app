@@ -3,27 +3,53 @@
 
 const AMPLITUDES = {
   30: {
-    20: 0.50,
-    30: 0.49,
-    40: 0.48,
-    50: 0.47,
-    60: 0.46,
-    70: 0.45,
+    20: 0.6329162785709044,
+    30: 0.6413956394030571,
+    40: 0.4959053968361492,
+    50: 0.36470454648566614,
+    60: 0.26611422180100547,
+    70: 0.2106880210457842,
   },
   45: {
-    30: 0.40,
-    45: 0.39,
-    60: 0.38,
-    75: 0.37,
-    90: 0.36,
-    100: 0.35,
+    30: 0.6913082740649584,
+    45: 0.6178336635675455,
+    60: 0.40814966185229296,
+    75: 0.2637512766651843,
+    90: 0.18713049618808367,
+    100: 0.1583433242220703,
   },
   60: {
-    90: 0.22,
-    100: 0.21,
-    110: 0.20,
-    120: 0.19,
-    130: 0.18,
+    90: 0.2746515856573605,
+    100: 0.2385729909602174,
+    110: 0.21135206883702015,
+    120: 0.1939659882572705,
+    130: 0.1889887431844112,
+  },
+};
+
+const AMPLITUDES_GLOSSY = {
+  30: {
+    20: 0.4566191919705103,
+    30: 0.36326881064878314,
+    40: 0.3397070229809142,
+    50: 0.4693682160598233,
+    60: 0.3990193345070058,
+    70: 0.3524622074457924,
+  },
+  45: {
+    30: 0.5438654823484095,
+    45: 0.3274679851394277,
+    60: 0.6066458983184034,
+    75: 0.27542515537943063,
+    90: 0.1384709330125284,
+    100: 0.10005728884745005,
+  },
+  60: {
+    90: 0.6070744489994983,
+    100: 0.6040306546690818,
+    110: 0.4647373087206856,
+    120: 0.3626279822920849,
+    130: 0.3769341281534545,
   },
 };
 
@@ -434,8 +460,7 @@ function getSurfaceDataList(numSets = 1) {
               surfaceSlant: SURFACESLANTS[surfaceIndex],
             };
             const surfaceData = getSurfaceData(seed,
-              testData.choice, testData.surfaceSlant,
-              AMPLITUDES[testData.surfaceSlant][testData.lightSlant]);
+              testData.choice, AMPLITUDES[testData.surfaceSlant][testData.lightSlant]);
             surfaceDataList.push(surfaceData);
             testDataList.push(testData);
           }
@@ -451,8 +476,7 @@ function getSurfaceDataList(numSets = 1) {
             surfaceSlant: SURFACESLANTS[surfaceIndex],
           };
           const surfaceData = getSurfaceData(seed,
-            testData.choice, testData.surfaceSlant,
-            OTHER_AMPLITUDES[testData.surfaceSlant]);
+            testData.choice, OTHER_AMPLITUDES[testData.surfaceSlant]);
           surfaceDataList.push(surfaceData);
           testDataList.push(testData);
         }
@@ -467,8 +491,7 @@ function getSurfaceDataList(numSets = 1) {
           surfaceSlant: SURFACESLANTS[surfaceIndex],
         };
         const surfaceData = getSurfaceData(seed,
-          testData.choice, testData.surfaceSlant,
-          OTHER_AMPLITUDES[testData.surfaceSlant]);
+          testData.choice, OTHER_AMPLITUDES[testData.surfaceSlant]);
         surfaceDataList.push(surfaceData);
         testDataList.push(testData);
       }

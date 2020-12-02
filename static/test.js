@@ -99,7 +99,7 @@ function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
 
     disk.visible = true;
     RENDERER.render(SCENE, CAMERA);
-    const rmsContrast = GetCenterContrast(460, 1250, 300, 700);
+    const rmsContrast = GetCenterContrast(500, 1400, 300, 700);
     console.log(`surfaceSlant: ${surfaceSlant}, lightSlant: ${lightSlant}, rmsContrast: ${rmsContrast}`);
 
     // reset our renderering to prep for next one
@@ -186,10 +186,10 @@ clearDocumentBody();
 document.body.appendChild(RENDERERCANVAS);
 
 function allRMSContrast() {
-  const seed = 1342;
-  const choice = CHOICE.HILL;
+  const seed = 120;
+  const choice = CHOICE.VALLEY;
   const light = LIGHTS.DIRECTIONAL;
-  const material = MATERIALS.MATTE;
+  const material = MATERIALS.GLOSSY;
   const isPretest = false;
 
   for (let surfaceSlant = 30; surfaceSlant <= 60; surfaceSlant += 15) {
@@ -204,7 +204,7 @@ function allRMSContrast() {
         light: LIGHTS.DIRECTIONAL,
         lightSlant: DIRECTIONALLIGHTSLANTS[surfaceSlant][lightSlantIndex],
         surfaceSlant,
-        amplitude: AMPLITUDES[surfaceSlant][DIRECTIONALLIGHTSLANTS[surfaceSlant][lightSlantIndex]],
+        amplitude: AMPLITUDES_GLOSSY[surfaceSlant][DIRECTIONALLIGHTSLANTS[surfaceSlant][lightSlantIndex]],
         isPretest,
       };
       renderSurface(data.seed, data.surfaceSlant, data.choice, data.light, data.lightSlant,
@@ -214,122 +214,107 @@ function allRMSContrast() {
 }
 
 function findAmplitudes() {
-  const seed = 1000;
-  const choice = CHOICE.HILL;
-  const surface = getSurfaceDataOnly(seed, choice);
-
-  let MY_AMPLITUDES = {
-    30: {
-      20: 0.55,
-      30: 0.49,
-      40: 0.45,
-      50: 0.39,
-      60: 0.38,
-      70: 0.37,
-    },
-    45: {
-      30: 0.50,
-      45: 0.50,
-      60: 0.38,
-      75: 0.37,
-      90: 0.36,
-      100: 0.35,
-    },
-    60: {
-      90: 0.22,
-      100: 0.21,
-      110: 0.20,
-      120: 0.19,
-      130: 0.18,
-    },
-  };
-
+  const choice = CHOICE.VALLEY;
   const TARGET_RMS = {
-    30: 0.20,
-    45: 0.25,
-    60: 0.255,
+    30: 0.17,
+    45: 0.17,
+    60: 0.17,
   };
 
-  const error = 0.0001;
+  const error = 0.001;
   const light = LIGHTS.DIRECTIONAL;
-  const material = MATERIALS.MATTE;
+  const material = MATERIALS.GLOSSY;
   const isPretest = false;
-  const limitIterations = 100;
+  const numSeeds = 50;
 
-  return surface.then((surfaceInfo) => {
-    function searchAmplitude(surfaceData, numCalls, targetRMS, l, r) {
-      // additional exit condition
-      const mid1 = l + (r - l) / 3;
-      const mid2 = r - (r - l) / 3;
+  function searchAmplitude(surfaceData, numCalls, targetRMS, l, r) {
+    // additional exit condition
+    const mid1 = l + (r - l) / 3;
+    const mid2 = r - (r - l) / 3;
 
-      const rms1 = renderSurface2(surfaceInfo.heightMap, surfaceData.seed, surfaceData.surfaceSlant,
-        surfaceData.choice, surfaceData.light, surfaceData.lightSlant,
-        surfaceData.material, mid1, surfaceData.isPretest);
-      const rms2 = renderSurface2(surfaceInfo.heightMap, surfaceData.seed, surfaceData.surfaceSlant,
-        surfaceData.choice, surfaceData.light, surfaceData.lightSlant,
-        surfaceData.material, mid2, surfaceData.isPretest);
-      const rms = [rms1, rms2];
+    const rms1 = renderSurface2(surfaceData.heightMap, surfaceData.seed, surfaceData.surfaceSlant,
+      surfaceData.choice, surfaceData.light, surfaceData.lightSlant,
+      surfaceData.material, mid1, surfaceData.isPretest);
+    const rms2 = renderSurface2(surfaceData.heightMap, surfaceData.seed, surfaceData.surfaceSlant,
+      surfaceData.choice, surfaceData.light, surfaceData.lightSlant,
+      surfaceData.material, mid2, surfaceData.isPretest);
+    const rms = [rms1, rms2];
 
-      if (numCalls === 0) {
-        console.log(`surfaceSlant: ${surfaceData.surfaceSlant}, 
-        lightSlant: ${surfaceData.lightSlant}, 
-        mid1: ${mid1}
-        mid2: ${mid2}
-        rms1: ${rms1}
-        rms2: ${rms2}
-        numCalls ${numCalls}`);
-        return ((l + r) / 2);
+    if (numCalls === 0) {
+      // console.log(`surfaceSlant: ${surfaceData.surfaceSlant}, 
+      // lightSlant: ${surfaceData.lightSlant}, 
+      // mid1: ${mid1}
+      // mid2: ${mid2}
+      // rms1: ${rms1}
+      // rms2: ${rms2}
+      // numCalls ${numCalls}`);
+      return ((l + r) / 2);
+    }
+
+    return Promise.all(rms).then((data) => {
+      const difference1 = Math.abs(data[0] - targetRMS);
+      const difference2 = Math.abs(data[1] - targetRMS);
+
+      if (difference1 < error) {
+        return mid1;
+      }
+      if (difference2 < error) {
+        return mid2;
       }
 
-      return Promise.all(rms).then((data) => {
-        const difference1 = Math.abs(data[0] - targetRMS);
-        const difference2 = Math.abs(data[1] - targetRMS);
+      let newL = l;
+      let newR = r;
 
-        if (difference1 < error) {
-          return mid1;
+      if (difference1 < difference2) {
+        newR = mid2;
+      } else if (difference2 < difference1) {
+        newL = mid1;
+      } else {
+        newR = mid2;
+        newL = mid1;
+      }
+
+      return searchAmplitude(surfaceData, numCalls - 1, targetRMS, newL, newR);
+    });
+  }
+
+  const amplitudes = [];
+  for (let surfaceSlant = 30; surfaceSlant <= 60; surfaceSlant += 15) {
+    const lightSlants = DIRECTIONALLIGHTSLANTS[surfaceSlant];
+    for (let i = 0; i < lightSlants.length; i += 1) {
+      const lightSlant = lightSlants[i];
+      const amplitude = [];
+      for (let j = 0; j < numSeeds; j += 1) {
+        const seed = getRandomSeed();
+        const surface = getSurfaceDataOnly(seed, choice);
+        amplitude.push(surface.then((surfaceInfo) => {
+          const surfaceData = {
+            surfaceSlant,
+            lightSlant,
+            choice,
+            seed,
+            light,
+            material,
+            isPretest,
+            heightMap: surfaceInfo.heightMap,
+          };
+
+          return searchAmplitude(surfaceData,
+            20, TARGET_RMS[surfaceSlant], 0.1, 0.7).then((data) => data);
+        }));
+      }
+
+      Promise.all(amplitude).then((data) => {
+        let sum = 0;
+        for (let k = 0; k < data.length; k += 1) {
+          sum += data[k];
         }
-        if (difference2 < error) {
-          return mid2;
-        }
-
-        let newL = l;
-        let newR = r;
-
-        if (difference1 < difference2) {
-          newR = mid2;
-        } else if (difference2 < difference1) {
-          newL = mid1;
-        } else {
-          newR = mid2;
-          newL = mid1;
-        }
-
-        return searchAmplitude(surfaceData, numCalls - 1, targetRMS, newL, newR);
+        const amp = sum / numSeeds;
+        console.log(`surfaceSlant: ${surfaceSlant}, lightSlant: ${lightSlant}, amplitude: ${amp}, sum: ${sum}`);
       });
     }
-    const amplitudes = [];
-    for (let surfaceSlant = 30; surfaceSlant <= 60; surfaceSlant += 15) {
-      const lightSlants = DIRECTIONALLIGHTSLANTS[surfaceSlant];
-      for (let i = 0; i < lightSlants.length; i += 1) {
-        const lightSlant = lightSlants[i];
-        const surfaceData = {
-          surfaceSlant,
-          lightSlant,
-          choice,
-          seed,
-          light,
-          material,
-          isPretest,
-        };
-
-        const amplitude = searchAmplitude(surfaceData,
-          40, TARGET_RMS[surfaceSlant], 0.1, 0.6).then((data) => {
-          console.log(`surfaceSlant: ${surfaceSlant}, lightSlant: ${lightSlant}, amplitude: ${data}`)
-        });
-      }
-    }
-    return MY_AMPLITUDES;
-  });
+  }
+  return amplitudes;
 }
 
-const amplitudes = findAmplitudes();
+findAmplitudes();
