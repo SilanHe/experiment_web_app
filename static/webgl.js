@@ -446,6 +446,7 @@ function getSurfaceDataList(numSets = 1) {
         // material
         for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
           // directional light slants
+
           for (let lightSlantIndex = 0;
             lightSlantIndex < DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]].length;
             lightSlantIndex += 1) {
@@ -459,41 +460,20 @@ function getSurfaceDataList(numSets = 1) {
               lightSlant: DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex],
               surfaceSlant: SURFACESLANTS[surfaceIndex],
             };
+            // different amplitude values for different materials
+            let amplitude;
+            if (testData.material === MATERIALS.MATTE) {
+              amplitude = AMPLITUDES[testData.surfaceSlant][testData.lightSlant];
+            } else {
+              amplitude = AMPLITUDES_GLOSSY[testData.surfaceSlant][testData.lightSlant];
+            }
+
             const surfaceData = getSurfaceData(seed,
-              testData.choice, AMPLITUDES[testData.surfaceSlant][testData.lightSlant]);
+              testData.choice, amplitude);
             surfaceDataList.push(surfaceData);
             testDataList.push(testData);
           }
-
-          // matlab light
-          // pretest and test image surface data
-          const seed = getRandomSeed();
-          const testData = {
-            seed,
-            choice: choices[choiceIndex][1],
-            material: materials[materialIndex][1],
-            light: LIGHTS.MATLAB,
-            surfaceSlant: SURFACESLANTS[surfaceIndex],
-          };
-          const surfaceData = getSurfaceData(seed,
-            testData.choice, OTHER_AMPLITUDES[testData.surfaceSlant]);
-          surfaceDataList.push(surfaceData);
-          testDataList.push(testData);
         }
-        // mathematica light
-        // pretest and test image surface data
-        const seed = getRandomSeed();
-        const testData = {
-          seed,
-          choice: choices[choiceIndex][1],
-          material: MATERIALS.MATTE,
-          light: LIGHTS.MATHEMATICA,
-          surfaceSlant: SURFACESLANTS[surfaceIndex],
-        };
-        const surfaceData = getSurfaceData(seed,
-          testData.choice, OTHER_AMPLITUDES[testData.surfaceSlant]);
-        surfaceDataList.push(surfaceData);
-        testDataList.push(testData);
       }
     }
   }

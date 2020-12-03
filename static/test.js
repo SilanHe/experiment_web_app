@@ -204,7 +204,7 @@ function allRMSContrast() {
   const seed = 120;
   const choice = CHOICE.VALLEY;
   const light = LIGHTS.DIRECTIONAL;
-  const material = MATERIALS.GLOSSY;
+  const material = MATERIALS.MATTE;
   const isPretest = false;
 
   for (let surfaceSlant = 30; surfaceSlant <= 60; surfaceSlant += 15) {
@@ -219,7 +219,7 @@ function allRMSContrast() {
         light: LIGHTS.DIRECTIONAL,
         lightSlant: DIRECTIONALLIGHTSLANTS[surfaceSlant][lightSlantIndex],
         surfaceSlant,
-        amplitude: AMPLITUDES_GLOSSY[surfaceSlant][DIRECTIONALLIGHTSLANTS[surfaceSlant][lightSlantIndex]],
+        amplitude: AMPLITUDES[surfaceSlant][DIRECTIONALLIGHTSLANTS[surfaceSlant][lightSlantIndex]],
         isPretest,
       };
       renderSurface(data.seed, data.surfaceSlant, data.choice, data.light, data.lightSlant,

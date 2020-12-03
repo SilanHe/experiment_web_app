@@ -185,6 +185,14 @@ function tutorial() {
   };
   timeline.push(instruction4);
 
+  const instructionDefinition = {
+    type: 'image-keyboard-response',
+    stimulus_name: 'hill and valley',
+    stimulus: valleyHillImage,
+    prompt: '<p>Illustrated above are cross sections of a valley and a hill (including the small reference circle).</p><p>In this experiment, you will have to identify whether the spot marked by the small red sphere is in a valley or on a hill.</p><p>Press any key to continue.</p>',
+  };
+  timeline.push(instructionDefinition);
+
   const instruction5 = {
     type: 'image-keyboard-response',
     stimulus_name: 'instruction4',
@@ -222,18 +230,10 @@ function tutorial() {
   };
   timeline.push(instruction7);
 
-  const instructionDefinition = {
-    type: 'image-keyboard-response',
-    stimulus_name: 'hill and valley',
-    stimulus: valleyHillImage,
-    prompt: '<p>Illustrated above are cross sections of a valley and a hill including the small reference circle.</p>',
-  };
-  timeline.push(instructionDefinition);
-
   timeline.push({
     type: 'html-keyboard-response',
     stimulus: '<div class="display_text">'
-    + "<p>Nice! Remember press 'v' if you think the small red circle is in a VALLEY.</p>"
+    + "<p>Remember press 'v' if you think the small red circle is in a VALLEY.</p>"
     + "<p>'h' if you think the small red circle is on a HILL</p>"
     + "<p>Place your fingers on the 'v' and 'h' key.</p>"
     + '<p>Press the VALLEY button to proceed to a little test run.'
