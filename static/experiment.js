@@ -107,6 +107,7 @@ const test = {
 function tutorial() {
   const staticPath = 'static/images/tutorial/';
   const ergonomicsImage = `${staticPath}ergonomics.jpg`;
+  const valleyHillImage = `${staticPath}valleyhill.jpg`;
   const trialImages = [
     `${staticPath}DirectionalLightTest_Seed6012Hill_Matte_45_100_1.jpg`,
     `${staticPath}DirectionalLightTest_Seed6012Hill_Matte_45_100_2.jpg`,
@@ -146,7 +147,7 @@ function tutorial() {
   timeline.push({
     type: 'html-keyboard-response',
     stimulus: '<div class="display_text">'
-    + '<p>This TUTORIAL trial will be in fullscreen mode. After the tutorial, you will be able to proceed with the ACTUAL experiment.</p>'
+    + '<p>After the tutorial, you will be able to proceed with the ACTUAL experiment.</p>'
     + ' Press any key on the keyboard to begin.'
     + '</div>',
   });
@@ -163,26 +164,6 @@ function tutorial() {
     stimulus_height: screen.height * 0.6,
   };
   timeline.push(ergonomicInstruction);
-
-  const instruction1 = {
-    type: 'image-keyboard-response',
-    stimulus_name: 'instruction1',
-    stimulus: pairedImages[0].stimulus1,
-    prompt: '<p>In this experiment, you will be shown images of surfaces like the above.</p> <p> Notice there is a large red circle. Press h to continue.</p>',
-    stimulus_height: screen.height * 0.8,
-    choices: ['h'],
-  };
-  timeline.push(instruction1);
-
-  const instruction2 = {
-    type: 'image-keyboard-response',
-    stimulus_name: 'instruction2',
-    stimulus: pairedImages[0].stimulus2,
-    prompt: '<p>In this experiment, you will be shown images of surfaces like the above.</p><p> Notice there is a small red circle where the large red circle was. Press v to continue.</p>',
-    stimulus_height: screen.height * 0.8,
-    choices: ['v'],
-  };
-  timeline.push(instruction2);
 
   const instruction3 = {
     type: 'image-keyboard-response',
@@ -204,23 +185,13 @@ function tutorial() {
   };
   timeline.push(instruction4);
 
-  const instruction41 = {
+  const instruction5 = {
     type: 'image-keyboard-response',
     stimulus_name: 'instruction4',
     stimulus: pairedImages[1].stimulus1,
     prompt: "<p>Let's try it. Look at the above. Press h to continue.</p>",
     stimulus_height: screen.height * 0.8,
     choices: ['h'],
-  };
-  timeline.push(instruction41);
-
-  const instruction5 = {
-    type: 'image-keyboard-response',
-    stimulus_name: 'instruction4',
-    stimulus: pairedImages[1].stimulus2,
-    prompt: '<p>You will now have to make a choice. Press v to continue.</p>',
-    stimulus_height: screen.height * 0.8,
-    choices: ['v'],
   };
   timeline.push(instruction5);
 
@@ -250,6 +221,14 @@ function tutorial() {
     choices: ['h'],
   };
   timeline.push(instruction7);
+
+  const instructionDefinition = {
+    type: 'image-keyboard-response',
+    stimulus_name: 'hill and valley',
+    stimulus: valleyHillImage,
+    prompt: '<p>Illustrated above are cross sections of a valley and a hill including the small reference circle.</p>',
+  };
+  timeline.push(instructionDefinition);
 
   timeline.push({
     type: 'html-keyboard-response',
@@ -292,7 +271,7 @@ function tutorial() {
     stimulus: '<div class="display_text">'
     + '<p>The images come pretty quick right? Make sure to stay focused. During the actual run, you will be given multiple breaks since there will be quite a few images to go through.</p>'
     + '<p>Press any key on the keyboard to continue.</p>'
-    + '<\div>',
+    + '</div>',
   };
   timeline.push(lastinstruction);
 
@@ -316,7 +295,7 @@ function tutorial() {
       createButton(displayText, 'RETRY', tutorial);
 
       // start real experiment button
-      createH3(displayText, 'Press the PROCEED button below if you have understood the instructions and wish to proceed with the actual experiment.');
+      createH3(displayText, 'Press the PROCEED button below if you have understood the instructions and wish to proceed.');
       createButton(displayText, 'PROCEED', loadingScreen);
     },
   });
@@ -373,13 +352,6 @@ function experiment(data) {
   timeline.push({
     type: 'fullscreen',
     fullscreen_mode: true,
-  });
-
-  timeline.push({
-    type: 'html-keyboard-response',
-    stimulus: '<div class="display_text">'
-    + 'This trial will be in fullscreen mode. Press any key on the keyboard to begin.'
-    + '</div>',
   });
 
   /* define welcome message trial */

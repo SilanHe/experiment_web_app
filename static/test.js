@@ -46,6 +46,22 @@ function getSurfaceDataOnly(seed, choice) {
   return $.get('/getsurface', surfaceDetails).then((data) => data);
 }
 
+function cloneCanvas(oldCanvas) {
+  // create a new canvas
+  const newCanvas = document.createElement('canvas');
+  const context = newCanvas.getContext('2d');
+
+  // set dimensions
+  newCanvas.width = oldCanvas.width;
+  newCanvas.height = oldCanvas.height;
+
+  // apply the old canvas to the new one
+  context.drawImage(oldCanvas, 0, 0);
+
+  // return the new canvas
+  return newCanvas;
+}
+
 function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
   material, amplitude, isPretest) {
   return getSurfaceData(seed, choice, amplitude).then((stimulusData) => {
@@ -99,6 +115,8 @@ function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
 
     disk.visible = true;
     RENDERER.render(SCENE, CAMERA);
+    const newCanvas = cloneCanvas(RENDERERCANVAS);
+    document.body.appendChild(newCanvas);
     const rmsContrast = GetCenterContrast(500, 1400, 300, 700);
     console.log(`surfaceSlant: ${surfaceSlant}, lightSlant: ${lightSlant}, rmsContrast: ${rmsContrast}`);
 
@@ -182,9 +200,6 @@ RENDERERCANVAS.addEventListener('mousedown', function(e) {
   getCursorPosition(RENDERERCANVAS, e);
 });
 
-clearDocumentBody();
-document.body.appendChild(RENDERERCANVAS);
-
 function allRMSContrast() {
   const seed = 120;
   const choice = CHOICE.VALLEY;
@@ -216,8 +231,8 @@ function allRMSContrast() {
 function findAmplitudes() {
   const choice = CHOICE.VALLEY;
   const TARGET_RMS = {
-    30: 0.17,
-    45: 0.17,
+    30: 0.2,
+    45: 0.2,
     60: 0.17,
   };
 
@@ -300,7 +315,7 @@ function findAmplitudes() {
           };
 
           return searchAmplitude(surfaceData,
-            20, TARGET_RMS[surfaceSlant], 0.1, 0.7).then((data) => data);
+            20, TARGET_RMS[surfaceSlant], 0.05, 0.5).then((data) => data);
         }));
       }
 
@@ -317,4 +332,6 @@ function findAmplitudes() {
   return amplitudes;
 }
 
-findAmplitudes();
+clearDocumentBody();
+// document.body.appendChild(RENDERERCANVAS);
+allRMSContrast();
