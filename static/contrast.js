@@ -11,6 +11,40 @@ function rgbToGrayscale(r, g, b) {
   return 0.2126 * r ** GAMMA + 0.7152 * g ** GAMMA + 0.0722 * b ** GAMMA;
 }
 
+function GetCenterContrastBackground(x1, x2, y1, y2) {
+  // get average Intensity of surface
+  const height = y2 - y1;
+  const width = x2 - x1;
+  // get points from screen middle with GL call
+  const numPixels = width * height;
+  const pixels = new Uint8Array(numPixels * 4);
+  GLCONTEXT.readPixels(x1, y1, width, height, GLCONTEXT.RGBA,
+    GLCONTEXT.UNSIGNED_BYTE, pixels);
+
+  const backgroundPixel = new Uint8Array(4);
+  GLCONTEXT.readPixels(0, 0, 1, 1, GLCONTEXT.RGBA,
+    GLCONTEXT.UNSIGNED_BYTE, backgroundPixel);
+  const averageBackgroundIntensity = rgbToGrayscale(backgroundPixel[0] / 255,
+    backgroundPixel[1] / 255, backgroundPixel[2] / 255);
+
+  // get average intensity
+  let intensity = 0;
+  for (let i = 0; i < pixels.length; i += 4) {
+    const grayscale = rgbToGrayscale(pixels[i] / 255, pixels[i + 1] / 255, pixels[i + 2] / 255);
+    intensity += grayscale;
+  }
+  const averageTargetIntensity = intensity / numPixels;
+  // computer RMS
+  let sum = 0;
+  for (let i = 0; i < pixels.length; i += 4) {
+    const grayscale = rgbToGrayscale(pixels[i] / 255, pixels[i + 1] / 255, pixels[i + 2] / 255);
+    sum += (grayscale - averageTargetIntensity) ** 2;
+  }
+
+  const rms = Math.sqrt(sum / NUM_VERTICES) / averageBackgroundIntensity;
+  return rms;
+}
+
 function GetCenterContrast(x1, x2, y1, y2) {
   // get average Intensity of surface
   const height = y2 - y1;
@@ -20,22 +54,44 @@ function GetCenterContrast(x1, x2, y1, y2) {
   const pixels = new Uint8Array(numPixels * 4);
   GLCONTEXT.readPixels(x1, y1, width, height, GLCONTEXT.RGBA,
     GLCONTEXT.UNSIGNED_BYTE, pixels);
+
   // get average intensity
   let intensity = 0;
   for (let i = 0; i < pixels.length; i += 4) {
     const grayscale = rgbToGrayscale(pixels[i] / 255, pixels[i + 1] / 255, pixels[i + 2] / 255);
     intensity += grayscale;
   }
-  const averageIntensity = intensity / numPixels;
+  const averageTargetIntensity = intensity / numPixels;
   // computer RMS
   let sum = 0;
   for (let i = 0; i < pixels.length; i += 4) {
     const grayscale = rgbToGrayscale(pixels[i] / 255, pixels[i + 1] / 255, pixels[i + 2] / 255);
-    sum += (grayscale - averageIntensity) ** 2;
+    sum += (grayscale - averageTargetIntensity) ** 2;
   }
 
-  const rms = Math.sqrt(sum / NUM_VERTICES);
+  const rms = Math.sqrt(sum / NUM_VERTICES) / averageTargetIntensity;
   return rms;
+}
+
+function GetCenterLuminance(x1, x2, y1, y2) {
+  // get average Intensity of surface
+  const height = y2 - y1;
+  const width = x2 - x1;
+  // get points from screen middle with GL call
+  const numPixels = width * height;
+  const pixels = new Uint8Array(numPixels * 4);
+  GLCONTEXT.readPixels(x1, y1, width, height, GLCONTEXT.RGBA,
+    GLCONTEXT.UNSIGNED_BYTE, pixels);
+
+  // get average intensity
+  let intensity = 0;
+  for (let i = 0; i < pixels.length; i += 4) {
+    const grayscale = rgbToGrayscale(pixels[i] / 255, pixels[i + 1] / 255, pixels[i + 2] / 255);
+    intensity += grayscale;
+  }
+  const averageTargetIntensity = intensity / numPixels;
+
+  return averageTargetIntensity;
 }
 
 function getSurfaceDataOnly(seed, choice) {
@@ -204,7 +260,7 @@ function allRMSContrast() {
   const seed = 1;
   const choice = CHOICE.VALLEY;
   const light = LIGHTS.DIRECTIONAL;
-  const material = MATERIALS.GLOSSY;
+  const material = MATERIALS.MATTE;
   const isPretest = false;
 
   for (let surfaceSlant = 30; surfaceSlant <= 60; surfaceSlant += 15) {
@@ -219,7 +275,7 @@ function allRMSContrast() {
         light: LIGHTS.DIRECTIONAL,
         lightSlant: DIRECTIONALLIGHTSLANTS[surfaceSlant][lightSlantIndex],
         surfaceSlant,
-        amplitude: AMPLITUDES_GLOSSY[surfaceSlant][DIRECTIONALLIGHTSLANTS[surfaceSlant][lightSlantIndex]],
+        amplitude: AMPLITUDES[surfaceSlant][DIRECTIONALLIGHTSLANTS[surfaceSlant][lightSlantIndex]],
         isPretest,
       };
       renderSurface(data.seed, data.surfaceSlant, data.choice, data.light, data.lightSlant,
@@ -247,30 +303,25 @@ function GetAmplitudeContrastData(surfaceSlant = 30, lightSlant = 20, material =
   });
 }
 
-function GetAllAmplitudeContrastData() {
-  const surfaceSlant = 60;
+function GetAllAmplitudeContrastData(surfaceSlant = 30, material = MATERIALS.MATTE) {
   for (let i = 0; i < DIRECTIONALLIGHTSLANTS[surfaceSlant].length; i += 1) {
-      const lightSlant = DIRECTIONALLIGHTSLANTS[surfaceSlant][i];
-      const amplitudeContrastData = GetAmplitudeContrastData(surfaceSlant, lightSlant, MATERIALS.GLOSSY);
-      amplitudeContrastData.then((data) => {
-        console.log(lightSlant);
-        console.log(data.toString());
+    const lightSlant = DIRECTIONALLIGHTSLANTS[surfaceSlant][i];
+    const amplitudeContrastData = GetAmplitudeContrastData(surfaceSlant, lightSlant, material);
+    amplitudeContrastData.then((data) => {
+      console.log(lightSlant);
+      console.log(data.toString());
     });
   }
 }
 
-function findAmplitudes(surfaceSlant = 30, material = MATERIALS.GLOSSY, lo = 0.1, hi = 0.7) {
+function findAmplitudes(surfaceSlant = 30, material = MATERIALS.GLOSSY, lo = 0.1, hi = 0.7, target = 0.2) {
   const choice = CHOICE.VALLEY;
-  const TARGET_RMS = {
-    30: 0.2,
-    45: 0.18,
-    60: 0.2,
-  };
 
   const error = 0.001;
   const light = LIGHTS.DIRECTIONAL;
   const isPretest = false;
   const numSeeds = 50;
+  const NUMCALLS = 20;
 
   function searchAmplitude(surfaceData, numCalls, targetRMS, l, r) {
     // additional exit condition
@@ -286,13 +337,6 @@ function findAmplitudes(surfaceSlant = 30, material = MATERIALS.GLOSSY, lo = 0.1
     const rms = [rms1, rms2];
 
     if (numCalls === 0) {
-      // console.log(`surfaceSlant: ${surfaceData.surfaceSlant}, 
-      // lightSlant: ${surfaceData.lightSlant}, 
-      // mid1: ${mid1}
-      // mid2: ${mid2}
-      // rms1: ${rms1}
-      // rms2: ${rms2}
-      // numCalls ${numCalls}`);
       return ((l + r) / 2);
     }
 
@@ -344,7 +388,7 @@ function findAmplitudes(surfaceSlant = 30, material = MATERIALS.GLOSSY, lo = 0.1
         };
 
         return searchAmplitude(surfaceData,
-          20, TARGET_RMS[surfaceSlant], lo, hi).then((data) => data);
+          NUMCALLS, target, lo, hi).then((data) => data);
       }));
     }
 
@@ -362,6 +406,19 @@ function findAmplitudes(surfaceSlant = 30, material = MATERIALS.GLOSSY, lo = 0.1
 
 clearDocumentBody();
 document.body.appendChild(RENDERERCANVAS);
-allRMSContrast();
+// allRMSContrast();
 
-// findAmplitudes(60, MATERIALS.GLOSSY, 0.08, 0.38);
+// GetAllAmplitudeContrastData(60, MATERIALS.GLOSSY);
+
+const TARGET_RMS = {
+  MATTE: {
+    30: 0.2,
+    45: 0.2,
+    60: 0.5,
+  },
+  GLOSSY: {
+    30: 0.4,
+    45: 0.37,
+    60: 0.5,
+  },
+};
