@@ -7,6 +7,19 @@ function clearDocumentBody() {
   }
 }
 
+function downloadCanvas(canvas, filename = "canvas_images.jpeg") {
+  // Convert the canvas to data
+  let image = canvas.toDataURL();
+  // Create a link
+  let aDownloadLink = document.createElement('a');
+  // Add the name of the file to the link
+  aDownloadLink.download = filename;
+  // Attach the data to the link
+  aDownloadLink.href = image;
+  // Get the code to click the download link
+  aDownloadLink.click();
+}
+
 function rgbToGrayscale(r, g, b) {
   return 0.2126 * r ** GAMMA + 0.7152 * g ** GAMMA + 0.0722 * b ** GAMMA;
 }
@@ -119,7 +132,7 @@ function cloneCanvas(oldCanvas) {
 }
 
 function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
-  material, amplitude, isPretest) {
+  material, amplitude, isPretest, lightIntensity = 1) {
   return getSurfaceData(seed, choice, amplitude).then((stimulusData) => {
     const disk = (() => {
       if (isPretest) {
@@ -167,13 +180,16 @@ function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
       DIRECTIONALLIGHTS.map.get(surfaceSlant)
         .get(lightSlant)
         .visible = true;
+      DIRECTIONALLIGHTS.map.get(surfaceSlant)
+        .get(lightSlant)
+        .intensity = lightIntensity;
     }
 
     disk.visible = true;
     RENDERER.render(SCENE, CAMERA);
     const newCanvas = cloneCanvas(RENDERERCANVAS);
     document.body.appendChild(newCanvas);
-    const rmsContrast = GetCenterContrast(500, 1400, 300, 700);
+    const rmsContrast = GetCenterContrast(400, 800, 200, 500);
     console.log(`surfaceSlant: ${surfaceSlant}, lightSlant: ${lightSlant}, rmsContrast: ${rmsContrast}`);
 
     // reset our renderering to prep for next one
@@ -192,7 +208,7 @@ function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
         .visible = false;
     }
 
-    return rmsContrast;
+    return newCanvas;
   });
 }
 
@@ -226,7 +242,7 @@ function renderSurface2(heightMap, seed, surfaceSlant, choice, light, lightSlant
   }
 
   RENDERER.render(SCENE, CAMERA);
-  const rmsContrast = GetCenterContrast(500, 1400, 300, 700);
+  const rmsContrast = GetCenterContrast(400, 800, 200, 500);
 
   // reset our renderering to prep for next one
   resetObject(MESH);
@@ -245,6 +261,59 @@ function renderSurface2(heightMap, seed, surfaceSlant, choice, light, lightSlant
   return rmsContrast;
 }
 
+function renderSurface3(heightMap, seed, surfaceSlant, choice, light, lightSlant,
+  material, amplitude, intensity) {
+  const vertices = getVertices(heightMap, amplitude);
+  setMeshGeometryVerticesIndices(vertices, INDICES);
+  // change material
+  if (material === MATERIALS.MATTE) {
+    setMeshMaterial(MATTEMATERIAL);
+    MATTEMATERIAL.needsUpdate = true;
+  } else {
+    setMeshMaterial(GLOSSYMATERIAL);
+    GLOSSYMATERIAL.needsUpdate = true;
+  }
+  // rotate
+  MESH.rotateX(-THREE.Math.degToRad(surfaceSlant));
+  MESH.geometry.computeVertexNormals();
+  MESH.updateMatrixWorld();
+
+  // make the light in question visible
+  if (light === LIGHTS.MATLAB) {
+    MATLABLIGHT.visible = true;
+  } else if (light === LIGHTS.MATHEMATICA) {
+    setMathematicaLightsVisibility(true);
+  } else {
+    // directional
+    DIRECTIONALLIGHTS.map.get(surfaceSlant)
+      .get(lightSlant)
+      .visible = true;
+
+    DIRECTIONALLIGHTS.map.get(surfaceSlant)
+      .get(lightSlant)
+      .intensity = intensity;
+  }
+
+  RENDERER.render(SCENE, CAMERA);
+  const luminance = GetCenterLuminance(400, 800, 200, 500);
+
+  // reset our renderering to prep for next one
+  resetObject(MESH);
+
+  if (light === LIGHTS.MATLAB) {
+    MATLABLIGHT.visible = false;
+  } else if (light === LIGHTS.MATHEMATICA) {
+    setMathematicaLightsVisibility(false);
+  } else {
+    // directional
+    DIRECTIONALLIGHTS.map.get(surfaceSlant)
+      .get(lightSlant)
+      .visible = false;
+  }
+
+  return luminance;
+}
+
 function getCursorPosition(canvas, event) {
   const rect = canvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
@@ -260,26 +329,42 @@ function allRMSContrast() {
   const seed = 1;
   const choice = CHOICE.VALLEY;
   const light = LIGHTS.DIRECTIONAL;
-  const material = MATERIALS.MATTE;
+  const materials = Object.entries(MATERIALS);
   const isPretest = false;
 
-  for (let surfaceSlant = 30; surfaceSlant <= 60; surfaceSlant += 15) {
-    for (let lightSlantIndex = 0;
-      lightSlantIndex < DIRECTIONALLIGHTSLANTS[surfaceSlant].length;
-      lightSlantIndex += 1) {
-      // pretest and test image surface data
-      const data = {
-        seed,
-        choice,
-        material,
-        light: LIGHTS.DIRECTIONAL,
-        lightSlant: DIRECTIONALLIGHTSLANTS[surfaceSlant][lightSlantIndex],
-        surfaceSlant,
-        amplitude: AMPLITUDES[surfaceSlant][DIRECTIONALLIGHTSLANTS[surfaceSlant][lightSlantIndex]],
-        isPretest,
-      };
-      renderSurface(data.seed, data.surfaceSlant, data.choice, data.light, data.lightSlant,
-        data.material, data.amplitude, data.isPretest);
+  for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
+    for (let surfaceSlant = 30; surfaceSlant <= 60; surfaceSlant += 15) {
+      for (let lightSlantIndex = 0;
+        lightSlantIndex < DIRECTIONALLIGHTSLANTS[surfaceSlant].length;
+        lightSlantIndex += 1) {
+        // pretest and test image surface data
+        const data = {
+          seed,
+          choice,
+          material: materials[materialIndex][1],
+          light,
+          lightSlant: DIRECTIONALLIGHTSLANTS[surfaceSlant][lightSlantIndex],
+          surfaceSlant,
+          isPretest,
+        };
+        // different amplitude values for different materials
+        let amplitude;
+        let lightIntensity;
+        if (data.material === MATERIALS.MATTE) {
+          amplitude = AMPLITUDES[data.surfaceSlant][data.lightSlant];
+          lightIntensity = LIGHT_INTENSITY_MATTE[data.surfaceSlant][data.lightSlant];
+        } else {
+          amplitude = AMPLITUDES_GLOSSY[data.surfaceSlant][data.lightSlant];
+          lightIntensity = LIGHT_INTENSITY_GLOSSY[data.surfaceSlant][data.lightSlant];
+        }
+        console.log(lightIntensity);
+        const tempCanvas = renderSurface(data.seed, data.surfaceSlant, data.choice,
+          data.light, data.lightSlant, data.material, amplitude, data.isPretest, lightIntensity);
+        const filename = getSurfaceInfoString(data, '.png');
+        tempCanvas.then((canvas) => {
+          downloadCanvas(canvas, filename);
+        });
+      }
     }
   }
 }
@@ -308,6 +393,43 @@ function GetAllAmplitudeContrastData(surfaceSlant = 30, material = MATERIALS.MAT
     const lightSlant = DIRECTIONALLIGHTSLANTS[surfaceSlant][i];
     const amplitudeContrastData = GetAmplitudeContrastData(surfaceSlant, lightSlant, material);
     amplitudeContrastData.then((data) => {
+      console.log(lightSlant);
+      console.log(data.toString());
+    });
+  }
+}
+
+function GetLuminanceData(seed = 1, surfaceSlant = 30, lightSlant = 20, material = MATERIALS.GLOSSY) {
+  const choice = CHOICE.VALLEY;
+  const light = LIGHTS.DIRECTIONAL;
+  const isPretest = false;
+  const surface = getSurfaceDataOnly(seed, choice);
+
+  let amplitude;
+  if (material === MATERIALS.MATTE) {
+    amplitude = AMPLITUDES[surfaceSlant][lightSlant];
+  } else {
+    amplitude = AMPLITUDES_GLOSSY[surfaceSlant][lightSlant];
+  }
+
+  return surface.then((surfaceInfo) => {
+    const data = [];
+    for (let intensity = 0.01; intensity <= 1; intensity += 0.01) {
+      const luminance = renderSurface3(surfaceInfo.heightMap, seed, surfaceSlant,
+        choice, light, lightSlant,
+        material, amplitude, intensity);
+      data.push(luminance);
+    }
+    return data;
+  });
+}
+
+function GetAllLuminanceData(seed = 1, surfaceSlant = 30, material = MATERIALS.MATTE) {
+  for (let i = 0; i < DIRECTIONALLIGHTSLANTS[surfaceSlant].length; i += 1) {
+    const lightSlant = DIRECTIONALLIGHTSLANTS[surfaceSlant][i];
+    const luminanceData = GetLuminanceData(seed, surfaceSlant, lightSlant, material);
+    luminanceData.then((data) => {
+      console.log(surfaceSlant);
       console.log(lightSlant);
       console.log(data.toString());
     });
@@ -414,11 +536,16 @@ const TARGET_RMS = {
   MATTE: {
     30: 0.2,
     45: 0.2,
-    60: 0.5,
+    60: 0.2,
   },
   GLOSSY: {
     30: 0.4,
-    45: 0.37,
-    60: 0.5,
+    45: 0.4,
+    60: 0.4,
   },
 };
+
+// findAmplitudes(60, MATERIALS.GLOSSY, 0.07, 0.4, 0.2);
+allRMSContrast();
+
+// GetAllLuminanceData(1, 30, MATERIALS.GLOSSY);
