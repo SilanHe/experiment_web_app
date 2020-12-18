@@ -568,8 +568,10 @@ function getSurfaceDataList(numSets = 1) {
             let amplitude;
             if (testData.material === MATERIALS.MATTE) {
               amplitude = AMPLITUDES[testData.surfaceSlant][testData.lightSlant];
+              testData.lightIntensity = LIGHT_INTENSITY_MATTE[testData.surfaceSlant][testData.lightSlant];
             } else {
               amplitude = AMPLITUDES_GLOSSY[testData.surfaceSlant][testData.lightSlant];
+              testData.lightIntensity = LIGHT_INTENSITY_GLOSSY[testData.surfaceSlant][testData.lightSlant];
             }
 
             const surfaceData = getSurfaceData(seed,

@@ -115,6 +115,9 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
       DIRECTIONALLIGHTS.map.get(trial.stimulus.surfaceSlant)
         .get(trial.stimulus.lightSlant)
         .visible = true;
+      DIRECTIONALLIGHTS.map.get(trial.stimulus.surfaceSlant)
+        .get(trial.stimulus.lightSlant)
+        .intensity = trial.stimulus.lightIntensity;
     }
 
     disk.visible = true;
