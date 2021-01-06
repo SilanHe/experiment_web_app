@@ -327,7 +327,7 @@ RENDERERCANVAS.addEventListener('mousedown', function(e) {
 
 function allRMSContrast() {
   const seed = 1;
-  const choice = CHOICE.VALLEY;
+  const choice = CHOICE.HILL;
   const light = LIGHTS.DIRECTIONAL;
   const materials = Object.entries(MATERIALS);
   const isPretest = false;
@@ -350,16 +350,10 @@ function allRMSContrast() {
         // different amplitude values for different materials
         let amplitude;
         let lightIntensity;
-        if (data.material === MATERIALS.MATTE) {
-          amplitude = AMPLITUDES[data.surfaceSlant][data.lightSlant];
-          lightIntensity = LIGHT_INTENSITY_MATTE[data.surfaceSlant][data.lightSlant];
-        } else {
-          amplitude = AMPLITUDES_GLOSSY[data.surfaceSlant][data.lightSlant];
-          lightIntensity = LIGHT_INTENSITY_GLOSSY[data.surfaceSlant][data.lightSlant];
-        }
+        amplitude = OTHER_AMPLITUDES[data.surfaceSlant];
         console.log(lightIntensity);
         const tempCanvas = renderSurface(data.seed, data.surfaceSlant, data.choice,
-          data.light, data.lightSlant, data.material, amplitude, data.isPretest, lightIntensity);
+          data.light, data.lightSlant, data.material, amplitude, data.isPretest, 1);
         const filename = getSurfaceInfoString(data, '.png');
         tempCanvas.then((canvas) => {
           downloadCanvas(canvas, filename);
