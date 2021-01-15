@@ -75,7 +75,7 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
     // set our mesh geometry
     // change positions
     const stimulusData = trial.stimulus.surfaceData;
-    setMeshGeometryVerticesIndices(stimulusData.vertices, INDICES);
+    setMeshGeometryVerticesIndices(stimulusData.vertices);
     // change material
     if (trial.stimulus.material === MATERIALS.MATTE) {
       setMeshMaterial(MATTEMATERIAL);
@@ -115,9 +115,8 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
       DIRECTIONALLIGHTS.map.get(trial.stimulus.surfaceSlant)
         .get(trial.stimulus.lightSlant)
         .visible = true;
-      DIRECTIONALLIGHTS.map.get(trial.stimulus.surfaceSlant)
-        .get(trial.stimulus.lightSlant)
-        .intensity = trial.stimulus.lightIntensity;
+      AMBIENTLIGHT.intensity = trial.stimulus.ambientLightIntensity;
+      AMBIENTLIGHT.visible = true;
     }
 
     disk.visible = true;
@@ -151,6 +150,7 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
           DIRECTIONALLIGHTS.map.get(trial.stimulus.surfaceSlant)
             .get(trial.stimulus.lightSlant)
             .visible = false;
+          AMBIENTLIGHT.visible = false;
         }
       }
     };
