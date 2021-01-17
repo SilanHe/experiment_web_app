@@ -1,163 +1,59 @@
 // CONSTANTS
 // -----------------------------------------------------------------------------
 
-const AMPLITUDES_OLD = {
-  30: {
-    20: 0.6329162785709044,
-    30: 0.6413956394030571,
-    40: 0.4959053968361492,
-    50: 0.36470454648566614,
-    60: 0.26611422180100547,
-    70: 0.2106880210457842,
-  },
-  45: {
-    30: 0.6913082740649584,
-    45: 0.6178336635675455,
-    60: 0.40814966185229296,
-    75: 0.2637512766651843,
-    90: 0.18713049618808367,
-    100: 0.1583433242220703,
-  },
-  60: {
-    90: 0.2746515856573605,
-    100: 0.2385729909602174,
-    110: 0.21135206883702015,
-    120: 0.1939659882572705,
-    130: 0.1889887431844112,
-  },
-};
-
-const AMPLITUDES_GLOSSY_OLD = {
-  30: {
-    20: 0.19519963262930745,
-    30: 0.14585349794238683,
-    40: 0.10949684499314123,
-    50: 0.14333827160493828,
-    60: 0.12908312757201648,
-    70: 0.08848008804201367,
-  },
-  45: {
-    30: 0.3045764114488478,
-    45: 0.25160654091683826,
-    60: 0.18813447619390103,
-    75: 0.16698106995884768,
-    90: 0.11375154193974496,
-    100: 0.07663581181003455,
-  },
-  60: {
-    90: 0.34636763919490754,
-    100: 0.26469135802469146,
-    110: 0.182875171467764,
-    120: 0.12165340649291269,
-    130: 0.08334681549586292,
-  },
-};
-
-const AMPLITUDES = {
-  30: {
-    20: 0.5999248178350449,
-    30: 0.5999248178350449,
-    40: 0.5999248178350449,
-    50: 0.4944317431285882,
-    60: 0.3634959101762943,
-    70: 0.2611431184270691,
-  },
-  45: {
-    30: 0.5999203069051474,
-    45: 0.5999203069051474,
-    60: 0.5559197683279986,
-    75: 0.3559727378956458,
-    90: 0.21714928054101962,
-    100: 0.15615543475192925,
-  },
-  60: {
-    90: 0.3105957018747142,
-    100: 0.23482194787379973,
-    110: 0.17454767057867193,
-    120: 0.13465046994868674,
-    130: 0.10600296702738403,
-  },
-};
-
-const AMPLITUDES_GLOSSY = {
-  30: {
-    20: 0.22277650764619214,
-    30: 0.29852771366404873,
-    40: 0.3386651009713519,
-    50: 0.2450480109739369,
-    60: 0.18031219834374845,
-    70: 0.11370003443467853,
-  },
-  45: {
-    30: 0.49974948821047,
-    45: 0.6607601777834736,
-    60: 0.6999052704721569,
-    75: 0.5248380429812529,
-    90: 0.3026066961337195,
-    100: 0.1774946976240071,
-  },
-  60: {
-    90: 0.18289410150891627,
-    100: 0.15795775034293558,
-    110: 0.12901941777168113,
-    120: 0.09472029670273843,
-    130: 0.07004962022887055,
-  },
-};
-
 LIGHT_INTENSITY_MATTE = {
   30: {
-    20: 0.85,
-    30: 0.86,
-    40: 0.9,
-    50: 0.9,
-    60: 0.92,
-    70: 1,
+    20: 0.043881296324521445,
+    30: 0.021788283869289913,
+    40: 0.10461277921726031,
+    50: 0.22935934562820706,
+    60: 0.370040136158106,
+    70: 0.5200240478246879,
   },
   45: {
-    30: 0.64,
-    45: 0.67,
-    60: 0.72,
-    75: 0.73,
-    90: 0.83,
-    100: 1,
+    30: 0.07110027265491374,
+    45: 0.05,
+    60: 0.1506951853545361,
+    75: 0.3509688563735204,
+    90: 0.5744761130586464,
+    100: 0.7325529644871209,
   },
   60: {
-    90: 0.6,
-    100: 0.64,
-    110: 0.72,
-    120: 0.84,
-    130: 1,
+    90: 0.017894276910871164,
+    100: 0.1822770919067216,
+    110: 0.3305928974241732,
+    120: 0.45190367322054553,
+    130: 0.5560805432776171,
   },
 };
 
 const LIGHT_INTENSITY_GLOSSY = {
   30: {
-    20: 0.95,
-    30: 0.94,
-    40: 0.99,
-    50: 0.92,
-    60: 0.86,
-    70: 0.86,
+    20: 0.05443072702331964,
+    30: 0.0051307846378081815,
+    40: 0.03685456120634975,
+    50: 0.16844180257074637,
+    60: 0.3503398872123153,
+    70: 0.575357415028197,
   },
   45: {
-    30: 0.70,
-    45: 0.82,
-    60: 0.97,
-    75: 0.99,
-    90: 0.93,
-    100: 0.87,
+    30: 0.10934300588549643,
+    45: 0.021333041543568618,
+    60: 0.009035921759591461,
+    75: 0.2498613016308489,
+    90: 0.6052126200274348,
+    100: 0.8460112787684806,
   },
   60: {
-    90: 0.94,
-    100: 0.95,
-    110: 0.95,
-    120: 0.94,
-    130: 1,
+    90: 0.009558349426606829,
+    100: 0.10804450541076055,
+    110: 0.3803840877914953,
+    120: 0.7416735253772289,
+    130: 0.9922986694123387,
   },
 };
 
-const OTHER_AMPLITUDES = {
+const AMPLITUDES = {
   30: 0.45,
   45: 0.35,
   60: 0.19,
@@ -255,6 +151,12 @@ const GLOSSYSPECULAR = (() => {
 
 const DARKGRAY = (() => {
   const color = new THREE.Color(0x111111);
+  color.convertSRGBToLinear();
+  return color;
+})();
+
+const GREEN = (() => {
+  const color = new THREE.Color(0x00ff00);
   color.convertSRGBToLinear();
   return color;
 })();
@@ -385,6 +287,12 @@ const DIRECTIONALLIGHTS = (() => {
   return { map, list };
 })();
 
+const AMBIENTLIGHT = (() => {
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  ambientLight.visible = false;
+  return ambientLight;
+})();
+
 const MESHGEOMETRY = (() => {
   const geometry = new THREE.BufferGeometry();
   const vertices = [];
@@ -409,13 +317,12 @@ const CAMERA = (() => {
   camera.lookAt(0, 0, 0);
   return camera;
 })();
-
 /**
  * Generic scene generation function with my default camera settings
  */
 const SCENE = (() => {
   const scene = new THREE.Scene();
-  scene.background = DARKGRAY;
+  scene.background = GREEN;
 
   // add all the lights, they start out: visible = false;
   for (let i = 0; i < MATHEMATICALIGHTS.length; i += 1) {
@@ -425,6 +332,8 @@ const SCENE = (() => {
   for (let i = 0; i < DIRECTIONALLIGHTS.list.length; i += 1) {
     scene.add(DIRECTIONALLIGHTS.list[i]);
   }
+
+  scene.add(AMBIENTLIGHT);
 
   scene.add(MESH);
   scene.add(DISK);
@@ -464,13 +373,98 @@ function onWindowResize() {
   RENDERERCANVAS.height = window.innerHeight;
 }
 
+function cloneCanvas(oldCanvas) {
+  // create a new canvas
+  const newCanvas = document.createElement('canvas');
+  const context = newCanvas.getContext('2d');
+
+  // set dimensions
+  newCanvas.width = oldCanvas.width;
+  newCanvas.height = oldCanvas.height;
+
+  // apply the old canvas to the new one
+  context.drawImage(oldCanvas, 0, 0);
+
+  // return the new canvas
+  return newCanvas;
+}
+
+function NormalizeContrast() {
+  const c = cloneCanvas(RENDERERCANVAS);
+  const ctx = c.getContext("2d");
+  const imageData = ctx.getImageData(0, 0, RENDERERCANVAS.width, RENDERERCANVAS.height);
+  const data = Uint8ClampedArray.from(imageData.data);
+
+  console.log(`imageData.width: ${imageData.width}, imageData.height: ${imageData.height}`);
+  console.log(`data.length: ${data.length}`);
+
+  // get average intensity
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let count = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
+      continue;
+    } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0) {
+      continue;
+    }
+    r += data[i];
+    g += data[i + 1];
+    b += data[i + 2];
+    count += 1;
+  }
+  r /= count;
+  g /= count;
+  b /= count;  
+
+  // get standard deviation of intensities
+  let sumR = 0;
+  let sumG = 0;
+  let sumB = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
+      continue;
+    } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0) {
+      continue;
+    }
+    sumR += (data[i] - r) ** 2;
+    sumG += (data[i + 1] - g) ** 2;
+    sumB += (data[i + 2] - b) ** 2;
+  }
+
+  const stdR = Math.sqrt(sumR / count);
+  const stdG = Math.sqrt(sumG / count);
+  const stdB = Math.sqrt(sumB / count);
+
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
+      data[i] = 17;
+      data[i + 1] = 17;
+      data[i + 2] = 17;
+      data[i + 3] = 255;
+      continue;
+    } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0) {
+      continue;
+    }
+
+    data[i] = Math.round(targetMean.r + targetStd.r * ((data[i] - r) / stdR));
+    data[i + 1] = Math.round(targetMean.g + targetStd.g * ((data[i + 1] - g) / stdG));
+    data[i + 2] = Math.round(targetMean.b + targetStd.b * ((data[i + 2] - b) / stdB));
+  }
+  const newImageData = new ImageData(data, RENDERERCANVAS.width);
+  ctx.putImageData(newImageData, 0, 0);
+
+  return c;
+}
+
 function setMathematicaLightsVisibility(value) {
   for (let i = 0; i < MATHEMATICALIGHTS.length; i += 1) {
     MATHEMATICALIGHTS[i].visible = value;
   }
 }
 
-function setMeshGeometryVerticesIndices(vertices, indices) {
+function setMeshGeometryVerticesIndices(vertices) {
   const bufferVertices = MESH.geometry.attributes.position.array;
   for (let i = 0; i < TOTAL_NUM_POINTS; i += 1) {
     bufferVertices[i] = vertices[i];
@@ -556,26 +550,30 @@ function getSurfaceDataList(numSets = 1) {
             lightSlantIndex += 1) {
             // pretest and test image surface data
             const seed = getRandomSeed();
+            const material = materials[materialIndex][1];
+            const lightSlant = DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex];
+            const surfaceSlant = SURFACESLANTS[surfaceIndex];
+            let ambientLightIntensity;
+            
+            if (material == MATERIALS.MATTE) {
+              ambientLightIntensity = LIGHT_INTENSITY_MATTE[surfaceSlant][lightSlant];
+            } else {
+              ambientLightIntensity = LIGHT_INTENSITY_GLOSSY[surfaceSlant][lightSlant];
+            }
+
             const testData = {
               seed,
               choice: choices[choiceIndex][1],
-              material: materials[materialIndex][1],
+              material,
               light: LIGHTS.DIRECTIONAL,
-              lightSlant: DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex],
-              surfaceSlant: SURFACESLANTS[surfaceIndex],
+              lightSlant,
+              surfaceSlant,
+              ambientLightIntensity,
             };
             // different amplitude values for different materials
-            let amplitude;
-            if (testData.material === MATERIALS.MATTE) {
-              amplitude = AMPLITUDES[testData.surfaceSlant][testData.lightSlant];
-              testData.lightIntensity = LIGHT_INTENSITY_MATTE[testData.surfaceSlant][testData.lightSlant];
-            } else {
-              amplitude = AMPLITUDES_GLOSSY[testData.surfaceSlant][testData.lightSlant];
-              testData.lightIntensity = LIGHT_INTENSITY_GLOSSY[testData.surfaceSlant][testData.lightSlant];
-            }
 
             const surfaceData = getSurfaceData(seed,
-              testData.choice, amplitude);
+              testData.choice, AMPLITUDES[testData.surfaceSlant]);
             surfaceDataList.push(surfaceData);
             testDataList.push(testData);
           }

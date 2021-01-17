@@ -7,11 +7,11 @@ function clearDocumentBody() {
   }
 }
 
-function downloadCanvas(canvas, filename = "canvas_images.jpeg") {
+function downloadCanvas(canvas, filename = 'canvas_images.jpeg') {
   // Convert the canvas to data
-  let image = canvas.toDataURL();
+  const image = canvas.toDataURL();
   // Create a link
-  let aDownloadLink = document.createElement('a');
+  const aDownloadLink = document.createElement('a');
   // Add the name of the file to the link
   aDownloadLink.download = filename;
   // Attach the data to the link
@@ -24,38 +24,12 @@ function rgbToGrayscale(r, g, b) {
   return 0.2126 * r ** GAMMA + 0.7152 * g ** GAMMA + 0.0722 * b ** GAMMA;
 }
 
-function GetCenterContrastBackground(x1, x2, y1, y2) {
-  // get average Intensity of surface
-  const height = y2 - y1;
-  const width = x2 - x1;
-  // get points from screen middle with GL call
-  const numPixels = width * height;
-  const pixels = new Uint8Array(numPixels * 4);
-  GLCONTEXT.readPixels(x1, y1, width, height, GLCONTEXT.RGBA,
-    GLCONTEXT.UNSIGNED_BYTE, pixels);
-
-  const backgroundPixel = new Uint8Array(4);
-  GLCONTEXT.readPixels(0, 0, 1, 1, GLCONTEXT.RGBA,
-    GLCONTEXT.UNSIGNED_BYTE, backgroundPixel);
-  const averageBackgroundIntensity = rgbToGrayscale(backgroundPixel[0] / 255,
-    backgroundPixel[1] / 255, backgroundPixel[2] / 255);
-
-  // get average intensity
-  let intensity = 0;
-  for (let i = 0; i < pixels.length; i += 4) {
-    const grayscale = rgbToGrayscale(pixels[i] / 255, pixels[i + 1] / 255, pixels[i + 2] / 255);
-    intensity += grayscale;
-  }
-  const averageTargetIntensity = intensity / numPixels;
-  // computer RMS
-  let sum = 0;
-  for (let i = 0; i < pixels.length; i += 4) {
-    const grayscale = rgbToGrayscale(pixels[i] / 255, pixels[i + 1] / 255, pixels[i + 2] / 255);
-    sum += (grayscale - averageTargetIntensity) ** 2;
-  }
-
-  const rms = Math.sqrt(sum / NUM_VERTICES) / averageBackgroundIntensity;
-  return rms;
+function grayscaleToRGB(grayscale) {
+  return {
+    r: (grayscale * 0.2126) ** (1 / GAMMA),
+    g: (grayscale * 0.7152) ** (1 / GAMMA),
+    b: (grayscale * 0.0722) ** (1 / GAMMA),
+  };
 }
 
 function GetCenterContrast(x1, x2, y1, y2) {
@@ -86,25 +60,55 @@ function GetCenterContrast(x1, x2, y1, y2) {
   return rms;
 }
 
-function GetCenterLuminance(x1, x2, y1, y2) {
-  // get average Intensity of surface
-  const height = y2 - y1;
-  const width = x2 - x1;
-  // get points from screen middle with GL call
-  const numPixels = width * height;
-  const pixels = new Uint8Array(numPixels * 4);
-  GLCONTEXT.readPixels(x1, y1, width, height, GLCONTEXT.RGBA,
-    GLCONTEXT.UNSIGNED_BYTE, pixels);
+function GetLuminanceAndStandardDeviation() {
+  const c = cloneCanvas(RENDERERCANVAS);
+  const ctx = c.getContext("2d");
+  const imageData = ctx.getImageData(0, 0, c.width, c.height);
+  const data = Uint8ClampedArray.from(imageData.data);
 
   // get average intensity
-  let intensity = 0;
-  for (let i = 0; i < pixels.length; i += 4) {
-    const grayscale = rgbToGrayscale(pixels[i] / 255, pixels[i + 1] / 255, pixels[i + 2] / 255);
-    intensity += grayscale;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let count = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
+      continue;
+    } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0) {
+      continue;
+    }
+    r += data[i];
+    g += data[i + 1];
+    b += data[i + 2];
+    count += 1;
   }
-  const averageTargetIntensity = intensity / numPixels;
+  r /= count;
+  g /= count;
+  b /= count;  
 
-  return averageTargetIntensity;
+  // get standard deviation of intensities
+  let sumR = 0;
+  let sumG = 0;
+  let sumB = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
+      continue;
+    } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0) {
+      continue;
+    }
+    sumR += (data[i] - r) ** 2;
+    sumG += (data[i + 1] - g) ** 2;
+    sumB += (data[i + 2] - b) ** 2;
+  }
+
+  const stdR = Math.sqrt(sumR / count);
+  const stdG = Math.sqrt(sumG / count);
+  const stdB = Math.sqrt(sumB / count);
+
+  console.log(`r: ${r},
+  g: ${g},
+  b: ${b}`);
+  console.log(`stdR ${stdR}, stdG ${stdG}, stdB ${stdB}`);
 }
 
 function getSurfaceDataOnly(seed, choice) {
@@ -115,24 +119,8 @@ function getSurfaceDataOnly(seed, choice) {
   return $.get('/getsurface', surfaceDetails).then((data) => data);
 }
 
-function cloneCanvas(oldCanvas) {
-  // create a new canvas
-  const newCanvas = document.createElement('canvas');
-  const context = newCanvas.getContext('2d');
-
-  // set dimensions
-  newCanvas.width = oldCanvas.width;
-  newCanvas.height = oldCanvas.height;
-
-  // apply the old canvas to the new one
-  context.drawImage(oldCanvas, 0, 0);
-
-  // return the new canvas
-  return newCanvas;
-}
-
 function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
-  material, amplitude, isPretest, lightIntensity = 1) {
+  material, amplitude, isPretest) {
   return getSurfaceData(seed, choice, amplitude).then((stimulusData) => {
     const disk = (() => {
       if (isPretest) {
@@ -140,7 +128,7 @@ function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
       }
       return PIP;
     })();
-    setMeshGeometryVerticesIndices(stimulusData.vertices, INDICES);
+    setMeshGeometryVerticesIndices(stimulusData.vertices);
     // change material
     if (material === MATERIALS.MATTE) {
       setMeshMaterial(MATTEMATERIAL);
@@ -153,6 +141,7 @@ function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
     MESH.rotateX(-THREE.Math.degToRad(surfaceSlant));
     MESH.geometry.computeVertexNormals();
     MESH.updateMatrixWorld();
+
     // set disk locations
     const x = stimulusData.vertices[stimulusData.extremaIndex];
     const y = stimulusData.vertices[stimulusData.extremaIndex + 1];
@@ -180,17 +169,12 @@ function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
       DIRECTIONALLIGHTS.map.get(surfaceSlant)
         .get(lightSlant)
         .visible = true;
-      DIRECTIONALLIGHTS.map.get(surfaceSlant)
-        .get(lightSlant)
-        .intensity = lightIntensity;
     }
 
     disk.visible = true;
     RENDERER.render(SCENE, CAMERA);
-    const newCanvas = cloneCanvas(RENDERERCANVAS);
+    const newCanvas = NormalizeContrast();
     document.body.appendChild(newCanvas);
-    const rmsContrast = GetCenterContrast(400, 800, 200, 500);
-    console.log(`surfaceSlant: ${surfaceSlant}, lightSlant: ${lightSlant}, rmsContrast: ${rmsContrast}`);
 
     // reset our renderering to prep for next one
     resetObject(MESH);
@@ -212,10 +196,10 @@ function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
   });
 }
 
-function renderSurface2(heightMap, seed, surfaceSlant, choice, light, lightSlant,
-  material, amplitude, isPretest) {
+function renderSurfaceContrast(heightMap, surfaceSlant, light, lightSlant,
+  material, amplitude) {
   const vertices = getVertices(heightMap, amplitude);
-  setMeshGeometryVerticesIndices(vertices, INDICES);
+  setMeshGeometryVerticesIndices(vertices);
   // change material
   if (material === MATERIALS.MATTE) {
     setMeshMaterial(MATTEMATERIAL);
@@ -235,15 +219,14 @@ function renderSurface2(heightMap, seed, surfaceSlant, choice, light, lightSlant
   } else if (light === LIGHTS.MATHEMATICA) {
     setMathematicaLightsVisibility(true);
   } else {
-    // directional
     DIRECTIONALLIGHTS.map.get(surfaceSlant)
       .get(lightSlant)
       .visible = true;
   }
 
   RENDERER.render(SCENE, CAMERA);
-  const rmsContrast = GetCenterContrast(400, 800, 200, 500);
-
+  const CANVAS = NormalizeContrast();
+  document.body.appendChild(CANVAS);
   // reset our renderering to prep for next one
   resetObject(MESH);
 
@@ -257,61 +240,6 @@ function renderSurface2(heightMap, seed, surfaceSlant, choice, light, lightSlant
       .get(lightSlant)
       .visible = false;
   }
-
-  return rmsContrast;
-}
-
-function renderSurface3(heightMap, seed, surfaceSlant, choice, light, lightSlant,
-  material, amplitude, intensity) {
-  const vertices = getVertices(heightMap, amplitude);
-  setMeshGeometryVerticesIndices(vertices, INDICES);
-  // change material
-  if (material === MATERIALS.MATTE) {
-    setMeshMaterial(MATTEMATERIAL);
-    MATTEMATERIAL.needsUpdate = true;
-  } else {
-    setMeshMaterial(GLOSSYMATERIAL);
-    GLOSSYMATERIAL.needsUpdate = true;
-  }
-  // rotate
-  MESH.rotateX(-THREE.Math.degToRad(surfaceSlant));
-  MESH.geometry.computeVertexNormals();
-  MESH.updateMatrixWorld();
-
-  // make the light in question visible
-  if (light === LIGHTS.MATLAB) {
-    MATLABLIGHT.visible = true;
-  } else if (light === LIGHTS.MATHEMATICA) {
-    setMathematicaLightsVisibility(true);
-  } else {
-    // directional
-    DIRECTIONALLIGHTS.map.get(surfaceSlant)
-      .get(lightSlant)
-      .visible = true;
-
-    DIRECTIONALLIGHTS.map.get(surfaceSlant)
-      .get(lightSlant)
-      .intensity = intensity;
-  }
-
-  RENDERER.render(SCENE, CAMERA);
-  const luminance = GetCenterLuminance(400, 800, 200, 500);
-
-  // reset our renderering to prep for next one
-  resetObject(MESH);
-
-  if (light === LIGHTS.MATLAB) {
-    MATLABLIGHT.visible = false;
-  } else if (light === LIGHTS.MATHEMATICA) {
-    setMathematicaLightsVisibility(false);
-  } else {
-    // directional
-    DIRECTIONALLIGHTS.map.get(surfaceSlant)
-      .get(lightSlant)
-      .visible = false;
-  }
-
-  return luminance;
 }
 
 function getCursorPosition(canvas, event) {
@@ -363,7 +291,7 @@ function allRMSContrast() {
   }
 }
 
-function GetAmplitudeContrastData(surfaceSlant = 30, lightSlant = 20, material = MATERIALS.GLOSSY) {
+function GetAmbientLightIntensityContrastData(surfaceSlant = 30, lightSlant = 20, material = MATERIALS.MATTE) {
   const seed = 120;
   const choice = CHOICE.VALLEY;
   const light = LIGHTS.DIRECTIONAL;
@@ -372,20 +300,20 @@ function GetAmplitudeContrastData(surfaceSlant = 30, lightSlant = 20, material =
 
   return surface.then((surfaceInfo) => {
     const data = [];
-    for (let amplitude = 0.01; amplitude < 0.7; amplitude += 0.01) {
-      const rms = renderSurface2(surfaceInfo.heightMap, seed, surfaceSlant,
-        choice, light, lightSlant,
-        material, amplitude, isPretest);
+    for (let lightIntensity = 0; lightIntensity <= 1.0; lightIntensity += 0.01) {
+      const rms = renderSurfaceContrast(surfaceInfo.heightMap, seed, surfaceSlant,
+        choice, light, lightSlant, material, 
+        AMPLITUDES[surfaceSlant], isPretest, lightIntensity);
       data.push(rms);
     }
     return data;
   });
 }
 
-function GetAllAmplitudeContrastData(surfaceSlant = 30, material = MATERIALS.MATTE) {
+function GetAllAmbientLightIntensityContrastData(surfaceSlant = 30, material = MATERIALS.MATTE) {
   for (let i = 0; i < DIRECTIONALLIGHTSLANTS[surfaceSlant].length; i += 1) {
     const lightSlant = DIRECTIONALLIGHTSLANTS[surfaceSlant][i];
-    const amplitudeContrastData = GetAmplitudeContrastData(surfaceSlant, lightSlant, material);
+    const amplitudeContrastData = GetAmbientLightIntensityContrastData(surfaceSlant, lightSlant, material);
     amplitudeContrastData.then((data) => {
       console.log(lightSlant);
       console.log(data.toString());
@@ -393,44 +321,7 @@ function GetAllAmplitudeContrastData(surfaceSlant = 30, material = MATERIALS.MAT
   }
 }
 
-function GetLuminanceData(seed = 1, surfaceSlant = 30, lightSlant = 20, material = MATERIALS.GLOSSY) {
-  const choice = CHOICE.VALLEY;
-  const light = LIGHTS.DIRECTIONAL;
-  const isPretest = false;
-  const surface = getSurfaceDataOnly(seed, choice);
-
-  let amplitude;
-  if (material === MATERIALS.MATTE) {
-    amplitude = AMPLITUDES[surfaceSlant][lightSlant];
-  } else {
-    amplitude = AMPLITUDES_GLOSSY[surfaceSlant][lightSlant];
-  }
-
-  return surface.then((surfaceInfo) => {
-    const data = [];
-    for (let intensity = 0.01; intensity <= 1; intensity += 0.01) {
-      const luminance = renderSurface3(surfaceInfo.heightMap, seed, surfaceSlant,
-        choice, light, lightSlant,
-        material, amplitude, intensity);
-      data.push(luminance);
-    }
-    return data;
-  });
-}
-
-function GetAllLuminanceData(seed = 1, surfaceSlant = 30, material = MATERIALS.MATTE) {
-  for (let i = 0; i < DIRECTIONALLIGHTSLANTS[surfaceSlant].length; i += 1) {
-    const lightSlant = DIRECTIONALLIGHTSLANTS[surfaceSlant][i];
-    const luminanceData = GetLuminanceData(seed, surfaceSlant, lightSlant, material);
-    luminanceData.then((data) => {
-      console.log(surfaceSlant);
-      console.log(lightSlant);
-      console.log(data.toString());
-    });
-  }
-}
-
-function findAmplitudes(surfaceSlant = 30, material = MATERIALS.GLOSSY, lo = 0.1, hi = 0.7, target = 0.2) {
+function findAmbientLightIntensity(surfaceSlant = 30, material = MATERIALS.GLOSSY, lo = 0, hi = 1, target = 0.2) {
   const choice = CHOICE.VALLEY;
 
   const error = 0.001;
@@ -439,17 +330,17 @@ function findAmplitudes(surfaceSlant = 30, material = MATERIALS.GLOSSY, lo = 0.1
   const numSeeds = 50;
   const NUMCALLS = 20;
 
-  function searchAmplitude(surfaceData, numCalls, targetRMS, l, r) {
+  function searchAmbient(surfaceData, numCalls, targetRMS, l, r) {
     // additional exit condition
     const mid1 = l + (r - l) / 3;
     const mid2 = r - (r - l) / 3;
 
-    const rms1 = renderSurface2(surfaceData.heightMap, surfaceData.seed, surfaceData.surfaceSlant,
+    const rms1 = renderSurfaceContrast(surfaceData.heightMap, surfaceData.seed, surfaceData.surfaceSlant,
       surfaceData.choice, surfaceData.light, surfaceData.lightSlant,
-      surfaceData.material, mid1, surfaceData.isPretest);
-    const rms2 = renderSurface2(surfaceData.heightMap, surfaceData.seed, surfaceData.surfaceSlant,
+      surfaceData.material, AMPLITUDES[surfaceData.surfaceSlant], surfaceData.isPretest, mid1);
+    const rms2 = renderSurfaceContrast(surfaceData.heightMap, surfaceData.seed, surfaceData.surfaceSlant,
       surfaceData.choice, surfaceData.light, surfaceData.lightSlant,
-      surfaceData.material, mid2, surfaceData.isPretest);
+      surfaceData.material, AMPLITUDES[surfaceData.surfaceSlant], surfaceData.isPretest, mid2);
     const rms = [rms1, rms2];
 
     if (numCalls === 0) {
@@ -479,19 +370,19 @@ function findAmplitudes(surfaceSlant = 30, material = MATERIALS.GLOSSY, lo = 0.1
         newL = mid1;
       }
 
-      return searchAmplitude(surfaceData, numCalls - 1, targetRMS, newL, newR);
+      return searchAmbient(surfaceData, numCalls - 1, targetRMS, newL, newR);
     });
   }
 
-  const amplitudes = [];
+  const lightIntensities = [];
   const lightSlants = DIRECTIONALLIGHTSLANTS[surfaceSlant];
   for (let i = 0; i < lightSlants.length; i += 1) {
     const lightSlant = lightSlants[i];
-    const amplitude = [];
+    const lightIntensity = [];
     for (let j = 0; j < numSeeds; j += 1) {
       const seed = getRandomSeed();
       const surface = getSurfaceDataOnly(seed, choice);
-      amplitude.push(surface.then((surfaceInfo) => {
+      lightIntensity.push(surface.then((surfaceInfo) => {
         const surfaceData = {
           surfaceSlant,
           lightSlant,
@@ -503,43 +394,145 @@ function findAmplitudes(surfaceSlant = 30, material = MATERIALS.GLOSSY, lo = 0.1
           heightMap: surfaceInfo.heightMap,
         };
 
-        return searchAmplitude(surfaceData,
+        return searchAmbient(surfaceData,
           NUMCALLS, target, lo, hi).then((data) => data);
       }));
     }
 
-    Promise.all(amplitude).then((data) => {
+    Promise.all(lightIntensity).then((data) => {
       let sum = 0;
       for (let k = 0; k < data.length; k += 1) {
         sum += data[k];
       }
       const amp = sum / numSeeds;
-      console.log(`surfaceSlant: ${surfaceSlant}, lightSlant: ${lightSlant}, amplitude: ${amp}, sum: ${sum}`);
+      console.log(`material: ${material} surfaceSlant: ${surfaceSlant}, lightSlant: ${lightSlant}, amplitude: ${amp}, sum: ${sum}`);
     });
   }
-  return amplitudes;
+  return lightIntensities;
 }
 
 clearDocumentBody();
 document.body.appendChild(RENDERERCANVAS);
 // allRMSContrast();
 
+
 // GetAllAmplitudeContrastData(60, MATERIALS.GLOSSY);
 
 const TARGET_RMS = {
   MATTE: {
-    30: 0.2,
-    45: 0.2,
-    60: 0.2,
+    30: 0.08849325510537281,
+    45: 0.06089653849564214,
+    60: 0.12608018980461572,
   },
   GLOSSY: {
-    30: 0.4,
-    45: 0.4,
-    60: 0.4,
+    30: 0.24829650141654042,
+    45: 0.2315229692583383,
+    60: 0.20102753863201026,
   },
 };
 
-// findAmplitudes(60, MATERIALS.GLOSSY, 0.07, 0.4, 0.2);
-allRMSContrast();
+function getSet(numSets = 1) {
+  const choices = Object.entries(CHOICE);
+  const materials = Object.entries(MATERIALS);
+  const seed = 1;
 
-// GetAllLuminanceData(1, 30, MATERIALS.GLOSSY);
+  // for each surface slant
+  for (let i = 0; i < numSets; i += 1) {
+    for (let surfaceIndex = 0; surfaceIndex < SURFACESLANTS.length; surfaceIndex += 1) {
+      // choice
+      for (let choiceIndex = 0; choiceIndex < choices.length; choiceIndex += 1) {
+        // material
+        for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
+          // directional light slants
+          for (let lightSlantIndex = 0;
+            lightSlantIndex < DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]].length;
+            lightSlantIndex += 1) {
+            // pretest and test image surface data
+            const data = {
+              seed,
+              choice: choices[choiceIndex][1],
+              material: materials[materialIndex][1],
+              light: LIGHTS.DIRECTIONAL,
+              lightSlant: DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex],
+              surfaceSlant: SURFACESLANTS[surfaceIndex],
+            };
+
+            const amplitude = AMPLITUDES[data.surfaceSlant];
+            const tempCanvas = renderSurface(data.seed, data.surfaceSlant, data.choice,
+            data.light, data.lightSlant, data.material, amplitude, data.isPretest);
+            const filename = getSurfaceInfoString(data, '.png');
+            tempCanvas.then((canvas) => {
+              downloadCanvas(canvas, filename);
+            });
+          }
+
+          // matlab light
+          // pretest and test image surface data
+          const data = {
+            seed,
+            choice: choices[choiceIndex][1],
+            material: materials[materialIndex][1],
+            light: LIGHTS.MATLAB,
+            surfaceSlant: SURFACESLANTS[surfaceIndex],
+          };
+          const amplitude = AMPLITUDES[data.surfaceSlant];
+          const tempCanvas = renderSurface(data.seed, data.surfaceSlant, data.choice,
+          data.light, data.lightSlant, data.material, amplitude, data.isPretest);
+          const filename = getSurfaceInfoString(data, '.png');
+          tempCanvas.then((canvas) => {
+            downloadCanvas(canvas, filename);
+          });
+        }
+        // mathematica light
+        // pretest and test image surface data
+        const data = {
+          seed,
+          choice: choices[choiceIndex][1],
+          material: MATERIALS.MATTE,
+          light: LIGHTS.MATHEMATICA,
+          surfaceSlant: SURFACESLANTS[surfaceIndex],
+        };
+        const amplitude = AMPLITUDES[data.surfaceSlant];
+        const tempCanvas = renderSurface(data.seed, data.surfaceSlant, data.choice,
+        data.light, data.lightSlant, data.material, amplitude, data.isPretest);
+        const filename = getSurfaceInfoString(data, '.png');
+        tempCanvas.then((canvas) => {
+          downloadCanvas(canvas, filename);
+        });
+      }
+    }
+  }
+}
+
+function RenderSurface(surfaceSlant = 60, lightSlant = 120, material = MATERIALS.MATTE) {
+  const seed = 1;
+  const choice = CHOICE.VALLEY;
+  const light = LIGHTS.DIRECTIONAL;
+  const surface = getSurfaceDataOnly(seed, choice);
+
+  return surface.then((surfaceInfo) => {
+    renderSurfaceContrast(surfaceInfo.heightMap, surfaceSlant, light, lightSlant, material,
+      AMPLITUDES[surfaceSlant], 0);
+  });
+}
+
+
+
+const targetMean = {
+  r: 245.5942780005993,
+  g: 245.5942780005993,
+  b: 245.5942780005993,
+};
+
+const targetStd = {
+  r: 7.104325914379496,
+  g: 7.104325914379496,
+  b: 7.104325914379496,
+};
+
+var t0 = performance.now();
+
+getSet();
+
+var t1 = performance.now();
+console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.");
