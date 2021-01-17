@@ -190,6 +190,7 @@ function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
       DIRECTIONALLIGHTS.map.get(surfaceSlant)
         .get(lightSlant)
         .visible = false;
+      AMBIENTLIGHT.visible = false;
     }
 
     return newCanvas;
@@ -515,7 +516,6 @@ function RenderSurface(surfaceSlant = 60, lightSlant = 120, material = MATERIALS
       AMPLITUDES[surfaceSlant], 0);
   });
 }
-
 
 
 const targetMean = {
