@@ -397,9 +397,6 @@ function NormalizeContrast() {
   const imageData = ctx.getImageData(0, 0, RENDERERCANVAS.width, RENDERERCANVAS.height);
   const data = Uint8ClampedArray.from(imageData.data);
 
-  console.log(`imageData.width: ${imageData.width}, imageData.height: ${imageData.height}`);
-  console.log(`data.length: ${data.length}`);
-
   // get average intensity
   let r = 0;
   let g = 0;

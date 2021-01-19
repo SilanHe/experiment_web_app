@@ -20,46 +20,6 @@ function downloadCanvas(canvas, filename = 'canvas_images.jpeg') {
   aDownloadLink.click();
 }
 
-function rgbToGrayscale(r, g, b) {
-  return 0.2126 * r ** GAMMA + 0.7152 * g ** GAMMA + 0.0722 * b ** GAMMA;
-}
-
-function grayscaleToRGB(grayscale) {
-  return {
-    r: (grayscale * 0.2126) ** (1 / GAMMA),
-    g: (grayscale * 0.7152) ** (1 / GAMMA),
-    b: (grayscale * 0.0722) ** (1 / GAMMA),
-  };
-}
-
-function GetCenterContrast(x1, x2, y1, y2) {
-  // get average Intensity of surface
-  const height = y2 - y1;
-  const width = x2 - x1;
-  // get points from screen middle with GL call
-  const numPixels = width * height;
-  const pixels = new Uint8Array(numPixels * 4);
-  GLCONTEXT.readPixels(x1, y1, width, height, GLCONTEXT.RGBA,
-    GLCONTEXT.UNSIGNED_BYTE, pixels);
-
-  // get average intensity
-  let intensity = 0;
-  for (let i = 0; i < pixels.length; i += 4) {
-    const grayscale = rgbToGrayscale(pixels[i] / 255, pixels[i + 1] / 255, pixels[i + 2] / 255);
-    intensity += grayscale;
-  }
-  const averageTargetIntensity = intensity / numPixels;
-  // computer RMS
-  let sum = 0;
-  for (let i = 0; i < pixels.length; i += 4) {
-    const grayscale = rgbToGrayscale(pixels[i] / 255, pixels[i + 1] / 255, pixels[i + 2] / 255);
-    sum += (grayscale - averageTargetIntensity) ** 2;
-  }
-
-  const rms = Math.sqrt(sum / NUM_VERTICES) / averageTargetIntensity;
-  return rms;
-}
-
 function GetLuminanceAndStandardDeviation() {
   const c = cloneCanvas(RENDERERCANVAS);
   const ctx = c.getContext("2d");
@@ -200,52 +160,6 @@ function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
   });
 }
 
-function renderSurfaceContrast(heightMap, surfaceSlant, light, lightSlant,
-  material, amplitude) {
-  const vertices = getVertices(heightMap, amplitude);
-  setMeshGeometryVerticesIndices(vertices);
-  // change material
-  if (material === MATERIALS.MATTE) {
-    setMeshMaterial(MATTEMATERIAL);
-    MATTEMATERIAL.needsUpdate = true;
-  } else {
-    setMeshMaterial(GLOSSYMATERIAL);
-    GLOSSYMATERIAL.needsUpdate = true;
-  }
-  // rotate
-  MESH.rotateX(-THREE.Math.degToRad(surfaceSlant));
-  MESH.geometry.computeVertexNormals();
-  MESH.updateMatrixWorld();
-
-  // make the light in question visible
-  if (light === LIGHTS.MATLAB) {
-    MATLABLIGHT.visible = true;
-  } else if (light === LIGHTS.MATHEMATICA) {
-    setMathematicaLightsVisibility(true);
-  } else {
-    DIRECTIONALLIGHTS.map.get(surfaceSlant)
-      .get(lightSlant)
-      .visible = true;
-  }
-
-  RENDERER.render(SCENE, CAMERA);
-  const CANVAS = NormalizeContrast();
-  document.body.appendChild(CANVAS);
-  // reset our renderering to prep for next one
-  resetObject(MESH);
-
-  if (light === LIGHTS.MATLAB) {
-    MATLABLIGHT.visible = false;
-  } else if (light === LIGHTS.MATHEMATICA) {
-    setMathematicaLightsVisibility(false);
-  } else {
-    // directional
-    DIRECTIONALLIGHTS.map.get(surfaceSlant)
-      .get(lightSlant)
-      .visible = false;
-  }
-}
-
 function getCursorPosition(canvas, event) {
   const rect = canvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
@@ -256,164 +170,6 @@ function getCursorPosition(canvas, event) {
 RENDERERCANVAS.addEventListener('mousedown', function(e) {
   getCursorPosition(RENDERERCANVAS, e);
 });
-
-function allRMSContrast() {
-  const seed = 1;
-  const choice = CHOICE.HILL;
-  const light = LIGHTS.DIRECTIONAL;
-  const materials = Object.entries(MATERIALS);
-  const isPretest = false;
-
-  for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
-    for (let surfaceSlant = 30; surfaceSlant <= 60; surfaceSlant += 15) {
-      for (let lightSlantIndex = 0;
-        lightSlantIndex < DIRECTIONALLIGHTSLANTS[surfaceSlant].length;
-        lightSlantIndex += 1) {
-        // pretest and test image surface data
-        const data = {
-          seed,
-          choice,
-          material: materials[materialIndex][1],
-          light,
-          lightSlant: DIRECTIONALLIGHTSLANTS[surfaceSlant][lightSlantIndex],
-          surfaceSlant,
-          isPretest,
-        };
-        // different amplitude values for different materials
-        let amplitude;
-        let lightIntensity;
-        amplitude = OTHER_AMPLITUDES[data.surfaceSlant];
-        console.log(lightIntensity);
-        const tempCanvas = renderSurface(data.seed, data.surfaceSlant, data.choice,
-          data.light, data.lightSlant, data.material, amplitude, data.isPretest, 1);
-        const filename = getSurfaceInfoString(data, '.png');
-        tempCanvas.then((canvas) => {
-          downloadCanvas(canvas, filename);
-        });
-      }
-    }
-  }
-}
-
-function GetAmbientLightIntensityContrastData(surfaceSlant = 30, lightSlant = 20, material = MATERIALS.MATTE) {
-  const seed = 120;
-  const choice = CHOICE.VALLEY;
-  const light = LIGHTS.DIRECTIONAL;
-  const isPretest = false;
-  const surface = getSurfaceDataOnly(seed, choice);
-
-  return surface.then((surfaceInfo) => {
-    const data = [];
-    for (let lightIntensity = 0; lightIntensity <= 1.0; lightIntensity += 0.01) {
-      const rms = renderSurfaceContrast(surfaceInfo.heightMap, seed, surfaceSlant,
-        choice, light, lightSlant, material, 
-        AMPLITUDES[surfaceSlant], isPretest, lightIntensity);
-      data.push(rms);
-    }
-    return data;
-  });
-}
-
-function GetAllAmbientLightIntensityContrastData(surfaceSlant = 30, material = MATERIALS.MATTE) {
-  for (let i = 0; i < DIRECTIONALLIGHTSLANTS[surfaceSlant].length; i += 1) {
-    const lightSlant = DIRECTIONALLIGHTSLANTS[surfaceSlant][i];
-    const amplitudeContrastData = GetAmbientLightIntensityContrastData(surfaceSlant, lightSlant, material);
-    amplitudeContrastData.then((data) => {
-      console.log(lightSlant);
-      console.log(data.toString());
-    });
-  }
-}
-
-function findAmbientLightIntensity(surfaceSlant = 30, material = MATERIALS.GLOSSY, lo = 0, hi = 1, target = 0.2) {
-  const choice = CHOICE.VALLEY;
-
-  const error = 0.001;
-  const light = LIGHTS.DIRECTIONAL;
-  const isPretest = false;
-  const numSeeds = 50;
-  const NUMCALLS = 20;
-
-  function searchAmbient(surfaceData, numCalls, targetRMS, l, r) {
-    // additional exit condition
-    const mid1 = l + (r - l) / 3;
-    const mid2 = r - (r - l) / 3;
-
-    const rms1 = renderSurfaceContrast(surfaceData.heightMap, surfaceData.seed, surfaceData.surfaceSlant,
-      surfaceData.choice, surfaceData.light, surfaceData.lightSlant,
-      surfaceData.material, AMPLITUDES[surfaceData.surfaceSlant], surfaceData.isPretest, mid1);
-    const rms2 = renderSurfaceContrast(surfaceData.heightMap, surfaceData.seed, surfaceData.surfaceSlant,
-      surfaceData.choice, surfaceData.light, surfaceData.lightSlant,
-      surfaceData.material, AMPLITUDES[surfaceData.surfaceSlant], surfaceData.isPretest, mid2);
-    const rms = [rms1, rms2];
-
-    if (numCalls === 0) {
-      return ((l + r) / 2);
-    }
-
-    return Promise.all(rms).then((data) => {
-      const difference1 = Math.abs(data[0] - targetRMS);
-      const difference2 = Math.abs(data[1] - targetRMS);
-
-      if (difference1 < error) {
-        return mid1;
-      }
-      if (difference2 < error) {
-        return mid2;
-      }
-
-      let newL = l;
-      let newR = r;
-
-      if (difference1 < difference2) {
-        newR = mid2;
-      } else if (difference2 < difference1) {
-        newL = mid1;
-      } else {
-        newR = mid2;
-        newL = mid1;
-      }
-
-      return searchAmbient(surfaceData, numCalls - 1, targetRMS, newL, newR);
-    });
-  }
-
-  const lightIntensities = [];
-  const lightSlants = DIRECTIONALLIGHTSLANTS[surfaceSlant];
-  for (let i = 0; i < lightSlants.length; i += 1) {
-    const lightSlant = lightSlants[i];
-    const lightIntensity = [];
-    for (let j = 0; j < numSeeds; j += 1) {
-      const seed = getRandomSeed();
-      const surface = getSurfaceDataOnly(seed, choice);
-      lightIntensity.push(surface.then((surfaceInfo) => {
-        const surfaceData = {
-          surfaceSlant,
-          lightSlant,
-          choice,
-          seed,
-          light,
-          material,
-          isPretest,
-          heightMap: surfaceInfo.heightMap,
-        };
-
-        return searchAmbient(surfaceData,
-          NUMCALLS, target, lo, hi).then((data) => data);
-      }));
-    }
-
-    Promise.all(lightIntensity).then((data) => {
-      let sum = 0;
-      for (let k = 0; k < data.length; k += 1) {
-        sum += data[k];
-      }
-      const amp = sum / numSeeds;
-      console.log(`material: ${material} surfaceSlant: ${surfaceSlant}, lightSlant: ${lightSlant}, amplitude: ${amp}, sum: ${sum}`);
-    });
-  }
-  return lightIntensities;
-}
 
 clearDocumentBody();
 document.body.appendChild(RENDERERCANVAS);
@@ -463,7 +219,7 @@ function getSet(numSets = 1) {
 
             const amplitude = AMPLITUDES[data.surfaceSlant];
             const tempCanvas = renderSurface(data.seed, data.surfaceSlant, data.choice,
-            data.light, data.lightSlant, data.material, amplitude, data.isPretest);
+              data.light, data.lightSlant, data.material, amplitude, data.isPretest);
             const filename = getSurfaceInfoString(data, '.png');
             tempCanvas.then((canvas) => {
               downloadCanvas(canvas, filename);
@@ -515,7 +271,7 @@ function RenderSurface(surfaceSlant = 60, lightSlant = 120, material = MATERIALS
   const surface = getSurfaceDataOnly(seed, choice);
 
   return surface.then((surfaceInfo) => {
-    renderSurfaceContrast(surfaceInfo.heightMap, surfaceSlant, light, lightSlant, material,
+    renderSurface(surfaceInfo.heightMap, surfaceSlant, light, lightSlant, material,
       AMPLITUDES[surfaceSlant], 0);
   });
 }
