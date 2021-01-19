@@ -347,6 +347,8 @@ const RENDERER = (() => {
   const renderer = new THREE.WebGLRenderer({
     powerPreference: 'high-performance',
   });
+  // renderer.alpha = true;
+  // renderer.setClearColor( 0x00ff00, 0 );
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.gammaFactor = GAMMA;
   renderer.physicallyCorrectLights = false;

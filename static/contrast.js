@@ -173,7 +173,10 @@ function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
 
     disk.visible = true;
     RENDERER.render(SCENE, CAMERA);
+    var t0 = performance.now();
     const newCanvas = NormalizeContrast();
+    var t1 = performance.now();
+    console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.");
     document.body.appendChild(newCanvas);
 
     // reset our renderering to prep for next one
@@ -517,7 +520,6 @@ function RenderSurface(surfaceSlant = 60, lightSlant = 120, material = MATERIALS
   });
 }
 
-
 const targetMean = {
   r: 245.5942780005993,
   g: 245.5942780005993,
@@ -530,9 +532,4 @@ const targetStd = {
   b: 7.104325914379496,
 };
 
-var t0 = performance.now();
-
 getSet();
-
-var t1 = performance.now();
-console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.");
