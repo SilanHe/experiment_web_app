@@ -1,58 +1,6 @@
 // CONSTANTS
 // -----------------------------------------------------------------------------
 
-LIGHT_INTENSITY_MATTE = {
-  30: {
-    20: 0.043881296324521445,
-    30: 0.021788283869289913,
-    40: 0.10461277921726031,
-    50: 0.22935934562820706,
-    60: 0.370040136158106,
-    70: 0.5200240478246879,
-  },
-  45: {
-    30: 0.07110027265491374,
-    45: 0.05,
-    60: 0.1506951853545361,
-    75: 0.3509688563735204,
-    90: 0.5744761130586464,
-    100: 0.7325529644871209,
-  },
-  60: {
-    90: 0.017894276910871164,
-    100: 0.1822770919067216,
-    110: 0.3305928974241732,
-    120: 0.45190367322054553,
-    130: 0.5560805432776171,
-  },
-};
-
-const LIGHT_INTENSITY_GLOSSY = {
-  30: {
-    20: 0.05443072702331964,
-    30: 0.0051307846378081815,
-    40: 0.03685456120634975,
-    50: 0.16844180257074637,
-    60: 0.3503398872123153,
-    70: 0.575357415028197,
-  },
-  45: {
-    30: 0.10934300588549643,
-    45: 0.021333041543568618,
-    60: 0.009035921759591461,
-    75: 0.2498613016308489,
-    90: 0.6052126200274348,
-    100: 0.8460112787684806,
-  },
-  60: {
-    90: 0.009558349426606829,
-    100: 0.10804450541076055,
-    110: 0.3803840877914953,
-    120: 0.7416735253772289,
-    130: 0.9922986694123387,
-  },
-};
-
 const AMPLITUDES = {
   30: 0.45,
   45: 0.35,
@@ -240,7 +188,7 @@ const MATHEMATICALIGHTS = (() => {
 const DIRECTIONALLIGHTS = (() => {
   function getDirectionalLight(lightSlant) {
     // target of directional light is (0,0,0) by default
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
     directionalLight.visible = false;
 
     if (lightSlant < 90) {
@@ -311,7 +259,7 @@ const MESH = (() => {
 })();
 
 const CAMERA = (() => {
-  const camera = new THREE.PerspectiveCamera(CAMERA_FOV, 
+  const camera = new THREE.PerspectiveCamera(CAMERA_FOV,
     window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(0, 0, CAMERA_POSITION);
   camera.lookAt(0, 0, 0);
@@ -346,11 +294,11 @@ const SCENE = (() => {
 const RENDERER = (() => {
   const renderer = new THREE.WebGLRenderer({
     powerPreference: 'high-performance',
+    // gammaFactor: GAMMA,
+    // outputEncoding: THREE.sRGBEncoding,
   });
-  // renderer.alpha = true;
-  // renderer.setClearColor( 0x00ff00, 0 );
-  renderer.outputEncoding = THREE.sRGBEncoding;
-  renderer.gammaFactor = GAMMA;
+  // renderer.outputEncoding = THREE.sRGBEncoding;
+  // renderer.gammaOutput = true;
   renderer.physicallyCorrectLights = false;
   renderer.setSize(window.innerWidth, window.innerHeight);
   return renderer;
@@ -391,10 +339,29 @@ function cloneCanvas(oldCanvas) {
   return newCanvas;
 }
 
-function NormalizeContrast() {
-  const c = cloneCanvas(RENDERERCANVAS);
-  const ctx = c.getContext("2d");
-  const imageData = ctx.getImageData(0, 0, RENDERERCANVAS.width, RENDERERCANVAS.height);
+function ConvertLinearToSRGB(l) {
+  normalizedL = l / 255;
+  if (normalizedL >= 0 && normalizedL <= 0.0031308) {
+    return 12.92 * normalizedL * 255;
+  }
+  return (1.055 * normalizedL ** (1 / 2.4) - 0.055) * 255;
+}
+
+function removeGreenBackground() {
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = Uint8ClampedArray.from(imageData.data);
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
+      data[i] = 17;
+      data[i + 1] = 17;
+      data[i + 2] = 17;
+      data[i + 3] = 255;
+    }
+  }
+}
+
+function NormalizeContrast(ctx, targetMean, targetStd) {
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = Uint8ClampedArray.from(imageData.data);
 
   // get average intensity
@@ -403,33 +370,29 @@ function NormalizeContrast() {
   let b = 0;
   let count = 0;
   for (let i = 0; i < data.length; i += 4) {
-    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
-      continue;
-    } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0) {
-      continue;
+    if (!((data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0)
+    || (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0))) {
+      r += data[i];
+      g += data[i + 1];
+      b += data[i + 2];
+      count += 1;
     }
-    r += data[i];
-    g += data[i + 1];
-    b += data[i + 2];
-    count += 1;
   }
   r /= count;
   g /= count;
-  b /= count;  
+  b /= count;
 
   // get standard deviation of intensities
   let sumR = 0;
   let sumG = 0;
   let sumB = 0;
   for (let i = 0; i < data.length; i += 4) {
-    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
-      continue;
-    } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0) {
-      continue;
+    if (!((data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0)
+    || (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0))) {
+      sumR += (data[i] - r) ** 2;
+      sumG += (data[i + 1] - g) ** 2;
+      sumB += (data[i + 2] - b) ** 2;
     }
-    sumR += (data[i] - r) ** 2;
-    sumG += (data[i + 1] - g) ** 2;
-    sumB += (data[i + 2] - b) ** 2;
   }
 
   const stdR = Math.sqrt(sumR / count);
@@ -442,19 +405,18 @@ function NormalizeContrast() {
       data[i + 1] = 17;
       data[i + 2] = 17;
       data[i + 3] = 255;
-      continue;
     } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0) {
+      // eslint-disable-next-line no-continue
       continue;
+    } else {
+      data[i] = Math.round(targetMean.r + targetStd.r * ((data[i] - r) / stdR));
+      data[i + 1] = Math.round(targetMean.g + targetStd.g * ((data[i + 1] - g) / stdG));
+      data[i + 2] = Math.round(targetMean.b + targetStd.b * ((data[i + 2] - b) / stdB));
     }
-
-    data[i] = Math.round(targetMean.r + targetStd.r * ((data[i] - r) / stdR));
-    data[i + 1] = Math.round(targetMean.g + targetStd.g * ((data[i + 1] - g) / stdG));
-    data[i + 2] = Math.round(targetMean.b + targetStd.b * ((data[i + 2] - b) / stdB));
   }
-  const newImageData = new ImageData(data, RENDERERCANVAS.width);
-  ctx.putImageData(newImageData, 0, 0);
 
-  return c;
+  const newImageData = new ImageData(data, ctx.canvas.width);
+  ctx.putImageData(newImageData, 0, 0);
 }
 
 function setMathematicaLightsVisibility(value) {
@@ -529,7 +491,7 @@ function getVertices(heightmap, amplitude) {
   return vertices;
 }
 
-function getSurfaceDataList(numSets = 1) {
+function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
   const choices = Object.entries(CHOICE);
   const materials = Object.entries(MATERIALS);
 
@@ -552,13 +514,6 @@ function getSurfaceDataList(numSets = 1) {
             const material = materials[materialIndex][1];
             const lightSlant = DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex];
             const surfaceSlant = SURFACESLANTS[surfaceIndex];
-            let ambientLightIntensity;
-            
-            if (material == MATERIALS.MATTE) {
-              ambientLightIntensity = LIGHT_INTENSITY_MATTE[surfaceSlant][lightSlant];
-            } else {
-              ambientLightIntensity = LIGHT_INTENSITY_GLOSSY[surfaceSlant][lightSlant];
-            }
 
             const testData = {
               seed,
@@ -567,7 +522,9 @@ function getSurfaceDataList(numSets = 1) {
               light: LIGHTS.DIRECTIONAL,
               lightSlant,
               surfaceSlant,
-              ambientLightIntensity,
+              gammaRed,
+              gammaGreen,
+              gammaBlue,
             };
             // different amplitude values for different materials
 

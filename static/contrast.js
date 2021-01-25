@@ -20,8 +20,8 @@ function downloadCanvas(canvas, filename = 'canvas_images.jpeg') {
   aDownloadLink.click();
 }
 
-function GetLuminanceAndStandardDeviation() {
-  const c = cloneCanvas(RENDERERCANVAS);
+function GetLuminanceAndStandardDeviation(canvas = RENDERERCANVAS) {
+  const c = cloneCanvas(canvas);
   const ctx = c.getContext("2d");
   const imageData = ctx.getImageData(0, 0, c.width, c.height);
   const data = Uint8ClampedArray.from(imageData.data);
@@ -32,33 +32,29 @@ function GetLuminanceAndStandardDeviation() {
   let b = 0;
   let count = 0;
   for (let i = 0; i < data.length; i += 4) {
-    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
-      continue;
-    } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0) {
-      continue;
+    if (!((data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0)
+    || (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0))) {
+      r += data[i];
+      g += data[i + 1];
+      b += data[i + 2];
+      count += 1;
     }
-    r += data[i];
-    g += data[i + 1];
-    b += data[i + 2];
-    count += 1;
   }
   r /= count;
   g /= count;
-  b /= count;  
+  b /= count;
 
   // get standard deviation of intensities
   let sumR = 0;
   let sumG = 0;
   let sumB = 0;
   for (let i = 0; i < data.length; i += 4) {
-    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
-      continue;
-    } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0) {
-      continue;
+    if (!((data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0)
+    || (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0))) {
+      sumR += (data[i] - r) ** 2;
+      sumG += (data[i + 1] - g) ** 2;
+      sumB += (data[i + 2] - b) ** 2;
     }
-    sumR += (data[i] - r) ** 2;
-    sumG += (data[i + 1] - g) ** 2;
-    sumB += (data[i + 2] - b) ** 2;
   }
 
   const stdR = Math.sqrt(sumR / count);
@@ -133,10 +129,8 @@ function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
 
     disk.visible = true;
     RENDERER.render(SCENE, CAMERA);
-    var t0 = performance.now();
     const newCanvas = NormalizeContrast();
-    var t1 = performance.now();
-    console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.");
+    // GetLuminanceAndStandardDeviation();
     document.body.appendChild(newCanvas);
 
     // reset our renderering to prep for next one
@@ -160,6 +154,56 @@ function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
   });
 }
 
+function renderSurfaceContrast(heightMap, surfaceSlant, light, lightSlant,
+  material, amplitude) {
+  const vertices = getVertices(heightMap, amplitude);
+  setMeshGeometryVerticesIndices(vertices);
+  // change material
+  if (material === MATERIALS.MATTE) {
+    setMeshMaterial(MATTEMATERIAL);
+    MATTEMATERIAL.needsUpdate = true;
+  } else {
+    setMeshMaterial(GLOSSYMATERIAL);
+    GLOSSYMATERIAL.needsUpdate = true;
+  }
+  // rotate
+  MESH.rotateX(-THREE.Math.degToRad(surfaceSlant));
+  MESH.geometry.computeVertexNormals();
+  MESH.updateMatrixWorld();
+
+  // make the light in question visible
+  if (light === LIGHTS.MATLAB) {
+    MATLABLIGHT.visible = true;
+  } else if (light === LIGHTS.MATHEMATICA) {
+    setMathematicaLightsVisibility(true);
+  } else {
+    DIRECTIONALLIGHTS.map.get(surfaceSlant)
+      .get(lightSlant)
+      .visible = true;
+  }
+
+  RENDERER.render(SCENE, CAMERA);
+  GetLuminanceAndStandardDeviation(RENDERERCANVAS);
+  const CANVAS = GetCanvasFromLinearToSRGB(RENDERERCANVAS);
+  GetLuminanceAndStandardDeviation(CANVAS);
+  // const CANVAS = NormalizeContrast();
+  // GetLuminanceAndStandardDeviation(CANVAS);
+  document.body.appendChild(CANVAS);
+  // reset our renderering to prep for next one
+  resetObject(MESH);
+
+  if (light === LIGHTS.MATLAB) {
+    MATLABLIGHT.visible = false;
+  } else if (light === LIGHTS.MATHEMATICA) {
+    setMathematicaLightsVisibility(false);
+  } else {
+    // directional
+    DIRECTIONALLIGHTS.map.get(surfaceSlant)
+      .get(lightSlant)
+      .visible = false;
+  }
+}
+
 function getCursorPosition(canvas, event) {
   const rect = canvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
@@ -173,10 +217,6 @@ RENDERERCANVAS.addEventListener('mousedown', function(e) {
 
 clearDocumentBody();
 document.body.appendChild(RENDERERCANVAS);
-// allRMSContrast();
-
-
-// GetAllAmplitudeContrastData(60, MATERIALS.GLOSSY);
 
 const TARGET_RMS = {
   MATTE: {
@@ -264,28 +304,29 @@ function getSet(numSets = 1) {
   }
 }
 
-function RenderSurface(surfaceSlant = 60, lightSlant = 120, material = MATERIALS.MATTE) {
+function RenderSurface(surfaceSlant = 45, lightSlant = 45, material = MATERIALS.MATTE) {
   const seed = 1;
   const choice = CHOICE.VALLEY;
   const light = LIGHTS.DIRECTIONAL;
   const surface = getSurfaceDataOnly(seed, choice);
 
   return surface.then((surfaceInfo) => {
-    renderSurface(surfaceInfo.heightMap, surfaceSlant, light, lightSlant, material,
+    renderSurfaceContrast(surfaceInfo.heightMap, surfaceSlant, light, lightSlant, material,
       AMPLITUDES[surfaceSlant], 0);
   });
 }
 
 const targetMean = {
-  r: 245.5942780005993,
-  g: 245.5942780005993,
-  b: 245.5942780005993,
+  r: 164.0868945406505,
+  g: 164.0868945406505,
+  b: 164.0868945406505,
 };
 
 const targetStd = {
-  r: 7.104325914379496,
-  g: 7.104325914379496,
-  b: 7.104325914379496,
+  r: 10.562060600068385,
+  g: 10.562060600068385,
+  b: 10.562060600068385,
 };
 
-getSet();
+RenderSurface();
+// getSet();

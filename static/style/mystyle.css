@@ -20,7 +20,7 @@ body {
 	line-height: 20px;
 }
 
-canvas { display: block; }
+/* canvas { display: block; } */
 
 .display_text {
 	height: 300px;

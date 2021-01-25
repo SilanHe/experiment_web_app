@@ -104,7 +104,7 @@ const test = {
   trial_duration: 3150,
 };
 
-function tutorial() {
+function tutorial(gammaRed, gammaGreen, gammaBlue) {
   const staticPath = 'static/images/tutorial/';
   const ergonomicsImage = `${staticPath}ergonomics.jpg`;
   const valleyHillImage = `${staticPath}valleyhill.jpg`;
@@ -140,7 +140,7 @@ function tutorial() {
     type: 'fullscreen',
     fullscreen_mode: true,
     on_load: () => {
-      pairedImagesPromise = generateImageData(2);
+      pairedImagesPromise = generateImageData(2, gammaRed, gammaGreen, gammaBlue);
     },
   });
 
@@ -301,8 +301,8 @@ function tutorial() {
   });
 }
 
-function generateImageData(numSets = 1) {
-  const [surfaceDataList, testDataList] = getSurfaceDataList(numSets);
+function generateImageData(numSets = 1,gammaRed, gammaGreen, gammaBlue) {
+  const [surfaceDataList, testDataList] = getSurfaceDataList(numSets, gammaRed, gammaGreen, gammaBlue);
   const promise = Promise.all(surfaceDataList).then((surfaceDataArray) => {
     // shuffle the s3Images
     function shuffle(array) {
@@ -448,4 +448,22 @@ function loadingScreen() {
     experiment(data);
   });
 }
-tutorial();
+
+// do gamma correction first
+
+const rangeSliderRed = GammaCorrectionWidget('#FF0000', '#7F0000', 'sliderGroupRed', 'sliderRangeRed', 'demoRed');
+const rangeSliderGreen = GammaCorrectionWidget('#00FF00', '#007F00', 'sliderGroupGreen', 'sliderRangeGreen', 'demoGreen');
+const rangeSliderBlue = GammaCorrectionWidget('#0000FF', '#00007F', 'sliderGroupBlue', 'sliderRangeBlue', 'demoBlue');
+rangeSliderRed.value = "1";
+rangeSliderGreen.value = "1";
+rangeSliderBlue.value = "1";
+
+// on submit start tutorial
+const submitGammaCalibrationButton = document.getElementById('submitGammaCalibration');
+submitGammaCalibrationButton.onclick = function() {
+  const gammaRed = parseFloat(rangeSliderRed.value);
+  const gammaGreen = parseFloat(rangeSliderGreen.value);
+  const gammaBlue = parseFloat(rangeSliderBlue.value);
+  clearDocumentBody();
+  tutorial(gammaRed, gammaGreen, gammaBlue);
+};
