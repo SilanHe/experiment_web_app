@@ -3,7 +3,7 @@ const HILL_BUTTON = 72;
 const VALLEY_BUTTON = 86;
 let pairedImagesPromise;
 
-const CONSENTFORM = '<p>This MTurk experiment is part of a research project at McGill University in Montreal, Canada. The research examines how well people can judge the shape of surfaces that are rendered with computer graphics. The researchers are Silan He and Prof. Michael Langer in the School of Computer Science. The study is funded by the Natural Science and Engineering Research Council of Canada (NSERC).</p><p>The experiment will take less than 10 minutes, including a practice phase at the start. You will be shown a sequence of 172 rendered images and you will have to make a quick judgment about the surface shown in each image, by pressing one of two keys on your keyboard. If you do not answer within 2 seconds, we will provide a random guess answer for you and move on to the next image.</p><p>You will be paid 1 USD for this work. To receive this payment, you must answer correctly on at least 55% of the examples (score 95 or better out of 172). We also require that your answers and the correct MTurk ID are successfully posted at the end of the experiment.</p><p>Since MTurk terms of use do not allow us to collect your name, your responses are anonymous.</p><p>By submitting your responses to this task, you are consenting to be in this research study.</p><p>If you have questions, you may contact Prof. Langer by email at langer@cim.mcgill.ca. If you have any ethical concerns and wish to speak with someone not on the research team, please contact the McGill Ethics Manager at lynda.mcneil@mcgill.ca.</p>';
+const CONSENTFORM = '<p>This MTurk experiment is part of a research project at McGill University in Montreal, Canada. The research examines how well people can judge the shape of surfaces that are rendered with computer graphics. The researchers are Silan He and Prof. Michael Langer in the School of Computer Science. The study is funded by the Natural Science and Engineering Research Council of Canada (NSERC).</p><p>The experiment will take less than 10 minutes, including a practice phase at the start. You will be shown a sequence of 136 rendered images and you will have to make a quick judgment about the surface shown in each image, by pressing one of two keys on your keyboard. If you do not answer within 2 seconds, we will provide a random guess answer for you and move on to the next image.</p><p>You will be paid 1 USD for this work. To receive this payment, you must answer correctly on at least 55% of the examples (score 75 or better out of 136). We also require that your answers and the correct MTurk ID are successfully posted at the end of the experiment.</p><p>Since MTurk terms of use do not allow us to collect your name, your responses are anonymous.</p><p>By submitting your responses to this task, you are consenting to be in this research study.</p><p>If you have questions, you may contact Prof. Langer by email at langer@cim.mcgill.ca. If you have any ethical concerns and wish to speak with someone not on the research team, please contact the McGill Ethics Manager at lynda.mcneil@mcgill.ca.</p>';
 
 function createDisplayText() {
   const d = document.createElement('div');
@@ -104,7 +104,7 @@ const test = {
   trial_duration: 3150,
 };
 
-function tutorial() {
+function tutorial(gammaRed, gammaGreen, gammaBlue) {
   const staticPath = 'static/images/tutorial/';
   const ergonomicsImage = `${staticPath}ergonomics.jpg`;
   const valleyHillImage = `${staticPath}valleyhill.jpg`;
@@ -140,7 +140,7 @@ function tutorial() {
     type: 'fullscreen',
     fullscreen_mode: true,
     on_load: () => {
-      pairedImagesPromise = generateImageData(2);
+      pairedImagesPromise = generateImageData(2, gammaRed, gammaGreen, gammaBlue);
     },
   });
 
@@ -185,6 +185,14 @@ function tutorial() {
   };
   timeline.push(instruction4);
 
+  const instructionDefinition = {
+    type: 'image-keyboard-response',
+    stimulus_name: 'hill and valley',
+    stimulus: valleyHillImage,
+    prompt: '<p>Illustrated above are cross sections of a valley and a hill (including the small reference circle).</p><p>In this experiment, you will have to identify whether the spot marked by the small red sphere is in a valley or on a hill.</p><p>Press any key to continue.</p>',
+  };
+  timeline.push(instructionDefinition);
+
   const instruction5 = {
     type: 'image-keyboard-response',
     stimulus_name: 'instruction4',
@@ -222,18 +230,10 @@ function tutorial() {
   };
   timeline.push(instruction7);
 
-  const instructionDefinition = {
-    type: 'image-keyboard-response',
-    stimulus_name: 'hill and valley',
-    stimulus: valleyHillImage,
-    prompt: '<p>Illustrated above are cross sections of a valley and a hill including the small reference circle.</p>',
-  };
-  timeline.push(instructionDefinition);
-
   timeline.push({
     type: 'html-keyboard-response',
     stimulus: '<div class="display_text">'
-    + "<p>Nice! Remember press 'v' if you think the small red circle is in a VALLEY.</p>"
+    + "<p>Remember press 'v' if you think the small red circle is in a VALLEY.</p>"
     + "<p>'h' if you think the small red circle is on a HILL</p>"
     + "<p>Place your fingers on the 'v' and 'h' key.</p>"
     + '<p>Press the VALLEY button to proceed to a little test run.'
@@ -301,8 +301,8 @@ function tutorial() {
   });
 }
 
-function generateImageData(numSets = 1) {
-  const [surfaceDataList, testDataList] = getSurfaceDataList(numSets);
+function generateImageData(numSets = 1,gammaRed, gammaGreen, gammaBlue) {
+  const [surfaceDataList, testDataList] = getSurfaceDataList(numSets, gammaRed, gammaGreen, gammaBlue);
   const promise = Promise.all(surfaceDataList).then((surfaceDataArray) => {
     // shuffle the s3Images
     function shuffle(array) {
@@ -448,4 +448,22 @@ function loadingScreen() {
     experiment(data);
   });
 }
-tutorial();
+
+// do gamma correction first
+
+const rangeSliderRed = GammaCorrectionWidget('#FF0000', '#7F0000', 'sliderGroupRed', 'sliderRangeRed', 'demoRed');
+const rangeSliderGreen = GammaCorrectionWidget('#00FF00', '#007F00', 'sliderGroupGreen', 'sliderRangeGreen', 'demoGreen');
+const rangeSliderBlue = GammaCorrectionWidget('#0000FF', '#00007F', 'sliderGroupBlue', 'sliderRangeBlue', 'demoBlue');
+rangeSliderRed.value = "1";
+rangeSliderGreen.value = "1";
+rangeSliderBlue.value = "1";
+
+// on submit start tutorial
+const submitGammaCalibrationButton = document.getElementById('submitGammaCalibration');
+submitGammaCalibrationButton.onclick = function() {
+  const gammaRed = parseFloat(rangeSliderRed.value);
+  const gammaGreen = parseFloat(rangeSliderGreen.value);
+  const gammaBlue = parseFloat(rangeSliderBlue.value);
+  clearDocumentBody();
+  tutorial(gammaRed, gammaGreen, gammaBlue);
+};

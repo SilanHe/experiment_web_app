@@ -2,58 +2,6 @@
 // -----------------------------------------------------------------------------
 
 const AMPLITUDES = {
-  30: {
-    20: 0.6329162785709044,
-    30: 0.6413956394030571,
-    40: 0.4959053968361492,
-    50: 0.36470454648566614,
-    60: 0.26611422180100547,
-    70: 0.2106880210457842,
-  },
-  45: {
-    30: 0.6913082740649584,
-    45: 0.6178336635675455,
-    60: 0.40814966185229296,
-    75: 0.2637512766651843,
-    90: 0.18713049618808367,
-    100: 0.1583433242220703,
-  },
-  60: {
-    90: 0.2746515856573605,
-    100: 0.2385729909602174,
-    110: 0.21135206883702015,
-    120: 0.1939659882572705,
-    130: 0.1889887431844112,
-  },
-};
-
-const AMPLITUDES_GLOSSY = {
-  30: {
-    20: 0.45,
-    30: 0.37,
-    40: 0.33,
-    50: 0.24,
-    60: 0.13,
-    70: 0.085,
-  },
-  45: {
-    30: 0.31,
-    45: 0.32,
-    60: 0.33,
-    75: 0.278,
-    90: 0.135,
-    100: 0.095,
-  },
-  60: {
-    90: 0.19,
-    100: 0.15,
-    110: 0.11,
-    120: 0.07,
-    130: 0.06,
-  },
-};
-
-const OTHER_AMPLITUDES = {
   30: 0.45,
   45: 0.35,
   60: 0.19,
@@ -155,6 +103,12 @@ const DARKGRAY = (() => {
   return color;
 })();
 
+const GREEN = (() => {
+  const color = new THREE.Color(0x00ff00);
+  color.convertSRGBToLinear();
+  return color;
+})();
+
 const BLACK = (() => {
   const color = new THREE.Color(0x000000);
   color.convertSRGBToLinear();
@@ -234,7 +188,7 @@ const MATHEMATICALIGHTS = (() => {
 const DIRECTIONALLIGHTS = (() => {
   function getDirectionalLight(lightSlant) {
     // target of directional light is (0,0,0) by default
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
     directionalLight.visible = false;
 
     if (lightSlant < 90) {
@@ -281,6 +235,12 @@ const DIRECTIONALLIGHTS = (() => {
   return { map, list };
 })();
 
+const AMBIENTLIGHT = (() => {
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  ambientLight.visible = false;
+  return ambientLight;
+})();
+
 const MESHGEOMETRY = (() => {
   const geometry = new THREE.BufferGeometry();
   const vertices = [];
@@ -299,19 +259,18 @@ const MESH = (() => {
 })();
 
 const CAMERA = (() => {
-  const camera = new THREE.PerspectiveCamera(CAMERA_FOV, 
+  const camera = new THREE.PerspectiveCamera(CAMERA_FOV,
     window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(0, 0, CAMERA_POSITION);
   camera.lookAt(0, 0, 0);
   return camera;
 })();
-
 /**
  * Generic scene generation function with my default camera settings
  */
 const SCENE = (() => {
   const scene = new THREE.Scene();
-  scene.background = DARKGRAY;
+  scene.background = GREEN;
 
   // add all the lights, they start out: visible = false;
   for (let i = 0; i < MATHEMATICALIGHTS.length; i += 1) {
@@ -321,6 +280,8 @@ const SCENE = (() => {
   for (let i = 0; i < DIRECTIONALLIGHTS.list.length; i += 1) {
     scene.add(DIRECTIONALLIGHTS.list[i]);
   }
+
+  scene.add(AMBIENTLIGHT);
 
   scene.add(MESH);
   scene.add(DISK);
@@ -333,9 +294,11 @@ const SCENE = (() => {
 const RENDERER = (() => {
   const renderer = new THREE.WebGLRenderer({
     powerPreference: 'high-performance',
+    // gammaFactor: GAMMA,
+    // outputEncoding: THREE.sRGBEncoding,
   });
-  renderer.outputEncoding = THREE.sRGBEncoding;
-  renderer.gammaFactor = GAMMA;
+  // renderer.outputEncoding = THREE.sRGBEncoding;
+  // renderer.gammaOutput = true;
   renderer.physicallyCorrectLights = false;
   renderer.setSize(window.innerWidth, window.innerHeight);
   return renderer;
@@ -360,13 +323,109 @@ function onWindowResize() {
   RENDERERCANVAS.height = window.innerHeight;
 }
 
+function cloneCanvas(oldCanvas) {
+  // create a new canvas
+  const newCanvas = document.createElement('canvas');
+  const context = newCanvas.getContext('2d');
+
+  // set dimensions
+  newCanvas.width = oldCanvas.width;
+  newCanvas.height = oldCanvas.height;
+
+  // apply the old canvas to the new one
+  context.drawImage(oldCanvas, 0, 0);
+
+  // return the new canvas
+  return newCanvas;
+}
+
+function ConvertLinearToSRGB(l) {
+  normalizedL = l / 255;
+  if (normalizedL >= 0 && normalizedL <= 0.0031308) {
+    return 12.92 * normalizedL * 255;
+  }
+  return (1.055 * normalizedL ** (1 / 2.4) - 0.055) * 255;
+}
+
+function removeGreenBackground() {
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = Uint8ClampedArray.from(imageData.data);
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
+      data[i] = 17;
+      data[i + 1] = 17;
+      data[i + 2] = 17;
+      data[i + 3] = 255;
+    }
+  }
+}
+
+function NormalizeContrast(ctx, targetMean, targetStd) {
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = Uint8ClampedArray.from(imageData.data);
+
+  // get average intensity
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let count = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    if (!((data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0)
+    || (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0))) {
+      r += data[i];
+      g += data[i + 1];
+      b += data[i + 2];
+      count += 1;
+    }
+  }
+  r /= count;
+  g /= count;
+  b /= count;
+
+  // get standard deviation of intensities
+  let sumR = 0;
+  let sumG = 0;
+  let sumB = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    if (!((data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0)
+    || (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0))) {
+      sumR += (data[i] - r) ** 2;
+      sumG += (data[i + 1] - g) ** 2;
+      sumB += (data[i + 2] - b) ** 2;
+    }
+  }
+
+  const stdR = Math.sqrt(sumR / count);
+  const stdG = Math.sqrt(sumG / count);
+  const stdB = Math.sqrt(sumB / count);
+
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
+      data[i] = 17;
+      data[i + 1] = 17;
+      data[i + 2] = 17;
+      data[i + 3] = 255;
+    } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0) {
+      // eslint-disable-next-line no-continue
+      continue;
+    } else {
+      data[i] = Math.round(targetMean.r + targetStd.r * ((data[i] - r) / stdR));
+      data[i + 1] = Math.round(targetMean.g + targetStd.g * ((data[i + 1] - g) / stdG));
+      data[i + 2] = Math.round(targetMean.b + targetStd.b * ((data[i + 2] - b) / stdB));
+    }
+  }
+
+  const newImageData = new ImageData(data, ctx.canvas.width);
+  ctx.putImageData(newImageData, 0, 0);
+}
+
 function setMathematicaLightsVisibility(value) {
   for (let i = 0; i < MATHEMATICALIGHTS.length; i += 1) {
     MATHEMATICALIGHTS[i].visible = value;
   }
 }
 
-function setMeshGeometryVerticesIndices(vertices, indices) {
+function setMeshGeometryVerticesIndices(vertices) {
   const bufferVertices = MESH.geometry.attributes.position.array;
   for (let i = 0; i < TOTAL_NUM_POINTS; i += 1) {
     bufferVertices[i] = vertices[i];
@@ -432,7 +491,7 @@ function getVertices(heightmap, amplitude) {
   return vertices;
 }
 
-function getSurfaceDataList(numSets = 1) {
+function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
   const choices = Object.entries(CHOICE);
   const materials = Object.entries(MATERIALS);
 
@@ -446,54 +505,35 @@ function getSurfaceDataList(numSets = 1) {
         // material
         for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
           // directional light slants
+
           for (let lightSlantIndex = 0;
             lightSlantIndex < DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]].length;
             lightSlantIndex += 1) {
             // pretest and test image surface data
             const seed = getRandomSeed();
+            const material = materials[materialIndex][1];
+            const lightSlant = DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex];
+            const surfaceSlant = SURFACESLANTS[surfaceIndex];
+
             const testData = {
               seed,
               choice: choices[choiceIndex][1],
-              material: materials[materialIndex][1],
+              material,
               light: LIGHTS.DIRECTIONAL,
-              lightSlant: DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex],
-              surfaceSlant: SURFACESLANTS[surfaceIndex],
+              lightSlant,
+              surfaceSlant,
+              gammaRed,
+              gammaGreen,
+              gammaBlue,
             };
+            // different amplitude values for different materials
+
             const surfaceData = getSurfaceData(seed,
-              testData.choice, AMPLITUDES[testData.surfaceSlant][testData.lightSlant]);
+              testData.choice, AMPLITUDES[testData.surfaceSlant]);
             surfaceDataList.push(surfaceData);
             testDataList.push(testData);
           }
-
-          // matlab light
-          // pretest and test image surface data
-          const seed = getRandomSeed();
-          const testData = {
-            seed,
-            choice: choices[choiceIndex][1],
-            material: materials[materialIndex][1],
-            light: LIGHTS.MATLAB,
-            surfaceSlant: SURFACESLANTS[surfaceIndex],
-          };
-          const surfaceData = getSurfaceData(seed,
-            testData.choice, OTHER_AMPLITUDES[testData.surfaceSlant]);
-          surfaceDataList.push(surfaceData);
-          testDataList.push(testData);
         }
-        // mathematica light
-        // pretest and test image surface data
-        const seed = getRandomSeed();
-        const testData = {
-          seed,
-          choice: choices[choiceIndex][1],
-          material: MATERIALS.MATTE,
-          light: LIGHTS.MATHEMATICA,
-          surfaceSlant: SURFACESLANTS[surfaceIndex],
-        };
-        const surfaceData = getSurfaceData(seed,
-          testData.choice, OTHER_AMPLITUDES[testData.surfaceSlant]);
-        surfaceDataList.push(surfaceData);
-        testDataList.push(testData);
       }
     }
   }

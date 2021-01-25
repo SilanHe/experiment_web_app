@@ -75,7 +75,7 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
     // set our mesh geometry
     // change positions
     const stimulusData = trial.stimulus.surfaceData;
-    setMeshGeometryVerticesIndices(stimulusData.vertices, INDICES);
+    setMeshGeometryVerticesIndices(stimulusData.vertices);
     // change material
     if (trial.stimulus.material === MATERIALS.MATTE) {
       setMeshMaterial(MATTEMATERIAL);
@@ -119,7 +119,13 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
 
     disk.visible = true;
     RENDERER.render(SCENE, CAMERA);
-    display_element.appendChild(RENDERERCANVAS);
+    const c = cloneCanvas(RENDERERCANVAS);
+    const ctx = c.getContext('2d');
+    c.id = 'jspsych-canvas-keyboard-response-stimulus';
+    // const c = NormalizeContrast(ctx)
+    CanvasFromLinearToSRGBPerChannel(ctx, trial.stimulus.gammaRed,
+      trial.stimulus.gammaGreen, trial.stimulus.gammaBlue);
+    display_element.appendChild(c);
     // const t1 = performance.now();
     // console.log("Call to render took " + (t1 - t0) + " milliseconds.");
 
@@ -170,7 +176,7 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
       };
 
       // clear the display
-      display_element.removeChild(RENDERERCANVAS);
+      display_element.removeChild(c);
       display_element.innerHTML = '';
 
       resetObjects();
