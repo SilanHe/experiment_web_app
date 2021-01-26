@@ -81,24 +81,6 @@ function CanvasFromLinearToSRGBPerChannel(ctx, gammaRed, gammaGreen, gammaBlue) 
   ctx.putImageData(newImageData, 0, 0);
 }
 
-function placeholder () {
-  const canvasRed = GammaCorrectionCanvas('#FF0000', '#7F0000');
-  const ctxRed = canvasRed.getContext("2d");
-  const imageDataRed = ctxRed.getImageData(0, 0, canvasRed.width, canvasRed.height);
-  const sliderGroupRed = document.getElementById('sliderGroupRed');
-  sliderGroupRed.appendChild(canvasRed);
-
-  const rangesliderRed = document.getElementById('sliderRangeRed');
-  const outputRed = document.getElementById('demoRed');
-  console.log(rangesliderRed);
-  outputRed.innerHTML = rangesliderRed.value;
-
-  rangesliderRed.oninput = function() {
-    outputRed.innerHTML = this.value;
-    CanvasFromLinearToSRGB(ctxRed, imageDataRed, this.value);
-  };
-}
-
 function GammaCorrectionWidget(color1, color2, groupName, sliderName, labelName) {
   const canvas = GammaCorrectionCanvas(color1, color2);
   const ctx = canvas.getContext("2d");
@@ -117,6 +99,3 @@ function GammaCorrectionWidget(color1, color2, groupName, sliderName, labelName)
 
   return rangeslider;
 }
-
-// SCRIPT
-// const rangeSliderGray =GammaCorrectionWidget('#FFFFFF', '#7F7F7F', 'sliderGroupGray', 'sliderRangeGray', 'demoGray');

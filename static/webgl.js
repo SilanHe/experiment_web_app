@@ -501,22 +501,21 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
   for (let i = 0; i < numSets; i += 1) {
     for (let surfaceIndex = 0; surfaceIndex < SURFACESLANTS.length; surfaceIndex += 1) {
       // choice
+      const surfaceSlant = SURFACESLANTS[surfaceIndex];
       for (let choiceIndex = 0; choiceIndex < choices.length; choiceIndex += 1) {
         // material
         for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
           // directional light slants
-
+          const material = materials[materialIndex][1];
           for (let lightSlantIndex = 0;
             lightSlantIndex < DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]].length;
             lightSlantIndex += 1) {
             // pretest and test image surface data
-            const seed = getRandomSeed();
-            const material = materials[materialIndex][1];
+            const seedDirectional = getRandomSeed();
             const lightSlant = DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex];
-            const surfaceSlant = SURFACESLANTS[surfaceIndex];
 
-            const testData = {
-              seed,
+            const testDataDirectional = {
+              seedDirectional,
               choice: choices[choiceIndex][1],
               material,
               light: LIGHTS.DIRECTIONAL,
@@ -528,12 +527,44 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
             };
             // different amplitude values for different materials
 
-            const surfaceData = getSurfaceData(seed,
-              testData.choice, AMPLITUDES[testData.surfaceSlant]);
-            surfaceDataList.push(surfaceData);
-            testDataList.push(testData);
+            const surfaceDataDirectional = getSurfaceData(seedDirectional,
+              testDataDirectional.choice, AMPLITUDES[testDataDirectional.surfaceSlant]);
+            surfaceDataList.push(surfaceDataDirectional);
+            testDataList.push(testDataDirectional);
           }
+          // matlab
+          const seed = getRandomSeed();
+          const testData = {
+            seed,
+            choice: choices[choiceIndex][1],
+            material,
+            light: LIGHTS.MATLAB,
+            surfaceSlant,
+            gammaRed,
+            gammaGreen,
+            gammaBlue,
+          };
+          const surfaceData = getSurfaceData(seed,
+            testData.choice, AMPLITUDES[testData.surfaceSlant]);
+          surfaceDataList.push(surfaceData);
+          testDataList.push(testData);
         }
+        // mathematica
+        const seed = getRandomSeed();
+        const testData = {
+          seed,
+          choice: choices[choiceIndex][1],
+          material: MATERIALS.MATTE,
+          light: LIGHTS.MATHEMATICA,
+          surfaceSlant,
+          gammaRed,
+          gammaGreen,
+          gammaBlue,
+        };
+        const surfaceData = getSurfaceData(seed,
+          testData.choice, AMPLITUDES[testData.surfaceSlant]);
+        surfaceDataList.push(surfaceData);
+        testDataList.push(testData);
       }
     }
   }
