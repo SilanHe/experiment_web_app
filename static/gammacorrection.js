@@ -117,6 +117,3 @@ function GammaCorrectionWidget(color1, color2, groupName, sliderName, labelName)
 
   return rangeslider;
 }
-
-// SCRIPT
-// const rangeSliderGray =GammaCorrectionWidget('#FFFFFF', '#7F7F7F', 'sliderGroupGray', 'sliderRangeGray', 'demoGray');
