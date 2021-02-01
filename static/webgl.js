@@ -1,13 +1,14 @@
 // CONSTANTS
 // -----------------------------------------------------------------------------
 
+const CLONECANVAS = document.createElement('canvas');
+const CLONECONTEXT = CLONECANVAS.getContext('2d');
+
 const AMPLITUDES = {
   30: 0.45,
   45: 0.35,
   60: 0.19,
 };
-
-const GAMMA = 2.2;
 
 const NUM_POINTS = 350;
 const RANGEMAX = 9.4;
@@ -325,98 +326,16 @@ function onWindowResize() {
 
 function cloneCanvas(oldCanvas) {
   // create a new canvas
-  const newCanvas = document.createElement('canvas');
-  const context = newCanvas.getContext('2d');
-
+  // using a precreated canvas to increase speed
   // set dimensions
-  newCanvas.width = oldCanvas.width;
-  newCanvas.height = oldCanvas.height;
+  CLONECANVAS.width = oldCanvas.width;
+  CLONECANVAS.height = oldCanvas.height;
 
   // apply the old canvas to the new one
-  context.drawImage(oldCanvas, 0, 0);
+  CLONECONTEXT.drawImage(oldCanvas, 0, 0);
 
   // return the new canvas
-  return newCanvas;
-}
-
-function ConvertLinearToSRGB(l) {
-  normalizedL = l / 255;
-  if (normalizedL >= 0 && normalizedL <= 0.0031308) {
-    return 12.92 * normalizedL * 255;
-  }
-  return (1.055 * normalizedL ** (1 / 2.4) - 0.055) * 255;
-}
-
-function removeGreenBackground() {
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = Uint8ClampedArray.from(imageData.data);
-  for (let i = 0; i < data.length; i += 4) {
-    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
-      data[i] = 17;
-      data[i + 1] = 17;
-      data[i + 2] = 17;
-      data[i + 3] = 255;
-    }
-  }
-}
-
-function NormalizeContrast(ctx, targetMean, targetStd) {
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = Uint8ClampedArray.from(imageData.data);
-
-  // get average intensity
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  let count = 0;
-  for (let i = 0; i < data.length; i += 4) {
-    if (!((data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0)
-    || (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0))) {
-      r += data[i];
-      g += data[i + 1];
-      b += data[i + 2];
-      count += 1;
-    }
-  }
-  r /= count;
-  g /= count;
-  b /= count;
-
-  // get standard deviation of intensities
-  let sumR = 0;
-  let sumG = 0;
-  let sumB = 0;
-  for (let i = 0; i < data.length; i += 4) {
-    if (!((data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0)
-    || (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0))) {
-      sumR += (data[i] - r) ** 2;
-      sumG += (data[i + 1] - g) ** 2;
-      sumB += (data[i + 2] - b) ** 2;
-    }
-  }
-
-  const stdR = Math.sqrt(sumR / count);
-  const stdG = Math.sqrt(sumG / count);
-  const stdB = Math.sqrt(sumB / count);
-
-  for (let i = 0; i < data.length; i += 4) {
-    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
-      data[i] = 17;
-      data[i + 1] = 17;
-      data[i + 2] = 17;
-      data[i + 3] = 255;
-    } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0) {
-      // eslint-disable-next-line no-continue
-      continue;
-    } else {
-      data[i] = Math.round(targetMean.r + targetStd.r * ((data[i] - r) / stdR));
-      data[i + 1] = Math.round(targetMean.g + targetStd.g * ((data[i + 1] - g) / stdG));
-      data[i + 2] = Math.round(targetMean.b + targetStd.b * ((data[i + 2] - b) / stdB));
-    }
-  }
-
-  const newImageData = new ImageData(data, ctx.canvas.width);
-  ctx.putImageData(newImageData, 0, 0);
+  return CLONECANVAS;
 }
 
 function setMathematicaLightsVisibility(value) {

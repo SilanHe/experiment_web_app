@@ -123,6 +123,7 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
     const ctx = c.getContext('2d');
     c.id = 'jspsych-canvas-keyboard-response-stimulus';
     // const c = NormalizeContrast(ctx)
+    removeGreenBackground(ctx);
     CanvasFromLinearToSRGBPerChannel(ctx, trial.stimulus.gammaRed,
       trial.stimulus.gammaGreen, trial.stimulus.gammaBlue);
     display_element.appendChild(c);
