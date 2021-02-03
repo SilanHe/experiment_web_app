@@ -114,8 +114,7 @@ function DrawBigDisk(ctx, redIndex) {
 function RenderImage(data) {
   // set our mesh geometry
   // change positions
-  const stimulusData = data.surfaceData;
-  setMeshGeometryVerticesIndices(stimulusData.vertices);
+  setMeshGeometryVerticesIndices(data.vertices);
   // change material
   if (data.material === MATERIALS.MATTE) {
     setMeshMaterial(MATTEMATERIAL);

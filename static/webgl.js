@@ -1,6 +1,9 @@
 // CONSTANTS
 // -----------------------------------------------------------------------------
 
+const GETVERTICESWEBWORKER = new Worker('static/getverticesWW.js');
+const GAMMAWEBWORKER = new Worker('static/gammaWW.js');
+
 const CLONECANVAS = document.createElement('canvas');
 const CLONECONTEXT = CLONECANVAS.getContext('2d');
 
@@ -381,33 +384,40 @@ function getRandomSeed() {
   return Math.floor(Math.random() * 10000);
 }
 
-function getSurfaceData(seed, choice, amplitude) {
+function getSurfaceData(testData) {
   const surfaceDetails = {
-    seed,
-    choice,
+    seed: testData.seed,
+    choice: testData.choice,
   };
   return $.get('/getsurface', surfaceDetails).then((data) => {
-    data.vertices = getVertices(data.heightMap, amplitude);
-    return data;
+    // get the full vertices
+    let vertices;
+    // data.vertices = getVertices(data.heightMap, amplitude);
+    GETVERTICESWEBWORKER.postMessage(data.heightMap, testData.amplitude);
+    GETVERTICESWEBWORKER.addEventListener('message', (event) => {
+      vertices = event.data;
+    });
+    return vertices;
+  }).then((vertices) => {
+    // render surface here
+    testData.vertices = vertices;
+    RenderImage(testData);
+    cloneCanvas(RENDERERCANVAS);
+    const threeImageData = CLONECONTEXT.getImageData(0, 0, CLONECONTEXT.canvas.width,
+      CLONECONTEXT.canvas.height);
+    const oldImageData = Uint8ClampedArray.from(threeImageData.data);
+    return oldImageData;
+  }).then((imageData) => {
+    // gamma correct
+    GAMMAWEBWORKER.postMessage([imageData,
+      testData.gammaRed, testData.gammaGreen, 
+      testData.gammaBlue, CLONECONTEXT.canvas.width]);
+    GAMMAWEBWORKER.addEventListener("message", (event) => {
+      testData.gammaResult = event.data;
+    });
+
+    return testData;
   });
-}
-
-function getVertices(heightmap, amplitude) {
-  const vertices = [];
-  let counter = 0;
-  for (let i = 0; i < NUM_POINTS; i += 1) {
-    const x = RANGEMIN + INCREMENT * i;
-    for (let j = 0; j < NUM_POINTS; j += 1) {
-      // get point coordinates in plane's coordinate system
-      // in the plane coordinate system we are using z as the height for the height map
-      const y = RANGEMIN + INCREMENT * j;
-
-      // get height map / z
-      vertices.push(x, y, amplitude * heightmap[counter]);
-      counter += 1;
-    }
-  }
-  return vertices;
 }
 
 function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
@@ -434,7 +444,8 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
             const lightSlant = DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex];
 
             const testDataDirectional = {
-              seedDirectional,
+              amplitude: AMPLITUDES[surfaceSlant],
+              seed: seedDirectional,
               choice: choices[choiceIndex][1],
               material,
               light: LIGHTS.DIRECTIONAL,
@@ -445,15 +456,14 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
               gammaBlue,
             };
             // different amplitude values for different materials
-
-            const surfaceDataDirectional = getSurfaceData(seedDirectional,
-              testDataDirectional.choice, AMPLITUDES[testDataDirectional.surfaceSlant]);
+            const surfaceDataDirectional = getSurfaceData(testDataDirectional);
             surfaceDataList.push(surfaceDataDirectional);
             testDataList.push(testDataDirectional);
           }
           // matlab
           const seed = getRandomSeed();
           const testData = {
+            amplitude: AMPLITUDES[surfaceSlant],
             seed,
             choice: choices[choiceIndex][1],
             material,
@@ -463,14 +473,14 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
             gammaGreen,
             gammaBlue,
           };
-          const surfaceData = getSurfaceData(seed,
-            testData.choice, AMPLITUDES[testData.surfaceSlant]);
+          const surfaceData = getSurfaceData(testData);
           surfaceDataList.push(surfaceData);
           testDataList.push(testData);
         }
         // mathematica
         const seed = getRandomSeed();
         const testData = {
+          amplitude: AMPLITUDES[surfaceSlant],
           seed,
           choice: choices[choiceIndex][1],
           material: MATERIALS.MATTE,
@@ -480,8 +490,7 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
           gammaGreen,
           gammaBlue,
         };
-        const surfaceData = getSurfaceData(seed,
-          testData.choice, AMPLITUDES[testData.surfaceSlant]);
+        const surfaceData = getSurfaceData(testData);
         surfaceDataList.push(surfaceData);
         testDataList.push(testData);
       }
