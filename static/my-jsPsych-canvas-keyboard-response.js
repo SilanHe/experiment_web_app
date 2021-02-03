@@ -119,13 +119,13 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
 
     disk.visible = true;
     RENDERER.render(SCENE, CAMERA);
-    const c = cloneCanvas(RENDERERCANVAS);
-    const ctx = c.getContext('2d');
-    c.id = 'jspsych-canvas-keyboard-response-stimulus';
+    // const c = cloneCanvas(RENDERERCANVAS);
+    // const ctx = c.getContext('2d');
+    RENDERERCANVAS.id = 'jspsych-canvas-keyboard-response-stimulus';
     // const c = NormalizeContrast(ctx)
-    CanvasFromLinearToSRGBPerChannel(ctx, trial.stimulus.gammaRed,
-      trial.stimulus.gammaGreen, trial.stimulus.gammaBlue);
-    display_element.appendChild(c);
+    // CanvasFromLinearToSRGBPerChannel(ctx, trial.stimulus.gammaRed,
+    //   trial.stimulus.gammaGreen, trial.stimulus.gammaBlue);
+    display_element.appendChild(RENDERERCANVAS);
     // const t1 = performance.now();
     // console.log("Call to render took " + (t1 - t0) + " milliseconds.");
 
@@ -176,7 +176,7 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
       };
 
       // clear the display
-      display_element.removeChild(c);
+      display_element.removeChild(RENDERERCANVAS);
       display_element.innerHTML = '';
 
       resetObjects();

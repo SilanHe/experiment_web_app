@@ -270,7 +270,7 @@ const CAMERA = (() => {
  */
 const SCENE = (() => {
   const scene = new THREE.Scene();
-  scene.background = GREEN;
+  scene.background = DARKGRAY;
 
   // add all the lights, they start out: visible = false;
   for (let i = 0; i < MATHEMATICALIGHTS.length; i += 1) {
