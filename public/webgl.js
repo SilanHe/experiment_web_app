@@ -393,7 +393,7 @@ function getSurfaceData(testData) {
     // get the full vertices
     let vertices;
     // data.vertices = getVertices(data.heightMap, amplitude);
-    GETVERTICESWEBWORKER.postMessage(data.heightMap, testData.amplitude);
+    GETVERTICESWEBWORKER.postMessage([data.heightMap, testData.amplitude]);
     GETVERTICESWEBWORKER.addEventListener('message', (event) => {
       vertices = event.data;
     });
