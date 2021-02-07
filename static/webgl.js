@@ -1,12 +1,6 @@
 // CONSTANTS
 // -----------------------------------------------------------------------------
 
-const GETVERTICESWEBWORKER = new Worker('static/getverticesWW.js');
-const GAMMAWEBWORKER = new Worker('static/gammaWW.js');
-
-const CLONECANVAS = document.createElement('canvas');
-const CLONECONTEXT = CLONECANVAS.getContext('2d');
-
 const AMPLITUDES = {
   30: 0.45,
   45: 0.35,
@@ -327,6 +321,112 @@ function onWindowResize() {
   RENDERERCANVAS.height = window.innerHeight;
 }
 
+function CustomShaderMaterial(gammaFactor) {
+  const customFragmentShader = [
+    '#define PHONG',
+    'uniform vec3 diffuse;',
+    'uniform vec3 emissive;',
+    'uniform vec3 specular;',
+    'uniform float shininess;',
+    'uniform float opacity;',
+    '#include <common>',
+    '#include <packing>',
+    '#include <dithering_pars_fragment>',
+    '#include <color_pars_fragment>',
+    '#include <uv_pars_fragment>',
+    '#include <uv2_pars_fragment>',
+    '#include <map_pars_fragment>',
+    '#include <alphamap_pars_fragment>',
+    '#include <aomap_pars_fragment>',
+    '#include <lightmap_pars_fragment>',
+    '#include <emissivemap_pars_fragment>',
+    '#include <envmap_common_pars_fragment>',
+    '#include <envmap_pars_fragment>',
+    '#include <cube_uv_reflection_fragment>',
+    '#include <fog_pars_fragment>',
+    '#include <bsdfs>',
+    '#include <lights_pars_begin>',
+    '#include <lights_phong_pars_fragment>',
+    '#include <shadowmap_pars_fragment>',
+    '#include <bumpmap_pars_fragment>',
+    '#include <normalmap_pars_fragment>',
+    '#include <specularmap_pars_fragment>',
+    '#include <logdepthbuf_pars_fragment>',
+    '#include <clipping_planes_pars_fragment>',
+    'void main() {',
+    ' #include <clipping_planes_fragment>',
+    '	vec4 diffuseColor = vec4( diffuse, opacity );',
+    '	ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );',
+    '	vec3 totalEmissiveRadiance = emissive;',
+    '	#include <logdepthbuf_fragment>',
+    '	#include <map_fragment>',
+    '	#include <color_fragment>',
+    '	#include <alphamap_fragment>',
+    '	#include <alphatest_fragment>',
+    '	#include <specularmap_fragment>',
+    '	#include <normal_fragment_begin>',
+    '	#include <normal_fragment_maps>',
+    '	#include <emissivemap_fragment>',
+    '	#include <lights_phong_fragment>',
+    '	#include <lights_fragment_begin>',
+    '	#include <lights_fragment_maps>',
+    '	#include <lights_fragment_end>',
+    '	#include <aomap_fragment>',
+    '	vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;',
+    '	#include <envmap_fragment>',
+    '	gl_FragColor = LinearToGamma(vec4( outgoingLight, diffuseColor.a ), float(gammafactor) );',
+    '	#include <tonemapping_fragment>',
+    '	#include <encodings_fragment>',
+    '	#include <fog_fragment>',
+    '	#include <premultiplied_alpha_fragment>',
+    ' #include <dithering_fragment>',
+    '}',
+  ].join('\n');
+
+  const matteUniforms = THREE.UniformsUtils.merge([
+    THREE.ShaderLib.phong.uniforms,
+    {
+      gammafactor: { value: gammaFactor },
+      side: { value: THREE.FrontSide },
+      color: { value: WHITE },
+      specular: { value: BLACK },
+      shininess: { value: 0 },
+    },
+  ]);
+
+  const glossyUniforms = THREE.UniformsUtils.merge([
+    THREE.ShaderLib.phong.uniforms,
+    {
+      gammafactor: { value: gammaFactor },
+      side: { value: THREE.FrontSide },
+      color: { value: GLOSSYCOLOR },
+      specular: { value: GLOSSYSPECULAR },
+      shininess: { value: 51 },
+    },
+  ]);
+
+  const matteMaterial = new THREE.ShaderMaterial({
+    uniforms: matteUniforms,
+    vertexShader: THREE.ShaderLib.phong.vertexShader,
+    fragmentShader: customFragmentShader,
+    lights: true,
+    name: 'matte-material',
+  });
+
+  const glossyMaterial = new THREE.ShaderMaterial({
+    uniforms: glossyUniforms,
+    vertexShader: THREE.ShaderLib.phong.vertexShader,
+    fragmentShader: customFragmentShader,
+    lights: true,
+    name: 'glossy-material',
+  });
+
+  return {
+    matteMaterial,
+    glossyMaterial,
+  };
+}
+
 function cloneCanvas(oldCanvas) {
   // create a new canvas
   // using a precreated canvas to increase speed
@@ -384,38 +484,33 @@ function getRandomSeed() {
   return Math.floor(Math.random() * 10000);
 }
 
+function getVertices(heightmap, amplitude) {
+  const vertices = [];
+  let counter = 0;
+  for (let i = 0; i < NUM_POINTS; i += 1) {
+    const x = RANGEMIN + INCREMENT * i;
+    for (let j = 0; j < NUM_POINTS; j += 1) {
+      // get point coordinates in plane's coordinate system
+      // in the plane coordinate system we are using z as the height for the height map
+      const y = RANGEMIN + INCREMENT * j;
+
+      // get height map / z
+      vertices.push(x, y, amplitude * heightmap[counter]);
+      counter += 1;
+    }
+  }
+  return vertices;
+}
+
 function getSurfaceData(testData) {
   const surfaceDetails = {
     seed: testData.seed,
     choice: testData.choice,
   };
   return $.get('/getsurface', surfaceDetails).then((data) => {
-    // get the full vertices
-    let vertices;
-    // data.vertices = getVertices(data.heightMap, amplitude);
-    GETVERTICESWEBWORKER.postMessage([data.heightMap, testData.amplitude]);
-    GETVERTICESWEBWORKER.addEventListener('message', (event) => {
-      vertices = event.data;
-    });
-    return vertices;
-  }).then((vertices) => {
-    // render surface here
-    testData.vertices = vertices;
-    RenderImage(testData);
-    cloneCanvas(RENDERERCANVAS);
-    const threeImageData = CLONECONTEXT.getImageData(0, 0, CLONECONTEXT.canvas.width,
-      CLONECONTEXT.canvas.height);
-    const oldImageData = Uint8ClampedArray.from(threeImageData.data);
-    return oldImageData;
-  }).then((imageData) => {
-    // gamma correct
-    GAMMAWEBWORKER.postMessage([imageData,
-      testData.gammaRed, testData.gammaGreen, 
-      testData.gammaBlue, CLONECONTEXT.canvas.width]);
-    GAMMAWEBWORKER.addEventListener("message", (event) => {
-      testData.gammaResult = event.data;
-    });
-
+    const {heightMap, extremaIndex} = data;
+    testData.vertices = getVertices(heightMap, testData.amplitude);
+    testData.extremaIndex = extremaIndex;
     return testData;
   });
 }
@@ -425,7 +520,6 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
   const materials = Object.entries(MATERIALS);
 
   const surfaceDataList = [];
-  const testDataList = [];
   // for each surface slant
   for (let i = 0; i < numSets; i += 1) {
     for (let surfaceIndex = 0; surfaceIndex < SURFACESLANTS.length; surfaceIndex += 1) {
@@ -458,7 +552,6 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
             // different amplitude values for different materials
             const surfaceDataDirectional = getSurfaceData(testDataDirectional);
             surfaceDataList.push(surfaceDataDirectional);
-            testDataList.push(testDataDirectional);
           }
           // matlab
           const seed = getRandomSeed();
@@ -475,7 +568,6 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
           };
           const surfaceData = getSurfaceData(testData);
           surfaceDataList.push(surfaceData);
-          testDataList.push(testData);
         }
         // mathematica
         const seed = getRandomSeed();
@@ -492,11 +584,10 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
         };
         const surfaceData = getSurfaceData(testData);
         surfaceDataList.push(surfaceData);
-        testDataList.push(testData);
       }
     }
   }
-  return [surfaceDataList, testDataList];
+  return surfaceDataList;
 }
 
 function getSurfaceInfoString(testData, additionalInfo) {
@@ -504,4 +595,71 @@ function getSurfaceInfoString(testData, additionalInfo) {
     return `${testData.light}_${testData.seed}_${testData.choice}_${testData.material}_${testData.surfaceSlant}_${testData.lightSlant}_${additionalInfo}`;
   }
   return `${testData.light}_${testData.seed}_${testData.choice}_${testData.material}_${testData.surfaceSlant}_${additionalInfo}`;
+}
+
+function RenderImage(data, isPretest = true) {
+  // set our mesh geometry
+  // change positions
+  setMeshGeometryVerticesIndices(data.vertices);
+  // change material
+  if (data.material === MATERIALS.MATTE) {
+    setMeshMaterial(MATTEMATERIAL);
+    MATTEMATERIAL.needsUpdate = true;
+  } else {
+    setMeshMaterial(GLOSSYMATERIAL);
+    GLOSSYMATERIAL.needsUpdate = true;
+  }
+  // rotate
+  MESH.rotateX(-THREE.Math.degToRad(data.surfaceSlant));
+  MESH.geometry.computeVertexNormals();
+  MESH.updateMatrixWorld();
+  // set disk locations
+  const x = data.vertices[data.extremaIndex];
+  const y = data.vertices[data.extremaIndex + 1];
+  const z = data.vertices[data.extremaIndex + 2];
+  const diskLocation = new THREE.Vector3(x, y, z);
+  MESH.localToWorld(diskLocation);
+
+  // set pip position
+  let disk;
+  if (isPretest) {
+    disk = DISK;
+  } else {
+    disk = PIP;
+  }
+  disk.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.PIP);
+  disk.updateMatrix();
+  disk.visible = true;
+
+  // make the light in question visible
+  if (data.light === LIGHTS.MATLAB) {
+    MATLABLIGHT.visible = true;
+  } else if (data.light === LIGHTS.MATHEMATICA) {
+    setMathematicaLightsVisibility(true);
+  } else {
+    // directional
+    DIRECTIONALLIGHTS.map.get(data.surfaceSlant)
+      .get(data.lightSlant)
+      .visible = true;
+  }
+}
+
+function ResetRenderImage(data) {
+  // reset mesh rotation
+  resetObject(MESH);
+  resetObject(DISK);
+  resetObject(PIP);
+  // make the light in question non visible
+  if (data.light === LIGHTS.MATLAB) {
+    MATLABLIGHT.visible = false;
+  } else if (data.light === LIGHTS.MATHEMATICA) {
+    setMathematicaLightsVisibility(false);
+  } else {
+    // directional
+    DIRECTIONALLIGHTS.map.get(data.surfaceSlant)
+      .get(data.lightSlant)
+      .visible = false;
+  }
+
+  RENDERER.render(SCENE, CAMERA);
 }

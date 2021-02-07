@@ -8,9 +8,10 @@
     "ejs": "latest",
     "express": "^4.17.1",
     "simplex-noise": "^2.4.0",
-    "three": "^0.122.0"
+    "three": "^0.125.2"
   },
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "local": "source local.sh;node app.js"
   }
 }

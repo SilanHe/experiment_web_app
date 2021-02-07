@@ -35,9 +35,8 @@ if (cluster.isMaster) {
   const ddbTable = process.env.EXPERIMENT_DATA_TABLE;
   const app = express();
 
-  app.use(express.static(path.join(__dirname, 'public')));
-  app.use('/build/', express.static(path.join(__dirname, 'node_modules/three/build')));
-  app.use('/jsm/', express.static(path.join(__dirname, 'node_modules/three/examples/jsm')));
+  app.set('view engine', 'ejs');
+  app.set('views', `${__dirname}/views`);
   if (typeof isDevelopmentMachine !== 'undefined' && isDevelopmentMachine.localeCompare('TRUE') === 0) {
     app.use(express.static('.'));
   }

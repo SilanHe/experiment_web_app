@@ -111,69 +111,6 @@ function DrawBigDisk(ctx, redIndex) {
   ctx.fill();
 }
 
-function RenderImage(data) {
-  // set our mesh geometry
-  // change positions
-  setMeshGeometryVerticesIndices(data.vertices);
-  // change material
-  if (data.material === MATERIALS.MATTE) {
-    setMeshMaterial(MATTEMATERIAL);
-    MATTEMATERIAL.needsUpdate = true;
-  } else {
-    setMeshMaterial(GLOSSYMATERIAL);
-    GLOSSYMATERIAL.needsUpdate = true;
-  }
-  // rotate
-  MESH.rotateX(-THREE.Math.degToRad(data.surfaceSlant));
-  MESH.geometry.computeVertexNormals();
-  MESH.updateMatrixWorld();
-  // set disk locations
-  const x = stimulusData.vertices[stimulusData.extremaIndex];
-  const y = stimulusData.vertices[stimulusData.extremaIndex + 1];
-  const z = stimulusData.vertices[stimulusData.extremaIndex + 2];
-  const diskLocation = new THREE.Vector3(x, y, z);
-  MESH.localToWorld(diskLocation);
-
-  // set pip position
-  PIP.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.PIP);
-  PIP.updateMatrix();
-  PIP.visible = true;
-
-  // make the light in question visible
-  if (data.light === LIGHTS.MATLAB) {
-    MATLABLIGHT.visible = true;
-  } else if (data.light === LIGHTS.MATHEMATICA) {
-    setMathematicaLightsVisibility(true);
-  } else {
-    // directional
-    DIRECTIONALLIGHTS.map.get(data.surfaceSlant)
-      .get(data.lightSlant)
-      .visible = true;
-  }
-}
-
-function ResetRenderImage(data) {
-  // reset mesh rotation
-  resetObject(MESH);
-  resetObject(DISK);
-  resetObject(PIP);
-  // make the light in question non visible
-  if (data.light === LIGHTS.MATLAB) {
-      MATLABLIGHT.visible = false;
-  } else if (data.light === LIGHTS.MATHEMATICA) {
-    setMathematicaLightsVisibility(false);
-  } else {
-    // directional
-    DIRECTIONALLIGHTS.map.get(data.surfaceSlant)
-      .get(data.lightSlant)
-      .visible = false;
-  }
-
-  RENDERER.render(SCENE, CAMERA);
-
-  return imageDataArray;
-}
-
 function GammaCorrectionWidget(color1, color2, groupName, sliderName, labelName) {
   const canvas = GammaCorrectionCanvas(color1, color2);
   const ctx = canvas.getContext("2d");
