@@ -28,8 +28,6 @@
           <p>Value: <span id="demoGreen"></span></p> 
         </div>
       </div>
-    </div>
-    <div class="row">
       <div class="column">
         <div class="rangeslider center" id="sliderGroupBlue"> 
           <input type="range" min="1" max="3" value="1" step="0.01" class="myslider" id="sliderRangeBlue"> 
@@ -39,14 +37,12 @@
     </div>
 
     <input id="submitGammaCalibration" type="button" value="Submit Calibration"></input>
-    
     <script src="<%= static_path + "/jquery/jquery-1.11.3.min.js" %>"></script>
-    <script src="<%= static_path + "/jspsych-6.1.0/jspsych.js" %>"></script>
-    <script src="<%= static_path + "/jspsych-6.1.0/plugins/jspsych-html-button-response.js" %>"></script>
+    <script src="<%= static_path + "/jspsych.js" %>"></script>
+    <script src="<%= static_path + "/jspsych-image-keyboard-response.js" %>"></script>
+    <script src="<%= static_path + "/jspsych-html-keyboard-response.js" %>"></script>
     <script src="<%= static_path + "/my-jspsych-html-button-response.js" %>"></script>
-    <script src="<%= static_path + "/jspsych-6.1.0/plugins/jspsych-html-keyboard-response.js" %>"></script>
     <script src="<%= static_path + "/my-jspsych-fullscreen.js" %>"></script>
-    <script src="<%= static_path + "/jspsych-6.1.0/plugins/jspsych-image-keyboard-response.js" %>"></script>
     <script src="<%= static_path + "/my-jspsych-image-keyboard-response.js" %>"></script>
     <script src="<%= static_path + "/my-jspsych-html-submit-form.js" %>"></script>
     <script src="<%= static_path + "/my-jspsych-canvas-keyboard-response.js" %>"></script>
@@ -54,8 +50,5 @@
     <script src="<%= static_path + "/webgl.js" %>"></script>
     <script src="<%= static_path + "/gammacorrection.js" %>"></script>
     <script src="<%= static_path + "/experiment.js" %>"></script>
-    <!-- <script src="<%= static_path + "/contrast.js" %>"></script> -->
-    
-    
   </body>
 </html>

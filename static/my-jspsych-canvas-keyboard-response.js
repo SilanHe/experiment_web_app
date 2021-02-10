@@ -65,67 +65,8 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
 
   plugin.trial = function (display_element, trial) {
     // const t0 = performance.now();
-    const disk = (() => {
-      if (trial.is_pretest) {
-        return DISK;
-      }
-      return PIP;
-    })();
-
-    // set our mesh geometry
-    // change positions
-    const stimulusData = trial.stimulus.surfaceData;
-    setMeshGeometryVerticesIndices(stimulusData.vertices);
-    // change material
-    if (trial.stimulus.material === MATERIALS.MATTE) {
-      setMeshMaterial(MATTEMATERIAL);
-      MATTEMATERIAL.needsUpdate = true;
-    } else {
-      setMeshMaterial(GLOSSYMATERIAL);
-      GLOSSYMATERIAL.needsUpdate = true;
-    }
-    // rotate
-    MESH.rotateX(-THREE.Math.degToRad(trial.stimulus.surfaceSlant));
-    MESH.geometry.computeVertexNormals();
-    MESH.updateMatrixWorld();
-    // set disk locations
-    const x = stimulusData.vertices[stimulusData.extremaIndex];
-    const y = stimulusData.vertices[stimulusData.extremaIndex + 1];
-    const z = stimulusData.vertices[stimulusData.extremaIndex + 2];
-    const diskLocation = new THREE.Vector3(x, y, z);
-    MESH.localToWorld(diskLocation);
-
-    if (trial.is_pretest === true) {
-      // disk position
-      DISK.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.DISK);
-      DISK.updateMatrix();
-    } else {
-      // pip position
-      PIP.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.PIP);
-      PIP.updateMatrix();
-    }
-
-    // make the light in question visible
-    if (trial.stimulus.light === LIGHTS.MATLAB) {
-      MATLABLIGHT.visible = true;
-    } else if (trial.stimulus.light === LIGHTS.MATHEMATICA) {
-      setMathematicaLightsVisibility(true);
-    } else {
-      // directional
-      DIRECTIONALLIGHTS.map.get(trial.stimulus.surfaceSlant)
-        .get(trial.stimulus.lightSlant)
-        .visible = true;
-    }
-
-    disk.visible = true;
-    RENDERER.render(SCENE, CAMERA);
-    const c = cloneCanvas(RENDERERCANVAS);
-    const ctx = c.getContext('2d');
-    c.id = 'jspsych-canvas-keyboard-response-stimulus';
-    // const c = NormalizeContrast(ctx)
-    CanvasFromLinearToSRGBPerChannel(ctx, trial.stimulus.gammaRed,
-      trial.stimulus.gammaGreen, trial.stimulus.gammaBlue);
-    display_element.appendChild(c);
+    RenderImage(trial.stimulus, trial.is_pretest);
+    display_element.appendChild(RENDERERCANVAS);
     // const t1 = performance.now();
     // console.log("Call to render took " + (t1 - t0) + " milliseconds.");
 
@@ -137,24 +78,8 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
 
     // function to rotate stuff back to their original positions
     const resetObjects = function () {
-      disk.visible = false;
-
       if (!trial.stimulus.is_pretest) {
-        // reset mesh rotation
-        resetObject(MESH);
-        resetObject(DISK);
-        resetObject(PIP);
-        // make the light in question non visible
-        if (trial.stimulus.light === LIGHTS.MATLAB) {
-          MATLABLIGHT.visible = false;
-        } else if (trial.stimulus.light === LIGHTS.MATHEMATICA) {
-          setMathematicaLightsVisibility(false);
-        } else {
-          // directional
-          DIRECTIONALLIGHTS.map.get(trial.stimulus.surfaceSlant)
-            .get(trial.stimulus.lightSlant)
-            .visible = false;
-        }
+        ResetRenderImage(trial.stimulus);
       }
     };
 
@@ -176,7 +101,7 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
       };
 
       // clear the display
-      display_element.removeChild(c);
+      display_element.removeChild(RENDERERCANVAS);
       display_element.innerHTML = '';
 
       resetObjects();

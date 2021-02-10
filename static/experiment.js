@@ -70,11 +70,10 @@ function getScore(data) {
       const filenameList = data[i].filename.split('_');
 
       if (filenameList[filenameList.length - 1] === '2') {
-        if (filenameList[2] === 'Hill'
-        && data[i].key_press === HILL_BUTTON) {
-          correct += 1;
-        } else if (filenameList[2] === 'Valley'
-        && data[i].key_press === VALLEY_BUTTON) {
+        if ((filenameList[2] === 'Hill'
+        && data[i].key_press === HILL_BUTTON)
+        || (filenameList[2] === 'Valley'
+        && data[i].key_press === VALLEY_BUTTON)) {
           correct += 1;
         }
         total += 1;
@@ -84,25 +83,144 @@ function getScore(data) {
   return (correct / total) * 100;
 }
 
-const preTest = {
+const pretest = {
   type: 'my-canvas-keyboard-response',
   stimulus_name: jsPsych.timelineVariable('stimulus1_name'),
   stimulus: jsPsych.timelineVariable('stimulus'),
-  is_pretest: true,
   stimulus_height: screen.height,
-  choices: jsPsych.NO_KEYS,
+  choices: ['v', 'h'],
   trial_duration: 350,
+  is_pretest: true,
 };
 
 const test = {
   type: 'my-canvas-keyboard-response',
   stimulus_name: jsPsych.timelineVariable('stimulus2_name'),
   stimulus: jsPsych.timelineVariable('stimulus'),
-  is_pretest: false,
   stimulus_height: screen.height,
   choices: ['v', 'h'],
   trial_duration: 3150,
+  is_pretest: false,
 };
+
+function experiment(data) {
+  /* create timeline */
+  const timeline = [];
+
+  const consent = {
+    type: 'my-html-button-response',
+    stimulus: CONSENTFORM,
+    choices: ['OK, I consent.'],
+  };
+  timeline.push(consent);
+
+  /* define identification message trial */
+  const identification = {
+    type: 'html-submit-form',
+    preamble: '<br><p> What is your <b>Mechanical Turk ID?</b>. Please ensure you have entered the correct ID or we will not be able to pay you.</p>',
+    html: '<p> My MTurk ID is <input name="id" type="text" onkeyup="EnableDisable(this)"/>.</p>',
+  };
+  timeline.push(identification);
+
+  timeline.push({
+    type: 'fullscreen',
+    fullscreen_mode: true,
+  });
+
+  /* define welcome message trial */
+  const welcome = {
+    type: 'html-keyboard-response',
+    stimulus: '<div class="display_text">'
+    + "<p>Welcome to the ACTUAL visual perception experiment.</p><p>Put your fingers on the 'v' and 'h' keys.</p><p>Press 'v' or 'h' to continue.</p>"
+    + '</div>',
+  };
+  timeline.push(welcome);
+
+  let pushPauseMessage = false;
+
+  const numSetsImages = Math.ceil(data.length / SPLICE_SIZE);
+  let setNum = 0;
+  while (data.length > 0) {
+    if (pushPauseMessage) {
+      // add pause message only if not first set of images
+      const breakInstructions = {
+        type: 'html-keyboard-response',
+        stimulus: `${'<div class="display_text">'
+            + '<p>You have finished '}${setNum}/${numSetsImages} set of images! Stay on this page to take a break.`
+            + '<p>Place your fingers on the \'v\' and \'h\' key. Press \'v\' or \'h\' to continue.</p>'
+            + '</div>',
+        choices: ['h', 'v'],
+        post_trial_gap: 500,
+      };
+      timeline.push(breakInstructions);
+    } else {
+      pushPauseMessage = true;
+    }
+
+    const splicedStimuli = data.splice(0, SPLICE_SIZE);
+
+    const testProcedure = {
+      timeline: [pretest, test],
+      timeline_variables: splicedStimuli,
+    };
+    timeline.push(testProcedure);
+    setNum += 1;
+  }
+
+  // exit fullscreen mode
+  timeline.push({
+    type: 'fullscreen',
+    fullscreen_mode: false,
+  });
+
+  /* start the experiment */
+  jsPsych.init({
+    timeline,
+    min_width: 1920,
+    min_height: 1200,
+    on_finish() {
+      createLoadingWheel(document.body);
+      createH1(document.body, 'Please do not close browser window yet, wait for submission confirmation message.');
+      createH1(document.body, 'This may take a few minutes.');
+
+      const allData = JSON.parse(data.get().json());
+      const interactionData = JSON.parse(data.getInteractionData().json());
+
+      // publish data to dynamodb
+      const experimentData = {};
+      // id page is the second of the experiment now
+      experimentData.id = JSON.parse(allData[1].responses).id;
+      experimentData.data = {};
+      experimentData.data.all_data = allData;
+      experimentData.data.interaction_data = interactionData;
+      experimentData.data = JSON.stringify(experimentData.data);
+
+      $.post('/submitexperiment', experimentData).then(
+        (data2) => {
+          clearDocumentBody();
+          createH1(document.body, 'Success! Your experiment data has been successfully submitted.');
+          // calculate score
+          const score = Math.round(getScore(allData));
+          createH3(document.body, `You scored ${score}%! You may now close this browser window.`);
+        },
+        (error2) => {
+          createH1(document.body, "Well this is embarrassing. It looks like we're having trouble submitting your experiment data.");
+        },
+      );
+    },
+  });
+}
+
+function loadingScreen() {
+  clearDocumentBody();
+  createH1(document.body, 'Loading the experiment. This may take a few minutes... Thank you for your patience.');
+  createLoadingWheel(document.body);
+  createH3(document.body, 'Thank you for taking the time to participate in this experiment!');
+
+  pairedImagesPromise.then((data) => {
+    experiment(data);
+  });
+}
 
 function tutorial(gammaRed, gammaGreen, gammaBlue) {
   const staticPath = 'static/images/tutorial/';
@@ -140,7 +258,7 @@ function tutorial(gammaRed, gammaGreen, gammaBlue) {
     type: 'fullscreen',
     fullscreen_mode: true,
     on_load: () => {
-      pairedImagesPromise = generateImageData(2, gammaRed, gammaGreen, gammaBlue);
+      pairedImagesPromise = generateImageData(gammaRed, gammaGreen, gammaBlue, 3);
     },
   });
 
@@ -301,8 +419,11 @@ function tutorial(gammaRed, gammaGreen, gammaBlue) {
   });
 }
 
-function generateImageData(numSets = 1,gammaRed, gammaGreen, gammaBlue) {
-  const [surfaceDataList, testDataList] = getSurfaceDataList(numSets, gammaRed, gammaGreen, gammaBlue);
+function generateImageData(gammaRed, gammaGreen, gammaBlue, numSets = 1) {
+  const surfaceDataList = getSurfaceDataList(numSets,
+    gammaRed, gammaGreen, gammaBlue);
+  const averageGammaFactor = (gammaRed + gammaGreen + gammaBlue) / 3;
+  const { matteMaterial, glossyMaterial } = CustomShaderMaterial(averageGammaFactor);
   const promise = Promise.all(surfaceDataList).then((surfaceDataArray) => {
     // shuffle the s3Images
     function shuffle(array) {
@@ -315,12 +436,13 @@ function generateImageData(numSets = 1,gammaRed, gammaGreen, gammaBlue) {
     }
     // pair up the images
     const pairedImages = [];
-    for (let i = 0; i < testDataList.length; i += 1) {
-      testDataList[i].surfaceData = surfaceDataArray[i];
+    for (let i = 0; i < surfaceDataArray.length; i += 1) {
+      surfaceDataArray[i].matteMaterial = matteMaterial;
+      surfaceDataArray[i].glossyMaterial = glossyMaterial;
       pairedImages.push({
-        stimulus1_name: getSurfaceInfoString(testDataList[i], 1),
-        stimulus2_name: getSurfaceInfoString(testDataList[i], 2),
-        stimulus: testDataList[i],
+        stimulus1_name: getSurfaceInfoString(surfaceDataArray[i], 1),
+        stimulus2_name: getSurfaceInfoString(surfaceDataArray[i], 2),
+        stimulus: surfaceDataArray[i],
       });
     }
 
@@ -330,133 +452,13 @@ function generateImageData(numSets = 1,gammaRed, gammaGreen, gammaBlue) {
   return promise;
 }
 
-function experiment(data) {
-  /* create timeline */
-  const timeline = [];
-
-  const consent = {
-    type: 'my-html-button-response',
-    stimulus: CONSENTFORM,
-    choices: ['OK, I consent.'],
-  };
-  timeline.push(consent);
-
-  /* define identification message trial */
-  const identification = {
-    type: 'html-submit-form',
-    preamble: '<br><p> What is your <b>Mechanical Turk ID?</b>. Please ensure you have entered the correct ID or we will not be able to pay you.</p>',
-    html: '<p> My MTurk ID is <input name="id" type="text" onkeyup="EnableDisable(this)"/>.</p>',
-  };
-  timeline.push(identification);
-
-  timeline.push({
-    type: 'fullscreen',
-    fullscreen_mode: true,
-  });
-
-  /* define welcome message trial */
-  const welcome = {
-    type: 'html-keyboard-response',
-    stimulus: '<div class="display_text">'
-    + "<p>Welcome to the ACTUAL visual perception experiment.</p><p>Put your fingers on the 'v' and 'h' keys.</p><p>Press 'v' or 'h' to continue.</p>"
-    + '</div>',
-  };
-  timeline.push(welcome);
-
-  let pushPauseMessage = false;
-
-  const numSetsImages = Math.ceil(data.length / SPLICE_SIZE);
-  let setNum = 0;
-  while (data.length > 0) {
-    if (pushPauseMessage) {
-      // add pause message only if not first set of images
-      const breakInstructions = {
-        type: 'html-keyboard-response',
-        stimulus: `${'<div class="display_text">'
-            + '<p>You have finished '}${setNum}/${numSetsImages} set of images! Stay on this page to take a break.`
-            + '<p>Place your fingers on the \'v\' and \'h\' key. Press \'v\' or \'h\' to continue.</p>'
-            + '</div>',
-        choices: ['h', 'v'],
-        post_trial_gap: 500,
-      };
-      timeline.push(breakInstructions);
-    } else {
-      pushPauseMessage = true;
-    }
-
-    const splicedStimuli = data.splice(0, SPLICE_SIZE);
-
-    const testProcedure = {
-      timeline: [preTest, test],
-      timeline_variables: splicedStimuli,
-    };
-    timeline.push(testProcedure);
-    setNum += 1;
-  }
-
-  // exit fullscreen mode
-  timeline.push({
-    type: 'fullscreen',
-    fullscreen_mode: false,
-  });
-
-  /* start the experiment */
-  jsPsych.init({
-    timeline,
-    min_width: 1920,
-    min_height: 1200,
-    on_finish() {
-      createLoadingWheel(document.body);
-      createH1(document.body, 'Please do not close browser window yet, wait for submission confirmation message.');
-      createH1(document.body, 'This may take a few minutes.');
-
-      const allData = JSON.parse(jsPsych.data.get().json());
-      const interactionData = JSON.parse(jsPsych.data.getInteractionData().json());
-
-      // publish data to dynamodb
-      const experimentData = {};
-      // id page is the second of the experiment now
-      experimentData.id = JSON.parse(allData[1].responses).id;
-      experimentData.data = {};
-      experimentData.data.all_data = allData;
-      experimentData.data.interaction_data = interactionData;
-      experimentData.data = JSON.stringify(experimentData.data);
-
-      $.post('/submitexperiment', experimentData).then(
-        (data2) => {
-          clearDocumentBody();
-          createH1(document.body, 'Success! Your experiment data has been successfully submitted.');
-          // calculate score
-          const score = Math.round(getScore(allData));
-          createH3(document.body, `You scored ${score}%! You may now close this browser window.`);
-        },
-        (error2) => {
-          createH1(document.body, "Well this is embarrassing. It looks like we're having trouble submitting your experiment data.");
-        },
-      );
-    },
-  });
-}
-
-function loadingScreen() {
-  clearDocumentBody();
-  createH1(document.body, 'Loading the experiment. This may take a few minutes... Thank you for your patience.');
-  createLoadingWheel(document.body);
-  createH3(document.body, 'Thank you for taking the time to participate in this experiment!');
-
-  pairedImagesPromise.then((data) => {
-    experiment(data);
-  });
-}
-
 // do gamma correction first
-
 const rangeSliderRed = GammaCorrectionWidget('#FF0000', '#7F0000', 'sliderGroupRed', 'sliderRangeRed', 'demoRed');
 const rangeSliderGreen = GammaCorrectionWidget('#00FF00', '#007F00', 'sliderGroupGreen', 'sliderRangeGreen', 'demoGreen');
 const rangeSliderBlue = GammaCorrectionWidget('#0000FF', '#00007F', 'sliderGroupBlue', 'sliderRangeBlue', 'demoBlue');
-rangeSliderRed.value = "1";
-rangeSliderGreen.value = "1";
-rangeSliderBlue.value = "1";
+rangeSliderRed.value = '1';
+rangeSliderGreen.value = '1';
+rangeSliderBlue.value = '1';
 
 // on submit start tutorial
 const submitGammaCalibrationButton = document.getElementById('submitGammaCalibration');

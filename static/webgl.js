@@ -7,8 +7,6 @@ const AMPLITUDES = {
   60: 0.19,
 };
 
-const GAMMA = 2.2;
-
 const NUM_POINTS = 350;
 const RANGEMAX = 9.4;
 const RANGEMIN = -9.4;
@@ -270,7 +268,7 @@ const CAMERA = (() => {
  */
 const SCENE = (() => {
   const scene = new THREE.Scene();
-  scene.background = GREEN;
+  scene.background = DARKGRAY;
 
   // add all the lights, they start out: visible = false;
   for (let i = 0; i < MATHEMATICALIGHTS.length; i += 1) {
@@ -323,100 +321,125 @@ function onWindowResize() {
   RENDERERCANVAS.height = window.innerHeight;
 }
 
+function CustomShaderMaterial(gammaFactor) {
+  const customFragmentShader = [
+    '#define PHONG',
+    'uniform vec3 diffuse;',
+    'uniform vec3 emissive;',
+    'uniform vec3 specular;',
+    'uniform float shininess;',
+    'uniform float opacity;',
+    'uniform float gammafactor;',
+    '#include <common>',
+    '#include <packing>',
+    '#include <dithering_pars_fragment>',
+    '#include <color_pars_fragment>',
+    '#include <uv_pars_fragment>',
+    '#include <uv2_pars_fragment>',
+    '#include <map_pars_fragment>',
+    '#include <alphamap_pars_fragment>',
+    '#include <aomap_pars_fragment>',
+    '#include <lightmap_pars_fragment>',
+    '#include <emissivemap_pars_fragment>',
+    '#include <envmap_common_pars_fragment>',
+    '#include <envmap_pars_fragment>',
+    '#include <cube_uv_reflection_fragment>',
+    '#include <fog_pars_fragment>',
+    '#include <bsdfs>',
+    '#include <lights_pars_begin>',
+    '#include <lights_phong_pars_fragment>',
+    '#include <shadowmap_pars_fragment>',
+    '#include <bumpmap_pars_fragment>',
+    '#include <normalmap_pars_fragment>',
+    '#include <specularmap_pars_fragment>',
+    '#include <logdepthbuf_pars_fragment>',
+    '#include <clipping_planes_pars_fragment>',
+    'void main() {',
+    ' #include <clipping_planes_fragment>',
+    ' vec4 diffuseColor = vec4( diffuse, opacity );',
+    ' ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );',
+    ' vec3 totalEmissiveRadiance = emissive;',
+    ' #include <logdepthbuf_fragment>',
+    ' #include <map_fragment>',
+    ' #include <color_fragment>',
+    ' #include <alphamap_fragment>',
+    ' #include <alphatest_fragment>',
+    ' #include <specularmap_fragment>',
+    ' #include <normal_fragment_begin>',
+    ' #include <normal_fragment_maps>',
+    ' #include <emissivemap_fragment>',
+    ' #include <lights_phong_fragment>',
+    ' #include <lights_fragment_begin>',
+    ' #include <lights_fragment_maps>',
+    ' #include <lights_fragment_end>',
+    ' #include <aomap_fragment>',
+    ' vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;',
+    ' #include <envmap_fragment>',
+    ' gl_FragColor = LinearToGamma(vec4( outgoingLight, diffuseColor.a ), gammafactor);',
+    ' #include <tonemapping_fragment>',
+    ' #include <encodings_fragment>',
+    ' #include <fog_fragment>',
+    ' #include <premultiplied_alpha_fragment>',
+    ' #include <dithering_fragment>',
+    '}',
+  ].join('\n');
+
+  const matteUniforms = THREE.UniformsUtils.merge([
+    THREE.ShaderLib.phong.uniforms,
+    {
+      gammafactor: { value: gammaFactor },
+    },
+  ]);
+
+  const glossyUniforms = THREE.UniformsUtils.merge([
+    THREE.ShaderLib.phong.uniforms,
+    {
+      gammafactor: { value: gammaFactor },
+    },
+  ]);
+
+  const matteMaterial = new THREE.ShaderMaterial({
+    uniforms: matteUniforms,
+    vertexShader: THREE.ShaderLib.phong.vertexShader,
+    fragmentShader: customFragmentShader,
+    lights: true,
+    name: 'matte-material',
+  });
+  matteMaterial.uniforms.side = { value: THREE.FrontSide };
+  matteMaterial.uniforms.color = { value: WHITE };
+  matteMaterial.uniforms.specular = { value: BLACK };
+  matteMaterial.uniforms.shininess = { value: 0 };
+
+  const glossyMaterial = new THREE.ShaderMaterial({
+    uniforms: glossyUniforms,
+    vertexShader: THREE.ShaderLib.phong.vertexShader,
+    fragmentShader: customFragmentShader,
+    lights: true,
+    name: 'glossy-material',
+  });
+  glossyMaterial.uniforms.side = { value: THREE.FrontSide };
+  glossyMaterial.uniforms.color = { value: GLOSSYCOLOR };
+  glossyMaterial.uniforms.specular = { value: GLOSSYSPECULAR };
+  glossyMaterial.uniforms.shininess = { value: 51 };
+
+  return {
+    matteMaterial,
+    glossyMaterial,
+  };
+}
+
 function cloneCanvas(oldCanvas) {
   // create a new canvas
-  const newCanvas = document.createElement('canvas');
-  const context = newCanvas.getContext('2d');
-
+  // using a precreated canvas to increase speed
   // set dimensions
-  newCanvas.width = oldCanvas.width;
-  newCanvas.height = oldCanvas.height;
+  CLONECANVAS.width = oldCanvas.width;
+  CLONECANVAS.height = oldCanvas.height;
 
   // apply the old canvas to the new one
-  context.drawImage(oldCanvas, 0, 0);
+  CLONECONTEXT.drawImage(oldCanvas, 0, 0);
 
   // return the new canvas
-  return newCanvas;
-}
-
-function ConvertLinearToSRGB(l) {
-  normalizedL = l / 255;
-  if (normalizedL >= 0 && normalizedL <= 0.0031308) {
-    return 12.92 * normalizedL * 255;
-  }
-  return (1.055 * normalizedL ** (1 / 2.4) - 0.055) * 255;
-}
-
-function removeGreenBackground() {
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = Uint8ClampedArray.from(imageData.data);
-  for (let i = 0; i < data.length; i += 4) {
-    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
-      data[i] = 17;
-      data[i + 1] = 17;
-      data[i + 2] = 17;
-      data[i + 3] = 255;
-    }
-  }
-}
-
-function NormalizeContrast(ctx, targetMean, targetStd) {
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = Uint8ClampedArray.from(imageData.data);
-
-  // get average intensity
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  let count = 0;
-  for (let i = 0; i < data.length; i += 4) {
-    if (!((data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0)
-    || (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0))) {
-      r += data[i];
-      g += data[i + 1];
-      b += data[i + 2];
-      count += 1;
-    }
-  }
-  r /= count;
-  g /= count;
-  b /= count;
-
-  // get standard deviation of intensities
-  let sumR = 0;
-  let sumG = 0;
-  let sumB = 0;
-  for (let i = 0; i < data.length; i += 4) {
-    if (!((data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0)
-    || (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0))) {
-      sumR += (data[i] - r) ** 2;
-      sumG += (data[i + 1] - g) ** 2;
-      sumB += (data[i + 2] - b) ** 2;
-    }
-  }
-
-  const stdR = Math.sqrt(sumR / count);
-  const stdG = Math.sqrt(sumG / count);
-  const stdB = Math.sqrt(sumB / count);
-
-  for (let i = 0; i < data.length; i += 4) {
-    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
-      data[i] = 17;
-      data[i + 1] = 17;
-      data[i + 2] = 17;
-      data[i + 3] = 255;
-    } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0) {
-      // eslint-disable-next-line no-continue
-      continue;
-    } else {
-      data[i] = Math.round(targetMean.r + targetStd.r * ((data[i] - r) / stdR));
-      data[i + 1] = Math.round(targetMean.g + targetStd.g * ((data[i + 1] - g) / stdG));
-      data[i + 2] = Math.round(targetMean.b + targetStd.b * ((data[i + 2] - b) / stdB));
-    }
-  }
-
-  const newImageData = new ImageData(data, ctx.canvas.width);
-  ctx.putImageData(newImageData, 0, 0);
+  return CLONECANVAS;
 }
 
 function setMathematicaLightsVisibility(value) {
@@ -462,17 +485,6 @@ function getRandomSeed() {
   return Math.floor(Math.random() * 10000);
 }
 
-function getSurfaceData(seed, choice, amplitude) {
-  const surfaceDetails = {
-    seed,
-    choice,
-  };
-  return $.get('/getsurface', surfaceDetails).then((data) => {
-    data.vertices = getVertices(data.heightMap, amplitude);
-    return data;
-  });
-}
-
 function getVertices(heightmap, amplitude) {
   const vertices = [];
   let counter = 0;
@@ -491,12 +503,24 @@ function getVertices(heightmap, amplitude) {
   return vertices;
 }
 
+function getSurfaceData(testData) {
+  const surfaceDetails = {
+    seed: testData.seed,
+    choice: testData.choice,
+  };
+  return $.get('/getsurface', surfaceDetails).then((data) => {
+    const {heightMap, extremaIndex} = data;
+    testData.vertices = getVertices(heightMap, testData.amplitude);
+    testData.extremaIndex = extremaIndex;
+    return testData;
+  });
+}
+
 function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
   const choices = Object.entries(CHOICE);
   const materials = Object.entries(MATERIALS);
 
   const surfaceDataList = [];
-  const testDataList = [];
   // for each surface slant
   for (let i = 0; i < numSets; i += 1) {
     for (let surfaceIndex = 0; surfaceIndex < SURFACESLANTS.length; surfaceIndex += 1) {
@@ -515,7 +539,8 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
             const lightSlant = DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex];
 
             const testDataDirectional = {
-              seedDirectional,
+              amplitude: AMPLITUDES[surfaceSlant],
+              seed: seedDirectional,
               choice: choices[choiceIndex][1],
               material,
               light: LIGHTS.DIRECTIONAL,
@@ -526,15 +551,13 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
               gammaBlue,
             };
             // different amplitude values for different materials
-
-            const surfaceDataDirectional = getSurfaceData(seedDirectional,
-              testDataDirectional.choice, AMPLITUDES[testDataDirectional.surfaceSlant]);
+            const surfaceDataDirectional = getSurfaceData(testDataDirectional);
             surfaceDataList.push(surfaceDataDirectional);
-            testDataList.push(testDataDirectional);
           }
           // matlab
           const seed = getRandomSeed();
           const testData = {
+            amplitude: AMPLITUDES[surfaceSlant],
             seed,
             choice: choices[choiceIndex][1],
             material,
@@ -544,14 +567,13 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
             gammaGreen,
             gammaBlue,
           };
-          const surfaceData = getSurfaceData(seed,
-            testData.choice, AMPLITUDES[testData.surfaceSlant]);
+          const surfaceData = getSurfaceData(testData);
           surfaceDataList.push(surfaceData);
-          testDataList.push(testData);
         }
         // mathematica
         const seed = getRandomSeed();
         const testData = {
+          amplitude: AMPLITUDES[surfaceSlant],
           seed,
           choice: choices[choiceIndex][1],
           material: MATERIALS.MATTE,
@@ -561,14 +583,12 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
           gammaGreen,
           gammaBlue,
         };
-        const surfaceData = getSurfaceData(seed,
-          testData.choice, AMPLITUDES[testData.surfaceSlant]);
+        const surfaceData = getSurfaceData(testData);
         surfaceDataList.push(surfaceData);
-        testDataList.push(testData);
       }
     }
   }
-  return [surfaceDataList, testDataList];
+  return surfaceDataList;
 }
 
 function getSurfaceInfoString(testData, additionalInfo) {
@@ -576,4 +596,76 @@ function getSurfaceInfoString(testData, additionalInfo) {
     return `${testData.light}_${testData.seed}_${testData.choice}_${testData.material}_${testData.surfaceSlant}_${testData.lightSlant}_${additionalInfo}`;
   }
   return `${testData.light}_${testData.seed}_${testData.choice}_${testData.material}_${testData.surfaceSlant}_${additionalInfo}`;
+}
+
+function RenderImage(data, isPretest = true) {
+  // set our mesh geometry
+  // change positions
+  setMeshGeometryVerticesIndices(data.vertices);
+  // change material
+  if (data.material === MATERIALS.MATTE) {
+    setMeshMaterial(data.matteMaterial);
+    data.matteMaterial.needsUpdate = true;
+  } else {
+    setMeshMaterial(data.glossyMaterial);
+    data.glossyMaterial.needsUpdate = true;
+  }
+  // rotate
+  MESH.rotateX(-THREE.Math.degToRad(data.surfaceSlant));
+  MESH.geometry.computeVertexNormals();
+  MESH.updateMatrixWorld();
+  // set disk locations
+  const x = data.vertices[data.extremaIndex];
+  const y = data.vertices[data.extremaIndex + 1];
+  const z = data.vertices[data.extremaIndex + 2];
+  const diskLocation = new THREE.Vector3(x, y, z);
+  MESH.localToWorld(diskLocation);
+
+  // set pip position
+  let disk;
+  if (isPretest) {
+    disk = DISK;
+    disk.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.DISK);
+  } else {
+    disk = PIP;
+    disk.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.PIP);
+  }
+  disk.updateMatrix();
+  disk.visible = true;
+
+  // make the light in question visible
+  if (data.light === LIGHTS.MATLAB) {
+    MATLABLIGHT.visible = true;
+  } else if (data.light === LIGHTS.MATHEMATICA) {
+    setMathematicaLightsVisibility(true);
+  } else {
+    // directional
+    DIRECTIONALLIGHTS.map.get(data.surfaceSlant)
+      .get(data.lightSlant)
+      .visible = true;
+  }
+
+  RENDERER.render(SCENE, CAMERA);
+}
+
+function ResetRenderImage(data) {
+  // reset mesh rotation
+  resetObject(MESH);
+  resetObject(DISK);
+  DISK.visible = false;
+  resetObject(PIP);
+  PIP.visible = false;
+  // make the light in question non visible
+  if (data.light === LIGHTS.MATLAB) {
+    MATLABLIGHT.visible = false;
+  } else if (data.light === LIGHTS.MATHEMATICA) {
+    setMathematicaLightsVisibility(false);
+  } else {
+    // directional
+    DIRECTIONALLIGHTS.map.get(data.surfaceSlant)
+      .get(data.lightSlant)
+      .visible = false;
+  }
+
+  RENDERER.render(SCENE, CAMERA);
 }
