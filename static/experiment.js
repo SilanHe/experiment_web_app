@@ -89,7 +89,7 @@ const pretest = {
   stimulus: jsPsych.timelineVariable('stimulus'),
   stimulus_height: screen.height,
   choices: ['v', 'h'],
-  trial_duration: 3150,
+  trial_duration: 350,
   is_pretest: true,
 };
 

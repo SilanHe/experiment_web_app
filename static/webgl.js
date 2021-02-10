@@ -625,10 +625,11 @@ function RenderImage(data, isPretest = true) {
   let disk;
   if (isPretest) {
     disk = DISK;
+    disk.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.DISK);
   } else {
     disk = PIP;
+    disk.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.PIP);
   }
-  disk.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.PIP);
   disk.updateMatrix();
   disk.visible = true;
 
@@ -651,7 +652,9 @@ function ResetRenderImage(data) {
   // reset mesh rotation
   resetObject(MESH);
   resetObject(DISK);
+  DISK.visible = false;
   resetObject(PIP);
+  PIP.visible = false;
   // make the light in question non visible
   if (data.light === LIGHTS.MATLAB) {
     MATLABLIGHT.visible = false;
