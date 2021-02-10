@@ -1,6 +1,11 @@
 // CONSTANTS
 // -----------------------------------------------------------------------------
 
+const CLONECANVAS = document.createElement("CANVAS");
+const CLONECONTEXT = CLONECANVAS.getContext("2d");
+CLONECONTEXT.canvas.width = window.innerWidth;
+CLONECONTEXT.canvas.height = window.innerHeight;
+
 const AMPLITUDES = {
   30: 0.45,
   45: 0.35,
@@ -268,7 +273,7 @@ const CAMERA = (() => {
  */
 const SCENE = (() => {
   const scene = new THREE.Scene();
-  scene.background = DARKGRAY;
+  scene.background = GREEN;
 
   // add all the lights, they start out: visible = false;
   for (let i = 0; i < MATHEMATICALIGHTS.length; i += 1) {
@@ -319,6 +324,118 @@ function onWindowResize() {
   RENDERER.setSize(window.innerWidth, window.innerHeight);
   RENDERERCANVAS.width = window.innerWidth;
   RENDERERCANVAS.height = window.innerHeight;
+}
+
+function CustomContrastNormalizedShaderMaterial(gammaFactor, meanLuminance, meanSTD) {
+  const customFragmentShader = [
+    '#define PHONG',
+    'uniform vec3 diffuse;',
+    'uniform vec3 emissive;',
+    'uniform vec3 specular;',
+    'uniform float shininess;',
+    'uniform float opacity;',
+    'uniform float gammafactor;',
+    'uniform float meanLuminance;',
+    'uniform float meanSTD;',
+    '#include <common>',
+    '#include <packing>',
+    '#include <dithering_pars_fragment>',
+    '#include <color_pars_fragment>',
+    '#include <uv_pars_fragment>',
+    '#include <uv2_pars_fragment>',
+    '#include <map_pars_fragment>',
+    '#include <alphamap_pars_fragment>',
+    '#include <aomap_pars_fragment>',
+    '#include <lightmap_pars_fragment>',
+    '#include <emissivemap_pars_fragment>',
+    '#include <envmap_common_pars_fragment>',
+    '#include <envmap_pars_fragment>',
+    '#include <cube_uv_reflection_fragment>',
+    '#include <fog_pars_fragment>',
+    '#include <bsdfs>',
+    '#include <lights_pars_begin>',
+    '#include <lights_phong_pars_fragment>',
+    '#include <shadowmap_pars_fragment>',
+    '#include <bumpmap_pars_fragment>',
+    '#include <normalmap_pars_fragment>',
+    '#include <specularmap_pars_fragment>',
+    '#include <logdepthbuf_pars_fragment>',
+    '#include <clipping_planes_pars_fragment>',
+    'void main() {',
+    ' #include <clipping_planes_fragment>',
+    ' vec4 diffuseColor = vec4( diffuse, opacity );',
+    ' ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );',
+    ' vec3 totalEmissiveRadiance = emissive;',
+    ' #include <logdepthbuf_fragment>',
+    ' #include <map_fragment>',
+    ' #include <color_fragment>',
+    ' #include <alphamap_fragment>',
+    ' #include <alphatest_fragment>',
+    ' #include <specularmap_fragment>',
+    ' #include <normal_fragment_begin>',
+    ' #include <normal_fragment_maps>',
+    ' #include <emissivemap_fragment>',
+    ' #include <lights_phong_fragment>',
+    ' #include <lights_fragment_begin>',
+    ' #include <lights_fragment_maps>',
+    ' #include <lights_fragment_end>',
+    ' #include <aomap_fragment>',
+    ' vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;',
+    ' #include <envmap_fragment>',
+    ' gl_FragColor = LinearToGamma(vec4( outgoingLight, diffuseColor.a ), gammafactor);',
+    ' #include <tonemapping_fragment>',
+    ' #include <encodings_fragment>',
+    ' #include <fog_fragment>',
+    ' #include <premultiplied_alpha_fragment>',
+    ' #include <dithering_fragment>',
+    '}',
+  ].join('\n');
+
+  const matteUniforms = THREE.UniformsUtils.merge([
+    THREE.ShaderLib.phong.uniforms,
+    {
+      meanLuminance: { value: meanLuminance },
+      meanSTD: { value: meanSTD },
+      gammafactor: { value: gammaFactor },
+    },
+  ]);
+
+  const glossyUniforms = THREE.UniformsUtils.merge([
+    THREE.ShaderLib.phong.uniforms,
+    {
+      meanLuminance: { value: meanLuminance },
+      meanSTD: { value: meanSTD },
+      gammafactor: { value: gammaFactor },
+    },
+  ]);
+
+  const matteMaterial = new THREE.ShaderMaterial({
+    uniforms: matteUniforms,
+    vertexShader: THREE.ShaderLib.phong.vertexShader,
+    fragmentShader: customFragmentShader,
+    lights: true,
+    name: 'matte-material',
+  });
+  matteMaterial.uniforms.side = { value: THREE.FrontSide };
+  matteMaterial.uniforms.color = { value: WHITE };
+  matteMaterial.uniforms.shininess = { value: 0 };
+
+  const glossyMaterial = new THREE.ShaderMaterial({
+    uniforms: glossyUniforms,
+    vertexShader: THREE.ShaderLib.phong.vertexShader,
+    fragmentShader: customFragmentShader,
+    lights: true,
+    name: 'glossy-material',
+  });
+  glossyMaterial.uniforms.side = { value: THREE.FrontSide };
+  glossyMaterial.uniforms.color = { value: GLOSSYCOLOR };
+  glossyMaterial.uniforms.specular = { value: GLOSSYSPECULAR };
+  glossyMaterial.uniforms.shininess = { value: 51 };
+
+  return {
+    matteMaterial,
+    glossyMaterial,
+  };
 }
 
 function CustomShaderMaterial(gammaFactor) {
@@ -407,7 +524,6 @@ function CustomShaderMaterial(gammaFactor) {
   });
   matteMaterial.uniforms.side = { value: THREE.FrontSide };
   matteMaterial.uniforms.color = { value: WHITE };
-  matteMaterial.uniforms.specular = { value: BLACK };
   matteMaterial.uniforms.shininess = { value: 0 };
 
   const glossyMaterial = new THREE.ShaderMaterial({
@@ -509,7 +625,7 @@ function getSurfaceData(testData) {
     choice: testData.choice,
   };
   return $.get('/getsurface', surfaceDetails).then((data) => {
-    const {heightMap, extremaIndex} = data;
+    const { heightMap, extremaIndex } = data;
     testData.vertices = getVertices(heightMap, testData.amplitude);
     testData.extremaIndex = extremaIndex;
     return testData;
@@ -519,6 +635,8 @@ function getSurfaceData(testData) {
 function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
   const choices = Object.entries(CHOICE);
   const materials = Object.entries(MATERIALS);
+  const averageGammaFactor = (gammaRed + gammaGreen + gammaBlue) / 3;
+  const { matteMaterial, glossyMaterial } = CustomShaderMaterial(averageGammaFactor);
 
   const surfaceDataList = [];
   // for each surface slant
@@ -549,6 +667,8 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
               gammaRed,
               gammaGreen,
               gammaBlue,
+              matteMaterial,
+              glossyMaterial,
             };
             // different amplitude values for different materials
             const surfaceDataDirectional = getSurfaceData(testDataDirectional);
@@ -566,6 +686,8 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
             gammaRed,
             gammaGreen,
             gammaBlue,
+            matteMaterial,
+            glossyMaterial,
           };
           const surfaceData = getSurfaceData(testData);
           surfaceDataList.push(surfaceData);
@@ -582,6 +704,8 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
           gammaRed,
           gammaGreen,
           gammaBlue,
+          matteMaterial,
+          glossyMaterial,
         };
         const surfaceData = getSurfaceData(testData);
         surfaceDataList.push(surfaceData);
@@ -605,9 +729,11 @@ function RenderImage(data, isPretest = true) {
   // change material
   if (data.material === MATERIALS.MATTE) {
     setMeshMaterial(data.matteMaterial);
+    // setMeshMaterial(MATTEMATERIAL);
     data.matteMaterial.needsUpdate = true;
   } else {
     setMeshMaterial(data.glossyMaterial);
+    // setMeshMaterial(GLOSSYMATERIAL);
     data.glossyMaterial.needsUpdate = true;
   }
   // rotate
@@ -625,10 +751,11 @@ function RenderImage(data, isPretest = true) {
   let disk;
   if (isPretest) {
     disk = DISK;
+    disk.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.DISK);
   } else {
     disk = PIP;
+    disk.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.PIP);
   }
-  disk.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.PIP);
   disk.updateMatrix();
   disk.visible = true;
 
@@ -651,7 +778,9 @@ function ResetRenderImage(data) {
   // reset mesh rotation
   resetObject(MESH);
   resetObject(DISK);
+  DISK.visible = false;
   resetObject(PIP);
+  PIP.visible = false;
   // make the light in question non visible
   if (data.light === LIGHTS.MATLAB) {
     MATLABLIGHT.visible = false;

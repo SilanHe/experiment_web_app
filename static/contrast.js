@@ -61,147 +61,14 @@ function GetLuminanceAndStandardDeviation(canvas = RENDERERCANVAS) {
   const stdG = Math.sqrt(sumG / count);
   const stdB = Math.sqrt(sumB / count);
 
-  console.log(`r: ${r},
-  g: ${g},
-  b: ${b}`);
-  console.log(`stdR ${stdR}, stdG ${stdG}, stdB ${stdB}`);
-}
-
-function getSurfaceDataOnly(seed, choice) {
-  const surfaceDetails = {
-    seed,
-    choice,
+  return {
+    r,
+    g,
+    b,
+    stdR,
+    stdG,
+    stdB,
   };
-  return $.get('/getsurface', surfaceDetails).then((data) => data);
-}
-
-function renderSurface(seed, surfaceSlant, choice, light, lightSlant,
-  material, amplitude, isPretest) {
-  return getSurfaceData(seed, choice, amplitude).then((stimulusData) => {
-    const disk = (() => {
-      if (isPretest) {
-        return DISK;
-      }
-      return PIP;
-    })();
-    setMeshGeometryVerticesIndices(stimulusData.vertices);
-    // change material
-    if (material === MATERIALS.MATTE) {
-      setMeshMaterial(MATTEMATERIAL);
-      MATTEMATERIAL.needsUpdate = true;
-    } else {
-      setMeshMaterial(GLOSSYMATERIAL);
-      GLOSSYMATERIAL.needsUpdate = true;
-    }
-    // rotate
-    MESH.rotateX(-THREE.Math.degToRad(surfaceSlant));
-    MESH.geometry.computeVertexNormals();
-    MESH.updateMatrixWorld();
-
-    // set disk locations
-    const x = stimulusData.vertices[stimulusData.extremaIndex];
-    const y = stimulusData.vertices[stimulusData.extremaIndex + 1];
-    const z = stimulusData.vertices[stimulusData.extremaIndex + 2];
-    const diskLocation = new THREE.Vector3(x, y, z);
-    MESH.localToWorld(diskLocation);
-
-    if (isPretest === true) {
-      // disk position
-      DISK.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.DISK);
-      DISK.updateMatrix();
-    } else {
-      // pip position
-      PIP.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.PIP);
-      PIP.updateMatrix();
-    }
-
-    // make the light in question visible
-    if (light === LIGHTS.MATLAB) {
-      MATLABLIGHT.visible = true;
-    } else if (light === LIGHTS.MATHEMATICA) {
-      setMathematicaLightsVisibility(true);
-    } else {
-      // directional
-      DIRECTIONALLIGHTS.map.get(surfaceSlant)
-        .get(lightSlant)
-        .visible = true;
-    }
-
-    disk.visible = true;
-    RENDERER.render(SCENE, CAMERA);
-    const newCanvas = NormalizeContrast();
-    // GetLuminanceAndStandardDeviation();
-    document.body.appendChild(newCanvas);
-
-    // reset our renderering to prep for next one
-    resetObject(MESH);
-    resetObject(DISK);
-    resetObject(PIP);
-
-    if (light === LIGHTS.MATLAB) {
-      MATLABLIGHT.visible = false;
-    } else if (light === LIGHTS.MATHEMATICA) {
-      setMathematicaLightsVisibility(false);
-    } else {
-      // directional
-      DIRECTIONALLIGHTS.map.get(surfaceSlant)
-        .get(lightSlant)
-        .visible = false;
-      AMBIENTLIGHT.visible = false;
-    }
-
-    return newCanvas;
-  });
-}
-
-function renderSurfaceContrast(heightMap, surfaceSlant, light, lightSlant,
-  material, amplitude) {
-  const vertices = getVertices(heightMap, amplitude);
-  setMeshGeometryVerticesIndices(vertices);
-  // change material
-  if (material === MATERIALS.MATTE) {
-    setMeshMaterial(MATTEMATERIAL);
-    MATTEMATERIAL.needsUpdate = true;
-  } else {
-    setMeshMaterial(GLOSSYMATERIAL);
-    GLOSSYMATERIAL.needsUpdate = true;
-  }
-  // rotate
-  MESH.rotateX(-THREE.Math.degToRad(surfaceSlant));
-  MESH.geometry.computeVertexNormals();
-  MESH.updateMatrixWorld();
-
-  // make the light in question visible
-  if (light === LIGHTS.MATLAB) {
-    MATLABLIGHT.visible = true;
-  } else if (light === LIGHTS.MATHEMATICA) {
-    setMathematicaLightsVisibility(true);
-  } else {
-    DIRECTIONALLIGHTS.map.get(surfaceSlant)
-      .get(lightSlant)
-      .visible = true;
-  }
-
-  RENDERER.render(SCENE, CAMERA);
-  GetLuminanceAndStandardDeviation(RENDERERCANVAS);
-  const CANVAS = GetCanvasFromLinearToSRGB(RENDERERCANVAS);
-  GetLuminanceAndStandardDeviation(CANVAS);
-  // const CANVAS = NormalizeContrast();
-  // GetLuminanceAndStandardDeviation(CANVAS);
-  document.body.appendChild(CANVAS);
-  // reset our renderering to prep for next one
-  resetObject(MESH);
-
-  if (light === LIGHTS.MATLAB) {
-    MATLABLIGHT.visible = false;
-  } else if (light === LIGHTS.MATHEMATICA) {
-    setMathematicaLightsVisibility(false);
-  } else {
-    // directional
-    DIRECTIONALLIGHTS.map.get(surfaceSlant)
-      .get(lightSlant)
-      .visible = false;
-  }
 }
 
 function getCursorPosition(canvas, event) {
@@ -218,115 +85,261 @@ RENDERERCANVAS.addEventListener('mousedown', function(e) {
 clearDocumentBody();
 document.body.appendChild(RENDERERCANVAS);
 
-const TARGET_RMS = {
-  MATTE: {
-    30: 0.08849325510537281,
-    45: 0.06089653849564214,
-    60: 0.12608018980461572,
-  },
-  GLOSSY: {
-    30: 0.24829650141654042,
-    45: 0.2315229692583383,
-    60: 0.20102753863201026,
-  },
-};
-
-function getSet(numSets = 1) {
+function getSet(seed, gammaRed, gammaGreen, gammaBlue, numSets = 1) {
   const choices = Object.entries(CHOICE);
   const materials = Object.entries(MATERIALS);
-  const seed = 1;
+  const averageGammaFactor = (gammaRed + gammaGreen + gammaBlue) / 3;
+  // const { matteMaterial, glossyMaterial } = CustomShaderMaterial(averageGammaFactor);
+  const matteMaterial = MATTEMATERIAL;
+  const glossyMaterial = GLOSSYMATERIAL;
+
+  const downloadFunction = (data) => {
+    RenderImage(data, false);
+    const canvas = cloneCanvas(RENDERERCANVAS);
+    const filename = getSurfaceInfoString(data, 1);
+    downloadCanvas(canvas, filename);
+    ResetRenderImage(data);
+  };
 
   // for each surface slant
   for (let i = 0; i < numSets; i += 1) {
     for (let surfaceIndex = 0; surfaceIndex < SURFACESLANTS.length; surfaceIndex += 1) {
       // choice
+      const surfaceSlant = SURFACESLANTS[surfaceIndex];
       for (let choiceIndex = 0; choiceIndex < choices.length; choiceIndex += 1) {
         // material
         for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
           // directional light slants
+          const material = materials[materialIndex][1];
           for (let lightSlantIndex = 0;
             lightSlantIndex < DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]].length;
             lightSlantIndex += 1) {
             // pretest and test image surface data
-            const data = {
+            const lightSlant = DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex];
+
+            const testDataDirectional = {
+              amplitude: AMPLITUDES[surfaceSlant],
               seed,
               choice: choices[choiceIndex][1],
-              material: materials[materialIndex][1],
+              material,
               light: LIGHTS.DIRECTIONAL,
-              lightSlant: DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex],
-              surfaceSlant: SURFACESLANTS[surfaceIndex],
+              lightSlant,
+              surfaceSlant,
+              gammaRed,
+              gammaGreen,
+              gammaBlue,
+              matteMaterial,
+              glossyMaterial,
             };
-
-            const amplitude = AMPLITUDES[data.surfaceSlant];
-            const tempCanvas = renderSurface(data.seed, data.surfaceSlant, data.choice,
-              data.light, data.lightSlant, data.material, amplitude, data.isPretest);
-            const filename = getSurfaceInfoString(data, '.png');
-            tempCanvas.then((canvas) => {
-              downloadCanvas(canvas, filename);
-            });
+            // different amplitude values for different materials
+            const surfaceDataDirectional = getSurfaceData(testDataDirectional);
+            surfaceDataDirectional.then(downloadFunction);
           }
-
-          // matlab light
-          // pretest and test image surface data
-          const data = {
+          // matlab
+          const testData = {
+            amplitude: AMPLITUDES[surfaceSlant],
             seed,
             choice: choices[choiceIndex][1],
-            material: materials[materialIndex][1],
+            material,
             light: LIGHTS.MATLAB,
-            surfaceSlant: SURFACESLANTS[surfaceIndex],
+            surfaceSlant,
+            gammaRed,
+            gammaGreen,
+            gammaBlue,
+            matteMaterial,
+            glossyMaterial,
           };
-          const amplitude = AMPLITUDES[data.surfaceSlant];
-          const tempCanvas = renderSurface(data.seed, data.surfaceSlant, data.choice,
-          data.light, data.lightSlant, data.material, amplitude, data.isPretest);
-          const filename = getSurfaceInfoString(data, '.png');
-          tempCanvas.then((canvas) => {
-            downloadCanvas(canvas, filename);
-          });
+          const surfaceData = getSurfaceData(testData);
+          surfaceData.then(downloadFunction);
         }
-        // mathematica light
-        // pretest and test image surface data
-        const data = {
+        // mathematica
+        const testData = {
+          amplitude: AMPLITUDES[surfaceSlant],
           seed,
           choice: choices[choiceIndex][1],
           material: MATERIALS.MATTE,
           light: LIGHTS.MATHEMATICA,
-          surfaceSlant: SURFACESLANTS[surfaceIndex],
+          surfaceSlant,
+          gammaRed,
+          gammaGreen,
+          gammaBlue,
+          matteMaterial,
+          glossyMaterial,
         };
-        const amplitude = AMPLITUDES[data.surfaceSlant];
-        const tempCanvas = renderSurface(data.seed, data.surfaceSlant, data.choice,
-        data.light, data.lightSlant, data.material, amplitude, data.isPretest);
-        const filename = getSurfaceInfoString(data, '.png');
-        tempCanvas.then((canvas) => {
-          downloadCanvas(canvas, filename);
-        });
+        const surfaceData = getSurfaceData(testData);
+        surfaceData.then(downloadFunction);
       }
     }
   }
 }
 
-function RenderSurface(surfaceSlant = 45, lightSlant = 45, material = MATERIALS.MATTE) {
-  const seed = 1;
-  const choice = CHOICE.VALLEY;
-  const light = LIGHTS.DIRECTIONAL;
-  const surface = getSurfaceDataOnly(seed, choice);
+function getContrastData(gammaRed, gammaGreen, gammaBlue, numSets = 1, sampleSize = 30) {
+  const choices = Object.entries(CHOICE);
+  const materials = Object.entries(MATERIALS);
+  const averageGammaFactor = (gammaRed + gammaGreen + gammaBlue) / 3;
+  // const { matteMaterial, glossyMaterial } = CustomShaderMaterial(averageGammaFactor);
+  const matteMaterial = MATTEMATERIAL;
+  const glossyMaterial = GLOSSYMATERIAL;
 
-  return surface.then((surfaceInfo) => {
-    renderSurfaceContrast(surfaceInfo.heightMap, surfaceSlant, light, lightSlant, material,
-      AMPLITUDES[surfaceSlant], 0);
-  });
+  const downloadFunction = (data) => {
+    RenderImage(data, false);
+    const contrastData = GetLuminanceAndStandardDeviation(RENDERERCANVAS);
+    ResetRenderImage(data);
+    return contrastData;
+  };
+
+  const averageLuminanceAndSTD = (data) => {
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    let stdR = 0;
+    let stdG = 0;
+    let stdB = 0;
+    for (let i = 0; i < data.length; i += 1) {
+      r += data[0].r;
+      g += data[0].g;
+      b += data[0].b;
+      stdR += data[0].stdR;
+      stdG += data[0].stdG;
+      stdB += data[0].stdB;
+    }
+    r /= data.length;
+    g /= data.length;
+    b /= data.length;
+    stdR /= data.length;
+    stdG /= data.length;
+    stdB /= data.length;
+    console.log(data[0]);
+    console.log(`r: ${r},
+    g: ${g},
+    b: ${b},
+    stdR: ${stdR},
+    stdG: ${stdG},
+    stdB: ${stdB}`);
+  };
+
+  const data = {};
+
+  // for each surface slant
+  for (let i = 0; i < numSets; i += 1) {
+    for (let surfaceIndex = 0; surfaceIndex < SURFACESLANTS.length; surfaceIndex += 1) {
+      // choice
+      const surfaceSlant = SURFACESLANTS[surfaceIndex];
+      data[surfaceSlant] = {};
+      for (let choiceIndex = 0; choiceIndex < choices.length; choiceIndex += 1) {
+        // material
+        for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
+          // directional light slants
+          const material = materials[materialIndex][1];
+          data[surfaceSlant][material] = {};
+          for (let lightSlantIndex = 0;
+            lightSlantIndex < DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]].length;
+            lightSlantIndex += 1) {
+            // pretest and test image surface data
+            const lightSlant = DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex];
+            data[surfaceSlant][material][lightSlant] = [];
+
+            for (let sampleNum = 0; sampleNum < sampleSize; sampleNum += 1) {
+              const seed = getRandomSeed();
+              const testDataDirectional = {
+                amplitude: AMPLITUDES[surfaceSlant],
+                seed,
+                choice: choices[choiceIndex][1],
+                material,
+                light: LIGHTS.DIRECTIONAL,
+                lightSlant,
+                surfaceSlant,
+                gammaRed,
+                gammaGreen,
+                gammaBlue,
+                matteMaterial,
+                glossyMaterial,
+              };
+              // different amplitude values for different materials
+              const surfaceDataDirectional = getSurfaceData(testDataDirectional);
+              const contrastData = surfaceDataDirectional.then(downloadFunction);
+              contrastData.then((data) => {
+                data.surfaceSlant = surfaceSlant;
+                data.material = material;
+                data.lightSlant = lightSlant;
+              });
+              data[surfaceSlant][material][lightSlant].push(contrastData);
+            }
+          }
+          // matlab
+          data[surfaceSlant][material][LIGHTS.MATLAB] = [];
+          for (let sampleNum = 0; sampleNum < sampleSize; sampleNum += 1) {
+            const seed = getRandomSeed();
+            const testData = {
+              amplitude: AMPLITUDES[surfaceSlant],
+              seed,
+              choice: choices[choiceIndex][1],
+              material,
+              light: LIGHTS.MATLAB,
+              surfaceSlant,
+              gammaRed,
+              gammaGreen,
+              gammaBlue,
+              matteMaterial,
+              glossyMaterial,
+            };
+            const surfaceData = getSurfaceData(testData);
+            const contrastData = surfaceData.then(downloadFunction);
+            contrastData.then((data) => {
+              data.surfaceSlant = surfaceSlant;
+              data.material = material;
+              data.lights = LIGHTS.MATLAB;
+            });
+            data[surfaceSlant][material][LIGHTS.MATLAB].push(contrastData);
+          }
+        }
+        // mathematica
+        for (let sampleNum = 0; sampleNum < sampleSize; sampleNum += 1) {
+          data[surfaceSlant][LIGHTS.MATHEMATICA] = [];
+          const seed = getRandomSeed();
+          const testData = {
+            amplitude: AMPLITUDES[surfaceSlant],
+            seed,
+            choice: choices[choiceIndex][1],
+            material: MATERIALS.MATTE,
+            light: LIGHTS.MATHEMATICA,
+            surfaceSlant,
+            gammaRed,
+            gammaGreen,
+            gammaBlue,
+            matteMaterial,
+            glossyMaterial,
+          };
+          const surfaceData = getSurfaceData(testData);
+          const contrastData = surfaceData.then(downloadFunction);
+          contrastData.then((data) => {
+            data.surfaceSlant = surfaceSlant;
+            data.lights = LIGHTS.MATHEMATICA;
+          });
+          data[surfaceSlant][LIGHTS.MATHEMATICA].push(contrastData);
+        }
+      }
+    }
+  }
+
+  for (let surfaceIndex = 0; surfaceIndex < SURFACESLANTS.length; surfaceIndex += 1) {
+    const surfaceSlant = SURFACESLANTS[surfaceIndex];
+    for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
+      // directional light slants
+      const material = materials[materialIndex][1];
+      for (let lightSlantIndex = 0;
+        lightSlantIndex < DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]].length;
+        lightSlantIndex += 1) {
+        // pretest and test image surface data
+        const lightSlant = DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex];
+        Promise.all(data[surfaceSlant][material][lightSlant]).then(averageLuminanceAndSTD);
+      }
+      Promise.all(data[surfaceSlant][material][LIGHTS.MATLAB]).then(averageLuminanceAndSTD);
+    }
+    Promise.all(data[surfaceSlant][LIGHTS.MATHEMATICA]).then(averageLuminanceAndSTD);
+  }
+
+  return data;
 }
 
-const targetMean = {
-  r: 164.0868945406505,
-  g: 164.0868945406505,
-  b: 164.0868945406505,
-};
-
-const targetStd = {
-  r: 10.562060600068385,
-  g: 10.562060600068385,
-  b: 10.562060600068385,
-};
-
-RenderSurface();
-// getSet();
+const contrastData = getContrastData(1, 1, 1, 1, 20);
