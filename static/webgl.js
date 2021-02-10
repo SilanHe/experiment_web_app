@@ -268,7 +268,7 @@ const CAMERA = (() => {
  */
 const SCENE = (() => {
   const scene = new THREE.Scene();
-  scene.background = GREEN;
+  scene.background = DARKGRAY;
 
   // add all the lights, they start out: visible = false;
   for (let i = 0; i < MATHEMATICALIGHTS.length; i += 1) {
@@ -329,6 +329,7 @@ function CustomShaderMaterial(gammaFactor) {
     'uniform vec3 specular;',
     'uniform float shininess;',
     'uniform float opacity;',
+    'uniform float gammafactor;',
     '#include <common>',
     '#include <packing>',
     '#include <dithering_pars_fragment>',
@@ -355,30 +356,30 @@ function CustomShaderMaterial(gammaFactor) {
     '#include <clipping_planes_pars_fragment>',
     'void main() {',
     ' #include <clipping_planes_fragment>',
-    '	vec4 diffuseColor = vec4( diffuse, opacity );',
-    '	ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );',
-    '	vec3 totalEmissiveRadiance = emissive;',
-    '	#include <logdepthbuf_fragment>',
-    '	#include <map_fragment>',
-    '	#include <color_fragment>',
-    '	#include <alphamap_fragment>',
-    '	#include <alphatest_fragment>',
-    '	#include <specularmap_fragment>',
-    '	#include <normal_fragment_begin>',
-    '	#include <normal_fragment_maps>',
-    '	#include <emissivemap_fragment>',
-    '	#include <lights_phong_fragment>',
-    '	#include <lights_fragment_begin>',
-    '	#include <lights_fragment_maps>',
-    '	#include <lights_fragment_end>',
-    '	#include <aomap_fragment>',
-    '	vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;',
-    '	#include <envmap_fragment>',
-    '	gl_FragColor = LinearToGamma(vec4( outgoingLight, diffuseColor.a ), float(gammafactor) );',
-    '	#include <tonemapping_fragment>',
-    '	#include <encodings_fragment>',
-    '	#include <fog_fragment>',
-    '	#include <premultiplied_alpha_fragment>',
+    ' vec4 diffuseColor = vec4( diffuse, opacity );',
+    ' ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );',
+    ' vec3 totalEmissiveRadiance = emissive;',
+    ' #include <logdepthbuf_fragment>',
+    ' #include <map_fragment>',
+    ' #include <color_fragment>',
+    ' #include <alphamap_fragment>',
+    ' #include <alphatest_fragment>',
+    ' #include <specularmap_fragment>',
+    ' #include <normal_fragment_begin>',
+    ' #include <normal_fragment_maps>',
+    ' #include <emissivemap_fragment>',
+    ' #include <lights_phong_fragment>',
+    ' #include <lights_fragment_begin>',
+    ' #include <lights_fragment_maps>',
+    ' #include <lights_fragment_end>',
+    ' #include <aomap_fragment>',
+    ' vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;',
+    ' #include <envmap_fragment>',
+    ' gl_FragColor = LinearToGamma(vec4( outgoingLight, diffuseColor.a ), gammafactor);',
+    ' #include <tonemapping_fragment>',
+    ' #include <encodings_fragment>',
+    ' #include <fog_fragment>',
+    ' #include <premultiplied_alpha_fragment>',
     ' #include <dithering_fragment>',
     '}',
   ].join('\n');
@@ -387,10 +388,6 @@ function CustomShaderMaterial(gammaFactor) {
     THREE.ShaderLib.phong.uniforms,
     {
       gammafactor: { value: gammaFactor },
-      side: { value: THREE.FrontSide },
-      color: { value: WHITE },
-      specular: { value: BLACK },
-      shininess: { value: 0 },
     },
   ]);
 
@@ -398,10 +395,6 @@ function CustomShaderMaterial(gammaFactor) {
     THREE.ShaderLib.phong.uniforms,
     {
       gammafactor: { value: gammaFactor },
-      side: { value: THREE.FrontSide },
-      color: { value: GLOSSYCOLOR },
-      specular: { value: GLOSSYSPECULAR },
-      shininess: { value: 51 },
     },
   ]);
 
@@ -412,6 +405,10 @@ function CustomShaderMaterial(gammaFactor) {
     lights: true,
     name: 'matte-material',
   });
+  matteMaterial.uniforms.side = { value: THREE.FrontSide };
+  matteMaterial.uniforms.color = { value: WHITE };
+  matteMaterial.uniforms.specular = { value: BLACK };
+  matteMaterial.uniforms.shininess = { value: 0 };
 
   const glossyMaterial = new THREE.ShaderMaterial({
     uniforms: glossyUniforms,
@@ -420,6 +417,10 @@ function CustomShaderMaterial(gammaFactor) {
     lights: true,
     name: 'glossy-material',
   });
+  glossyMaterial.uniforms.side = { value: THREE.FrontSide };
+  glossyMaterial.uniforms.color = { value: GLOSSYCOLOR };
+  glossyMaterial.uniforms.specular = { value: GLOSSYSPECULAR };
+  glossyMaterial.uniforms.shininess = { value: 51 };
 
   return {
     matteMaterial,
@@ -603,11 +604,11 @@ function RenderImage(data, isPretest = true) {
   setMeshGeometryVerticesIndices(data.vertices);
   // change material
   if (data.material === MATERIALS.MATTE) {
-    setMeshMaterial(MATTEMATERIAL);
-    MATTEMATERIAL.needsUpdate = true;
+    setMeshMaterial(data.matteMaterial);
+    data.matteMaterial.needsUpdate = true;
   } else {
-    setMeshMaterial(GLOSSYMATERIAL);
-    GLOSSYMATERIAL.needsUpdate = true;
+    setMeshMaterial(data.glossyMaterial);
+    data.glossyMaterial.needsUpdate = true;
   }
   // rotate
   MESH.rotateX(-THREE.Math.degToRad(data.surfaceSlant));
@@ -642,6 +643,8 @@ function RenderImage(data, isPretest = true) {
       .get(data.lightSlant)
       .visible = true;
   }
+
+  RENDERER.render(SCENE, CAMERA);
 }
 
 function ResetRenderImage(data) {

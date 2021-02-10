@@ -78,6 +78,7 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
 
     // function to rotate stuff back to their original positions
     const resetObjects = function () {
+      disk.visible = false;
       if (!trial.stimulus.is_pretest) {
         ResetRenderImage(trial.stimulus);
       }
@@ -101,7 +102,7 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
       };
 
       // clear the display
-      display_element.removeChild(c);
+      display_element.removeChild(RENDERERCANVAS);
       display_element.innerHTML = '';
 
       resetObjects();

@@ -90,6 +90,7 @@ const pretest = {
   stimulus_height: screen.height,
   choices: ['v', 'h'],
   trial_duration: 3150,
+  is_pretest: true,
 };
 
 const test = {
@@ -99,6 +100,7 @@ const test = {
   stimulus_height: screen.height,
   choices: ['v', 'h'],
   trial_duration: 3150,
+  is_pretest: false,
 };
 
 function experiment(data) {
