@@ -92,6 +92,7 @@ function getSet(seed, gammaRed, gammaGreen, gammaBlue, numSets = 1) {
   // const { matteMaterial, glossyMaterial } = CustomShaderMaterial(averageGammaFactor);
   const matteMaterial = MATTEMATERIAL;
   const glossyMaterial = GLOSSYMATERIAL;
+  const contrastMaterialLookup = getAllContrastMaterial(averageGammaFactor);
 
   const downloadFunction = (data) => {
     RenderImage(data, false);
@@ -130,6 +131,7 @@ function getSet(seed, gammaRed, gammaGreen, gammaBlue, numSets = 1) {
               gammaBlue,
               matteMaterial,
               glossyMaterial,
+              contrastMaterialLookup,
             };
             // different amplitude values for different materials
             const surfaceDataDirectional = getSurfaceData(testDataDirectional);
@@ -148,6 +150,7 @@ function getSet(seed, gammaRed, gammaGreen, gammaBlue, numSets = 1) {
             gammaBlue,
             matteMaterial,
             glossyMaterial,
+            contrastMaterialLookup,
           };
           const surfaceData = getSurfaceData(testData);
           surfaceData.then(downloadFunction);
@@ -165,6 +168,7 @@ function getSet(seed, gammaRed, gammaGreen, gammaBlue, numSets = 1) {
           gammaBlue,
           matteMaterial,
           glossyMaterial,
+          contrastMaterialLookup,
         };
         const surfaceData = getSurfaceData(testData);
         surfaceData.then(downloadFunction);
@@ -225,6 +229,9 @@ function getContrastData(gammaRed, gammaGreen, gammaBlue, numSets = 1, sampleSiz
     for (let surfaceIndex = 0; surfaceIndex < SURFACESLANTS.length; surfaceIndex += 1) {
       // choice
       const surfaceSlant = SURFACESLANTS[surfaceIndex];
+      if (surfaceSlant === 30 || surfaceSlant === 45) {
+        continue;
+      }
       data[surfaceSlant] = {};
       for (let choiceIndex = 0; choiceIndex < choices.length; choiceIndex += 1) {
         // material
@@ -324,6 +331,9 @@ function getContrastData(gammaRed, gammaGreen, gammaBlue, numSets = 1, sampleSiz
 
   for (let surfaceIndex = 0; surfaceIndex < SURFACESLANTS.length; surfaceIndex += 1) {
     const surfaceSlant = SURFACESLANTS[surfaceIndex];
+    if (surfaceSlant === 30 || surfaceSlant === 45) {
+      continue;
+    }
     for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
       // directional light slants
       const material = materials[materialIndex][1];
@@ -342,4 +352,4 @@ function getContrastData(gammaRed, gammaGreen, gammaBlue, numSets = 1, sampleSiz
   return data;
 }
 
-const contrastData = getContrastData(1, 1, 1, 1, 20);
+getSet(2, 2.4, 2.4, 2.4, 1);
