@@ -225,6 +225,9 @@ function getContrastData(gammaRed, gammaGreen, gammaBlue, numSets = 1, sampleSiz
     for (let surfaceIndex = 0; surfaceIndex < SURFACESLANTS.length; surfaceIndex += 1) {
       // choice
       const surfaceSlant = SURFACESLANTS[surfaceIndex];
+      if (surfaceSlant === 30 || surfaceSlant === 45) {
+        continue;
+      }
       data[surfaceSlant] = {};
       for (let choiceIndex = 0; choiceIndex < choices.length; choiceIndex += 1) {
         // material
@@ -324,6 +327,9 @@ function getContrastData(gammaRed, gammaGreen, gammaBlue, numSets = 1, sampleSiz
 
   for (let surfaceIndex = 0; surfaceIndex < SURFACESLANTS.length; surfaceIndex += 1) {
     const surfaceSlant = SURFACESLANTS[surfaceIndex];
+    if (surfaceSlant === 30 || surfaceSlant === 45) {
+      continue;
+    }
     for (let materialIndex = 0; materialIndex < materials.length; materialIndex += 1) {
       // directional light slants
       const material = materials[materialIndex][1];
