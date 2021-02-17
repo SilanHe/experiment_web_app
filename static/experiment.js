@@ -422,8 +422,6 @@ function tutorial(gammaRed, gammaGreen, gammaBlue) {
 function generateImageData(gammaRed, gammaGreen, gammaBlue, numSets = 1) {
   const surfaceDataList = getSurfaceDataList(numSets,
     gammaRed, gammaGreen, gammaBlue);
-  const averageGammaFactor = (gammaRed + gammaGreen + gammaBlue) / 3;
-  const { matteMaterial, glossyMaterial } = CustomShaderMaterial(averageGammaFactor);
   const promise = Promise.all(surfaceDataList).then((surfaceDataArray) => {
     // shuffle the s3Images
     function shuffle(array) {
@@ -437,8 +435,6 @@ function generateImageData(gammaRed, gammaGreen, gammaBlue, numSets = 1) {
     // pair up the images
     const pairedImages = [];
     for (let i = 0; i < surfaceDataArray.length; i += 1) {
-      surfaceDataArray[i].matteMaterial = matteMaterial;
-      surfaceDataArray[i].glossyMaterial = glossyMaterial;
       pairedImages.push({
         stimulus1_name: getSurfaceInfoString(surfaceDataArray[i], 1),
         stimulus2_name: getSurfaceInfoString(surfaceDataArray[i], 2),
