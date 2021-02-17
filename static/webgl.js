@@ -896,6 +896,7 @@ function RenderImage(data, isPretest = true, normalizeContrast = true) {
     //mathematica
     return;
   }
+  
   // rotate
   MESH.rotateX(-THREE.Math.degToRad(data.surfaceSlant));
   MESH.geometry.computeVertexNormals();
