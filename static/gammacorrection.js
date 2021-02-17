@@ -96,3 +96,80 @@ function GammaCorrectionWidget(color1, color2, groupName, sliderName, labelName)
 
   return rangeslider;
 }
+
+function NormalizeContrast(ctx, targetMean, targetStd, gammaRed, gammaBlue, gammaGreen) {
+  const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+  const data = Uint8ClampedArray.from(imageData.data);
+
+  // get average intensity
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let count = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    if (!((data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0)
+    || (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0))) {
+      r += data[i];
+      g += data[i + 1];
+      b += data[i + 2];
+      count += 1;
+    }
+  }
+  r /= count;
+  g /= count;
+  b /= count;
+
+  // get standard deviation of intensities
+  let sumR = 0;
+  let sumG = 0;
+  let sumB = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    if (!((data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0)
+    || (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0))) {
+      sumR += (data[i] - r) ** 2;
+      sumG += (data[i + 1] - g) ** 2;
+      sumB += (data[i + 2] - b) ** 2;
+    }
+  }
+
+  const stdR = Math.sqrt(sumR / count);
+  const stdG = Math.sqrt(sumG / count);
+  const stdB = Math.sqrt(sumB / count);
+
+  let redIndex = 0;
+
+  for (let i = 0; i < data.length; i += 4) {
+    // remove green background and make it dark gray
+    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
+      data[i] = 17;
+      data[i + 1] = 17;
+      data[i + 2] = 17;
+      data[i + 3] = 255;
+    } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0 && redIndex === 0) {
+      // eslint-disable-next-line no-continue
+      redIndex = i;
+    } else {
+      // contrast normalization
+      data[i] = Math.round(targetMean.r + targetStd.r * ((data[i] - r) / stdR));
+      data[i + 1] = Math.round(targetMean.g + targetStd.g * ((data[i + 1] - g) / stdG));
+      data[i + 2] = Math.round(targetMean.b + targetStd.b * ((data[i + 2] - b) / stdB));
+      // gamma correction
+      data[i] = linearToSRGB(data[i], gammaRed);
+      data[i + 1] = linearToSRGB(data[i + 1], gammaGreen);
+      data[i + 2] = linearToSRGB(data[i + 2], gammaBlue);
+    }
+  }
+
+  const newImageData = new ImageData(data, ctx.canvas.width);
+  ctx.putImageData(newImageData, 0, 0);
+
+  const radius = Math.floor(ctx.canvas.width / 24);
+  const centerX = Math.floor(redIndex / 4 / ctx.canvas.width) - radius;
+  const centerY = (Math.floor(redIndex / 4) % ctx.canvas.width) - radius;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+  ctx.fillStyle = '#ff0000';
+  ctx.fill();
+
+  return newImageData;
+}

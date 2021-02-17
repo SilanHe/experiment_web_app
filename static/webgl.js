@@ -480,6 +480,7 @@ function CustomShaderMaterial(gammaFactor) {
   });
   matteMaterial.uniforms.side = { value: THREE.FrontSide };
   matteMaterial.uniforms.color = { value: WHITE };
+  matteMaterial.uniforms.specular = { value: BLACK };
   matteMaterial.uniforms.shininess = { value: 0 };
 
   const glossyMaterial = new THREE.ShaderMaterial({
@@ -896,7 +897,6 @@ function RenderImage(data, isPretest = true, normalizeContrast = true) {
     //mathematica
     return;
   }
-  
   // rotate
   MESH.rotateX(-THREE.Math.degToRad(data.surfaceSlant));
   MESH.geometry.computeVertexNormals();
