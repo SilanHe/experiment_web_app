@@ -422,8 +422,7 @@ function tutorial(gammaRed, gammaGreen, gammaBlue) {
 }
 
 function generateImageData(gammaRed, gammaGreen, gammaBlue, numSets = 1) {
-  const surfaceDataList = getSurfaceDataList(numSets,
-    gammaRed, gammaGreen, gammaBlue);
+  const surfaceDataList = getSurfaceDataList( gammaRed, gammaGreen, gammaBlue, numSets);
   const promise = Promise.all(surfaceDataList).then((surfaceDataArray) => {
     // shuffle the s3Images
     function shuffle(array) {

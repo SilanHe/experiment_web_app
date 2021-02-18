@@ -1,15 +1,10 @@
 // CONSTANTS
 // -----------------------------------------------------------------------------
 
-<<<<<<< HEAD
-const CLONECANVAS = document.createElement('canvas');
-const CLONECONTEXT = CLONECANVAS.getContext('2d');
-=======
 const CLONECANVAS = document.createElement("CANVAS");
 const CLONECONTEXT = CLONECANVAS.getContext("2d");
 CLONECONTEXT.canvas.width = window.innerWidth;
 CLONECONTEXT.canvas.height = window.innerHeight;
->>>>>>> 50cd6a08d6ecc3288d588993c69e977b6f4a0d42
 
 const AMPLITUDES = {
   30: 0.45,
@@ -118,7 +113,7 @@ const GREEN = (() => {
 })();
 
 const BLACK = (() => {
-  const color = new THREE.Color(0x000000);
+  const color = new THREE.Color(0x000001);
   color.convertSRGBToLinear();
   return color;
 })();
@@ -305,7 +300,7 @@ const RENDERER = (() => {
     // gammaFactor: GAMMA,
     // outputEncoding: THREE.sRGBEncoding,
   });
-  // renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.outputEncoding = THREE.sRGBEncoding;
   // renderer.gammaOutput = true;
   renderer.physicallyCorrectLights = false;
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -553,7 +548,6 @@ function ContrastGlossyMaterial(uniform) {
 }
 
 function getAllContrastMaterial(gammaFactor) {
-
   const materials = {};
   materials[MATERIALS.MATTE] = {};
   materials[MATERIALS.GLOSSY] = {};
@@ -712,7 +706,7 @@ function cloneCanvas(oldCanvas) {
 }
 
 function setMathematicaLightsVisibility(value) {
-  for (let i = 0; i < MATHEMATICALIGHTS.length; i += 1) {
+  for (let i = 1; i < MATHEMATICALIGHTS.length; i += 1) {
     MATHEMATICALIGHTS[i].visible = value;
   }
 }
@@ -785,7 +779,7 @@ function getSurfaceData(testData) {
   });
 }
 
-function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
+function getSurfaceDataList(gammaRed, gammaGreen, gammaBlue, numSets = 1) {
   const choices = Object.entries(CHOICE);
   const materials = Object.entries(MATERIALS);
   const averageGammaFactor = (gammaRed + gammaGreen + gammaBlue) / 3;
@@ -879,7 +873,7 @@ function getSurfaceInfoString(testData, additionalInfo) {
   return `${testData.light}_${testData.seed}_${testData.choice}_${testData.material}_${testData.surfaceSlant}_${additionalInfo}`;
 }
 
-function RenderImage(data, isPretest = true, normalizeContrast = true) {
+function RenderImage(data, isPretest = false, normalizeContrast = false) {
   // set our mesh geometry
   // change positions
   setMeshGeometryVerticesIndices(data.vertices);
