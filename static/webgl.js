@@ -1,8 +1,15 @@
 // CONSTANTS
 // -----------------------------------------------------------------------------
 
+<<<<<<< HEAD
 const CLONECANVAS = document.createElement('canvas');
 const CLONECONTEXT = CLONECANVAS.getContext('2d');
+=======
+const CLONECANVAS = document.createElement("CANVAS");
+const CLONECONTEXT = CLONECANVAS.getContext("2d");
+CLONECONTEXT.canvas.width = window.innerWidth;
+CLONECONTEXT.canvas.height = window.innerHeight;
+>>>>>>> 50cd6a08d6ecc3288d588993c69e977b6f4a0d42
 
 const AMPLITUDES = {
   30: 0.45,
@@ -271,7 +278,7 @@ const CAMERA = (() => {
  */
 const SCENE = (() => {
   const scene = new THREE.Scene();
-  scene.background = GREEN;
+  scene.background = DARKGRAY;
 
   // add all the lights, they start out: visible = false;
   for (let i = 0; i < MATHEMATICALIGHTS.length; i += 1) {
@@ -313,6 +320,74 @@ const RENDERERCANVAS = (() => {
   return canvas;
 })();
 
+const CUSTOMFRAGMENTSHADERCONTRAST = (() => ['#define PHONG',
+  'uniform vec3 diffuse;',
+  'uniform vec3 emissive;',
+  'uniform vec3 specular;',
+  'uniform float shininess;',
+  'uniform float opacity;',
+  'uniform float gammafactor;',
+  'uniform float stdTarget;',
+  'uniform float stdIntensity;',
+  'uniform float meanTarget;',
+  'uniform float meanIntensity;',
+  '#include <common>',
+  '#include <packing>',
+  '#include <dithering_pars_fragment>',
+  '#include <color_pars_fragment>',
+  '#include <uv_pars_fragment>',
+  '#include <uv2_pars_fragment>',
+  '#include <map_pars_fragment>',
+  '#include <alphamap_pars_fragment>',
+  '#include <aomap_pars_fragment>',
+  '#include <lightmap_pars_fragment>',
+  '#include <emissivemap_pars_fragment>',
+  '#include <envmap_common_pars_fragment>',
+  '#include <envmap_pars_fragment>',
+  '#include <cube_uv_reflection_fragment>',
+  '#include <fog_pars_fragment>',
+  '#include <bsdfs>',
+  '#include <lights_pars_begin>',
+  '#include <lights_phong_pars_fragment>',
+  '#include <shadowmap_pars_fragment>',
+  '#include <bumpmap_pars_fragment>',
+  '#include <normalmap_pars_fragment>',
+  '#include <specularmap_pars_fragment>',
+  '#include <logdepthbuf_pars_fragment>',
+  '#include <clipping_planes_pars_fragment>',
+  'void main() {',
+  ' #include <clipping_planes_fragment>',
+  ' vec4 diffuseColor = vec4( diffuse, opacity );',
+  ' ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );',
+  ' vec3 totalEmissiveRadiance = emissive;',
+  ' #include <logdepthbuf_fragment>',
+  ' #include <map_fragment>',
+  ' #include <color_fragment>',
+  ' #include <alphamap_fragment>',
+  ' #include <alphatest_fragment>',
+  ' #include <specularmap_fragment>',
+  ' #include <normal_fragment_begin>',
+  ' #include <normal_fragment_maps>',
+  ' #include <emissivemap_fragment>',
+  ' #include <lights_phong_fragment>',
+  ' #include <lights_fragment_begin>',
+  ' #include <lights_fragment_maps>',
+  ' #include <lights_fragment_end>',
+  ' #include <aomap_fragment>',
+  ' vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;',
+  ' #include <envmap_fragment>',
+  ' vec4 v = vec4( outgoingLight, diffuseColor.a );',
+  ' vec4 normalized = normalizeContrast( meanTarget, meanIntensity, stdTarget, stdIntensity, v);',
+  // 'gl_FragColor = normalized;',
+  ' gl_FragColor = LinearToGamma(normalized, gammafactor);',
+  ' #include <tonemapping_fragment>',
+  ' #include <encodings_fragment>',
+  ' #include <fog_fragment>',
+  ' #include <premultiplied_alpha_fragment>',
+  ' #include <dithering_fragment>',
+  '}',
+].join('\n'))();
+
 // Functions
 // -----------------------------------------------------------------------------
 window.addEventListener('resize', onWindowResize, false);
@@ -322,6 +397,304 @@ function onWindowResize() {
   RENDERER.setSize(window.innerWidth, window.innerHeight);
   RENDERERCANVAS.width = window.innerWidth;
   RENDERERCANVAS.height = window.innerHeight;
+}
+
+function CustomShaderMaterial(gammaFactor) {
+  const customFragmentShader = [
+    '#define PHONG',
+    'uniform vec3 diffuse;',
+    'uniform vec3 emissive;',
+    'uniform vec3 specular;',
+    'uniform float shininess;',
+    'uniform float opacity;',
+    'uniform float gammafactor;',
+    '#include <common>',
+    '#include <packing>',
+    '#include <dithering_pars_fragment>',
+    '#include <color_pars_fragment>',
+    '#include <uv_pars_fragment>',
+    '#include <uv2_pars_fragment>',
+    '#include <map_pars_fragment>',
+    '#include <alphamap_pars_fragment>',
+    '#include <aomap_pars_fragment>',
+    '#include <lightmap_pars_fragment>',
+    '#include <emissivemap_pars_fragment>',
+    '#include <envmap_common_pars_fragment>',
+    '#include <envmap_pars_fragment>',
+    '#include <cube_uv_reflection_fragment>',
+    '#include <fog_pars_fragment>',
+    '#include <bsdfs>',
+    '#include <lights_pars_begin>',
+    '#include <lights_phong_pars_fragment>',
+    '#include <shadowmap_pars_fragment>',
+    '#include <bumpmap_pars_fragment>',
+    '#include <normalmap_pars_fragment>',
+    '#include <specularmap_pars_fragment>',
+    '#include <logdepthbuf_pars_fragment>',
+    '#include <clipping_planes_pars_fragment>',
+    'void main() {',
+    ' #include <clipping_planes_fragment>',
+    ' vec4 diffuseColor = vec4( diffuse, opacity );',
+    ' ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );',
+    ' vec3 totalEmissiveRadiance = emissive;',
+    ' #include <logdepthbuf_fragment>',
+    ' #include <map_fragment>',
+    ' #include <color_fragment>',
+    ' #include <alphamap_fragment>',
+    ' #include <alphatest_fragment>',
+    ' #include <specularmap_fragment>',
+    ' #include <normal_fragment_begin>',
+    ' #include <normal_fragment_maps>',
+    ' #include <emissivemap_fragment>',
+    ' #include <lights_phong_fragment>',
+    ' #include <lights_fragment_begin>',
+    ' #include <lights_fragment_maps>',
+    ' #include <lights_fragment_end>',
+    ' #include <aomap_fragment>',
+    ' vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;',
+    ' #include <envmap_fragment>',
+    ' gl_FragColor = LinearToGamma(vec4( outgoingLight, diffuseColor.a ), gammafactor);',
+    ' #include <tonemapping_fragment>',
+    ' #include <encodings_fragment>',
+    ' #include <fog_fragment>',
+    ' #include <premultiplied_alpha_fragment>',
+    ' #include <dithering_fragment>',
+    '}',
+  ].join('\n');
+
+  const matteUniforms = THREE.UniformsUtils.merge([
+    THREE.ShaderLib.phong.uniforms,
+    {
+      gammafactor: { value: gammaFactor },
+    },
+  ]);
+
+  const glossyUniforms = THREE.UniformsUtils.merge([
+    THREE.ShaderLib.phong.uniforms,
+    {
+      gammafactor: { value: gammaFactor },
+    },
+  ]);
+
+  const matteMaterial = new THREE.ShaderMaterial({
+    uniforms: matteUniforms,
+    vertexShader: THREE.ShaderLib.phong.vertexShader,
+    fragmentShader: customFragmentShader,
+    lights: true,
+    name: 'matte-material',
+  });
+  matteMaterial.uniforms.side = { value: THREE.FrontSide };
+  matteMaterial.uniforms.color = { value: WHITE };
+  matteMaterial.uniforms.specular = { value: BLACK };
+  matteMaterial.uniforms.shininess = { value: 0 };
+
+  const glossyMaterial = new THREE.ShaderMaterial({
+    uniforms: glossyUniforms,
+    vertexShader: THREE.ShaderLib.phong.vertexShader,
+    fragmentShader: customFragmentShader,
+    lights: true,
+    name: 'glossy-material',
+  });
+  glossyMaterial.uniforms.side = { value: THREE.FrontSide };
+  glossyMaterial.uniforms.color = { value: GLOSSYCOLOR };
+  glossyMaterial.uniforms.specular = { value: GLOSSYSPECULAR };
+  glossyMaterial.uniforms.shininess = { value: 51 };
+
+  return {
+    matteMaterial,
+    glossyMaterial,
+  };
+}
+
+function ContrastUniform(gammaFactor, meanTarget, meanIntensity, stdTarget, stdIntensity) {
+  const uniforms = THREE.UniformsUtils.merge([
+    THREE.ShaderLib.phong.uniforms,
+    {
+      meanTarget: { value: meanTarget / 255 },
+      meanIntensity: { value: meanIntensity / 255 },
+      stdTarget: { value: stdTarget / 255 },
+      stdIntensity: { value: stdIntensity / 255 },
+      gammafactor: { value: gammaFactor },
+    },
+  ]);
+
+  return uniforms;
+}
+
+function ContrastMatteMaterial(uniform) {
+  const matteMaterial = new THREE.ShaderMaterial({
+    uniforms: uniform,
+    vertexShader: THREE.ShaderLib.phong.vertexShader,
+    fragmentShader: CUSTOMFRAGMENTSHADERCONTRAST,
+    lights: true,
+    name: 'matte-material',
+  });
+  matteMaterial.uniforms.side = { value: THREE.FrontSide };
+  matteMaterial.uniforms.color = { value: WHITE };
+  matteMaterial.uniforms.shininess = { value: 0 };
+
+  return matteMaterial;
+}
+function ContrastGlossyMaterial(uniform) {
+  const glossyMaterial = new THREE.ShaderMaterial({
+    uniforms: uniform,
+    vertexShader: THREE.ShaderLib.phong.vertexShader,
+    fragmentShader: CUSTOMFRAGMENTSHADERCONTRAST,
+    lights: true,
+    name: 'glossy-material',
+  });
+
+  glossyMaterial.uniforms.side = { value: THREE.FrontSide };
+  glossyMaterial.uniforms.color = { value: GLOSSYCOLOR };
+  glossyMaterial.uniforms.specular = { value: GLOSSYSPECULAR };
+  glossyMaterial.uniforms.shininess = { value: 51 };
+
+  return glossyMaterial;
+}
+
+function getAllContrastMaterial(gammaFactor) {
+
+  const materials = {};
+  materials[MATERIALS.MATTE] = {};
+  materials[MATERIALS.GLOSSY] = {};
+  materials[MATERIALS.MATTE][30] = {};
+  materials[MATERIALS.MATTE][45] = {};
+  materials[MATERIALS.MATTE][60] = {};
+  materials[MATERIALS.GLOSSY][30] = {};
+  materials[MATERIALS.GLOSSY][45] = {};
+  materials[MATERIALS.GLOSSY][60] = {};
+
+  const targetStd = 10.378200810233588;
+  const meanTarget = 164.3208475484253;
+  let uniform;
+
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 156.78441751556545, targetStd, 15.378369292846338); // matte directional 20 30
+  materials[MATERIALS.MATTE][30][20] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 156.73204315863583, targetStd, 14.735199406339916); // matte directional 30 30
+  materials[MATERIALS.MATTE][30][30] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 152.43828727743295, targetStd, 19.189763292808713); // matte directional 40 30
+  materials[MATERIALS.MATTE][30][40] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 141.85212866714215, targetStd, 26.63428501073127); // matte directional 50 30
+  materials[MATERIALS.MATTE][30][50] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 128.97426185358717, targetStd, 33.95757496043813); // matte directional 60 30
+  materials[MATERIALS.MATTE][30][60] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 110.45247650436139, targetStd, 40.618685834439965); // matte directional 70 30
+  materials[MATERIALS.MATTE][30][70] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 145.24504151641847, targetStd, 68.19507984420792); // matte matlab 30
+  materials[MATERIALS.MATTE][30][LIGHTS.MATLAB] = ContrastMatteMaterial(uniform);
+
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 77.66105048482835, targetStd, 20.840488892152457); // glossy directional 20 30
+  materials[MATERIALS.GLOSSY][30][20] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 77.59462339901249, targetStd, 19.640071841171896); // glossy directiona 30 30
+  materials[MATERIALS.GLOSSY][30][30] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 75.66843347453761, targetStd, 20.51199028233263); // glossy directional 40 30
+  materials[MATERIALS.GLOSSY][30][40] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 70.6609089975541, targetStd, 21.623171581600857); // glossy directional 50 30
+  materials[MATERIALS.GLOSSY][30][50] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 63.91771310005013, targetStd, 23.762505138501464); // glossy directional 60 30
+  materials[MATERIALS.GLOSSY][30][60] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 54.97124607349393, targetStd, 25.795451080781323); // glossy directional 70 30
+  materials[MATERIALS.GLOSSY][30][70] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 130.73872104507092, targetStd, 59.37215513448607); // matlab glossy 30
+  materials[MATERIALS.GLOSSY][30][LIGHTS.MATLAB] = ContrastGlossyMaterial(uniform);
+
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 161.82561866291567, targetStd, 13.962054755936498); // matte directional 30 45
+  materials[MATERIALS.MATTE][45][30] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 164.3208475484253, targetStd, 10.378200810233588); // matte directional 45 45
+  materials[MATERIALS.MATTE][45][45] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 154.0722337735319, targetStd, 17.928364448440046); // matte directional 60 45
+  materials[MATERIALS.MATTE][45][60] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 134.60153339832854, targetStd, 27.278002227705667); // matte directional 75 45
+  materials[MATERIALS.MATTE][45][75] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 104.8302295939948, targetStd, 36.12854919358175); // matte directional 90 45
+  materials[MATERIALS.MATTE][45][90] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 82.12687053802051, targetStd, 40.47684195258709); // matte directional 100 45
+  materials[MATERIALS.MATTE][45][100] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 145.24504151641847, targetStd, 68.19507984420792); // matte matlab 45
+  materials[MATERIALS.MATTE][45][LIGHTS.MATLAB] = ContrastMatteMaterial(uniform);
+
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 80.07235680735263, targetStd, 20.569933157284137); // glossy directional 30 45
+  materials[MATERIALS.GLOSSY][45][30] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 83.68543601651187, targetStd, 19.997361940379772); // glossy directional 45 45
+  materials[MATERIALS.GLOSSY][45][45] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 80.15986836188678, targetStd, 19.093637881040486); // glossy directional 60 45
+  materials[MATERIALS.GLOSSY][45][60] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 70.53981766860578, targetStd, 21.5397875591238); // glossy directional 75 45
+  materials[MATERIALS.GLOSSY][45][75] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 56.4184812174614, targetStd, 25.029834592078473); // glossy directional 90 45
+  materials[MATERIALS.GLOSSY][45][90] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 43.447956597920445, targetStd, 26.144498613697245); // glossy directional 100 45
+  materials[MATERIALS.GLOSSY][45][100] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 58.20756089925286, targetStd, 27.61137254246659); // matlab glossy 45
+  materials[MATERIALS.GLOSSY][45][LIGHTS.MATLAB] = ContrastGlossyMaterial(uniform);
+
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 146.0033590060164, targetStd, 15.576613308598121); // matte directional 90 60
+  materials[MATERIALS.MATTE][60][90] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 128.80968662312245, targetStd, 18.215480673699382); // matte directional 100 60
+  materials[MATERIALS.MATTE][60][100] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 107.72125271939024, targetStd, 22.50830654458899); // matte directional 110 60
+  materials[MATERIALS.MATTE][60][110] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 88.87329198357965, targetStd, 23.551441632503828); // matte directional 120 60
+  materials[MATERIALS.MATTE][60][120] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 72.3866582420558, targetStd, 26.407158004661255); // matte directional 130 60
+  materials[MATERIALS.MATTE][60][130] = ContrastMatteMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 94.97364785265025, targetStd, 37.38996556166459); // matte matlab 60
+  materials[MATERIALS.MATTE][60][LIGHTS.MATLAB] = ContrastMatteMaterial(uniform);
+
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 82.49597690993694, targetStd, 15.157563565430284); // glossy directional 90 60
+  materials[MATERIALS.GLOSSY][60][90] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 77.42224868629461, targetStd, 16.813043349637788); // glossy directional 100 60
+  materials[MATERIALS.GLOSSY][60][100] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 70.01247472927017, targetStd, 20.151593700659085); // glossy directional 110 60
+  materials[MATERIALS.GLOSSY][60][110] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 59.885340016839315, targetStd, 23.570160825318506); // glossy directional 120 60
+  materials[MATERIALS.GLOSSY][60][120] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 50.43846485047754, targetStd, 25.852402488807098); // glossy directional 130 60
+  materials[MATERIALS.GLOSSY][60][130] = ContrastGlossyMaterial(uniform);
+  uniform = ContrastUniform(gammaFactor,
+    meanTarget, 42.512636280303475, targetStd, 16.567008149745796); // matlab glossy 60
+  materials[MATERIALS.GLOSSY][60][LIGHTS.MATLAB] = ContrastGlossyMaterial(uniform);
+
+  return materials;
 }
 
 function cloneCanvas(oldCanvas) {
@@ -381,17 +754,6 @@ function getRandomSeed() {
   return Math.floor(Math.random() * 10000);
 }
 
-function getSurfaceData(seed, choice, amplitude) {
-  const surfaceDetails = {
-    seed,
-    choice,
-  };
-  return $.get('/getsurface', surfaceDetails).then((data) => {
-    data.vertices = getVertices(data.heightMap, amplitude);
-    return data;
-  });
-}
-
 function getVertices(heightmap, amplitude) {
   const vertices = [];
   let counter = 0;
@@ -410,12 +772,27 @@ function getVertices(heightmap, amplitude) {
   return vertices;
 }
 
+function getSurfaceData(testData) {
+  const surfaceDetails = {
+    seed: testData.seed,
+    choice: testData.choice,
+  };
+  return $.get('/getsurface', surfaceDetails).then((data) => {
+    const { heightMap, extremaIndex } = data;
+    testData.vertices = getVertices(heightMap, testData.amplitude);
+    testData.extremaIndex = extremaIndex;
+    return testData;
+  });
+}
+
 function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
   const choices = Object.entries(CHOICE);
   const materials = Object.entries(MATERIALS);
+  const averageGammaFactor = (gammaRed + gammaGreen + gammaBlue) / 3;
+  const { matteMaterial, glossyMaterial } = CustomShaderMaterial(averageGammaFactor);
+  const contrastMaterialLookup = getAllContrastMaterial(averageGammaFactor);
 
   const surfaceDataList = [];
-  const testDataList = [];
   // for each surface slant
   for (let i = 0; i < numSets; i += 1) {
     for (let surfaceIndex = 0; surfaceIndex < SURFACESLANTS.length; surfaceIndex += 1) {
@@ -434,7 +811,8 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
             const lightSlant = DIRECTIONALLIGHTSLANTS[SURFACESLANTS[surfaceIndex]][lightSlantIndex];
 
             const testDataDirectional = {
-              seedDirectional,
+              amplitude: AMPLITUDES[surfaceSlant],
+              seed: seedDirectional,
               choice: choices[choiceIndex][1],
               material,
               light: LIGHTS.DIRECTIONAL,
@@ -443,17 +821,18 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
               gammaRed,
               gammaGreen,
               gammaBlue,
+              matteMaterial,
+              glossyMaterial,
+              contrastMaterialLookup,
             };
             // different amplitude values for different materials
-
-            const surfaceDataDirectional = getSurfaceData(seedDirectional,
-              testDataDirectional.choice, AMPLITUDES[testDataDirectional.surfaceSlant]);
+            const surfaceDataDirectional = getSurfaceData(testDataDirectional);
             surfaceDataList.push(surfaceDataDirectional);
-            testDataList.push(testDataDirectional);
           }
           // matlab
           const seed = getRandomSeed();
           const testData = {
+            amplitude: AMPLITUDES[surfaceSlant],
             seed,
             choice: choices[choiceIndex][1],
             material,
@@ -462,15 +841,17 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
             gammaRed,
             gammaGreen,
             gammaBlue,
+            matteMaterial,
+            glossyMaterial,
+            contrastMaterialLookup,
           };
-          const surfaceData = getSurfaceData(seed,
-            testData.choice, AMPLITUDES[testData.surfaceSlant]);
+          const surfaceData = getSurfaceData(testData);
           surfaceDataList.push(surfaceData);
-          testDataList.push(testData);
         }
         // mathematica
         const seed = getRandomSeed();
         const testData = {
+          amplitude: AMPLITUDES[surfaceSlant],
           seed,
           choice: choices[choiceIndex][1],
           material: MATERIALS.MATTE,
@@ -479,15 +860,16 @@ function getSurfaceDataList(numSets = 1, gammaRed, gammaGreen, gammaBlue) {
           gammaRed,
           gammaGreen,
           gammaBlue,
+          matteMaterial,
+          glossyMaterial,
+          contrastMaterialLookup,
         };
-        const surfaceData = getSurfaceData(seed,
-          testData.choice, AMPLITUDES[testData.surfaceSlant]);
+        const surfaceData = getSurfaceData(testData);
         surfaceDataList.push(surfaceData);
-        testDataList.push(testData);
       }
     }
   }
-  return [surfaceDataList, testDataList];
+  return surfaceDataList;
 }
 
 function getSurfaceInfoString(testData, additionalInfo) {
@@ -495,4 +877,87 @@ function getSurfaceInfoString(testData, additionalInfo) {
     return `${testData.light}_${testData.seed}_${testData.choice}_${testData.material}_${testData.surfaceSlant}_${testData.lightSlant}_${additionalInfo}`;
   }
   return `${testData.light}_${testData.seed}_${testData.choice}_${testData.material}_${testData.surfaceSlant}_${additionalInfo}`;
+}
+
+function RenderImage(data, isPretest = true, normalizeContrast = true) {
+  // set our mesh geometry
+  // change positions
+  setMeshGeometryVerticesIndices(data.vertices);
+  // change material
+  if (!normalizeContrast) {
+    if (data.material === MATERIALS.MATTE) {
+      setMeshMaterial(data.matteMaterial);
+      // setMeshMaterial(MATTEMATERIAL);
+      data.matteMaterial.needsUpdate = true;
+    } else {
+      setMeshMaterial(data.glossyMaterial);
+      // setMeshMaterial(GLOSSYMATERIAL);
+      data.glossyMaterial.needsUpdate = true;
+    }
+  } else if (data.light === LIGHTS.MATLAB) {
+    setMeshMaterial(data.contrastMaterialLookup[data.material][data.surfaceSlant][data.light]);
+  } else if (data.light === LIGHTS.DIRECTIONAL) {
+    setMeshMaterial(data.contrastMaterialLookup[data.material][data.surfaceSlant][data.lightSlant]);
+  } else {
+    //mathematica
+    return;
+  }
+  // rotate
+  MESH.rotateX(-THREE.Math.degToRad(data.surfaceSlant));
+  MESH.geometry.computeVertexNormals();
+  MESH.updateMatrixWorld();
+  // set disk locations
+  const x = data.vertices[data.extremaIndex];
+  const y = data.vertices[data.extremaIndex + 1];
+  const z = data.vertices[data.extremaIndex + 2];
+  const diskLocation = new THREE.Vector3(x, y, z);
+  MESH.localToWorld(diskLocation);
+
+  // set pip position
+  let disk;
+  if (isPretest) {
+    disk = DISK;
+    disk.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.DISK);
+  } else {
+    disk = PIP;
+    disk.position.set(diskLocation.x, diskLocation.y, diskLocation.z + DISKS_DISTANCES.PIP);
+  }
+  disk.updateMatrix();
+  disk.visible = true;
+
+  // make the light in question visible
+  if (data.light === LIGHTS.MATLAB) {
+    MATLABLIGHT.visible = true;
+  } else if (data.light === LIGHTS.MATHEMATICA) {
+    setMathematicaLightsVisibility(true);
+  } else {
+    // directional
+    DIRECTIONALLIGHTS.map.get(data.surfaceSlant)
+      .get(data.lightSlant)
+      .visible = true;
+  }
+
+  RENDERER.render(SCENE, CAMERA);
+}
+
+function ResetRenderImage(data) {
+  // reset mesh rotation
+  resetObject(MESH);
+  resetObject(DISK);
+  DISK.visible = false;
+  resetObject(PIP);
+  PIP.visible = false;
+  // make the light in question non visible
+  if (data.light === LIGHTS.MATLAB) {
+    MATLABLIGHT.visible = false;
+  } else if (data.light === LIGHTS.MATHEMATICA) {
+    setMathematicaLightsVisibility(false);
+  } else {
+    // directional
+    DIRECTIONALLIGHTS.map.get(data.surfaceSlant)
+      .get(data.lightSlant)
+      .visible = false;
+  }
+
+  RENDERER.render(SCENE, CAMERA);
 }

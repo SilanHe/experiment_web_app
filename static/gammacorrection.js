@@ -59,7 +59,7 @@ function CreateCanvas() {
 
 function linearToSRGB(l, gamma = 2.4) {
   normalizedL = l / 255;
-  if (normalizedL >= 0 && normalizedL <= 0.0031308) {
+  if (normalizedL >= 0.0 && normalizedL <= 0.0031308) {
     return 12.92 * normalizedL * 255;
   }
   return (1.055 * normalizedL ** (1 / gamma) - 0.055) * 255;
@@ -78,6 +78,7 @@ function CanvasFromLinearToSRGB(ctx, imageData, gamma) {
   ctx.putImageData(newImageData, 0, 0);
 }
 
+<<<<<<< HEAD
 // converts from linear to SRGB and makes our green background dark dark gray
 function CanvasFromLinearToSRGBPerChannel(data, gammaRed, gammaGreen, gammaBlue) {
   let redIndex = 0;
@@ -175,6 +176,8 @@ function ResetRenderImage(data) {
   return imageDataArray;
 }
 
+=======
+>>>>>>> 50cd6a08d6ecc3288d588993c69e977b6f4a0d42
 function GammaCorrectionWidget(color1, color2, groupName, sliderName, labelName) {
   const canvas = GammaCorrectionCanvas(color1, color2);
   const ctx = canvas.getContext("2d");

@@ -26,6 +26,7 @@ if (cluster.isMaster) {
   const AWS = require('aws-sdk');
   const express = require('express');
   const bodyParser = require('body-parser');
+  const path = require('path');
 
   AWS.config.region = process.env.REGION;
 
@@ -36,7 +37,7 @@ if (cluster.isMaster) {
 
   app.set('view engine', 'ejs');
   app.set('views', `${__dirname}/views`);
-  if (typeof isDevelopmentMachine !== 'undefined' && isDevelopmentMachine.localeCompare('TRUE') == 0) {
+  if (typeof isDevelopmentMachine !== 'undefined' && isDevelopmentMachine.localeCompare('TRUE') === 0) {
     app.use(express.static('.'));
   }
 
