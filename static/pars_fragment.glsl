@@ -1,17 +1,13 @@
-"
 vec4 LinearToLinear( in vec4 value ) {
 	return value;
 }
 vec4 GammaToLinear( in vec4 value, in float gammaFactor ) {
 	return vec4( pow( value.rgb, vec3( gammaFactor ) ), value.a );
 }
-float LinearToGamma( in float normalizedL, in float gammaFactor) {
-	if (normalizedL >= 0 && normalizedL <= 0.0031308) {
-    	return 12.92 * normalizedL;
-  	}
-  	return 1.055 * pow(normalizedL , (1.0 / gammaFactor)) - 0.055;
+bool isNan(float val)
+{
+  return (val <= 0.0 || 0.0 <= val) ? false : true;
 }
-
 float normalizeContrast( in float meanTarget, in float meanIntensity, in float stdTarget, in float stdIntensity, in float intensity) {
 	return meanTarget - (stdTarget / stdIntensity) * meanIntensity + (stdTarget/ stdIntensity) * intensity;
 }
@@ -25,7 +21,7 @@ vec4 normalizeContrast( in float meanTarget, in float meanIntensity, in float st
 }
 
 vec4 LinearToGamma( in vec4 value, in float gammaFactor ) {
-	return vec4( LinearToGamma(value.x, gammaFactor), LinearToGamma(value.y, gammaFactor), LinearToGamma(value.z, gammaFactor), value.a);
+	return vec4( pow( value.rgb, vec3( 1.0 / gammaFactor ) ), value.a );
 }
 vec4 sRGBToLinear( in vec4 value ) {
 	return vec4( mix( pow( value.rgb * 0.9478672986 + vec3( 0.0521327014 ), vec3( 2.4 ) ), value.rgb * 0.0773993808, vec3( lessThanEqual( value.rgb, vec3( 0.04045 ) ) ) ), value.a );
@@ -79,4 +75,4 @@ vec4 LogLuvToLinear( in vec4 value ) {
 	Xp_Y_XYZp.x = value.x * Xp_Y_XYZp.z;
 	vec3 vRGB = cLogLuvInverseM * Xp_Y_XYZp.rgb;
 	return vec4( max( vRGB, 0.0 ), 1.0 );
-}"
+}

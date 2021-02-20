@@ -89,9 +89,9 @@ function getSet(seed, gammaRed, gammaGreen, gammaBlue, numSets = 1) {
   const choices = Object.entries(CHOICE);
   const materials = Object.entries(MATERIALS);
   const averageGammaFactor = (gammaRed + gammaGreen + gammaBlue) / 3;
-  // const { matteMaterial, glossyMaterial } = CustomShaderMaterial(averageGammaFactor);
-  const matteMaterial = MATTEMATERIAL;
-  const glossyMaterial = GLOSSYMATERIAL;
+  const { matteMaterial, glossyMaterial } = CustomShaderMaterial(averageGammaFactor);
+  // const matteMaterial = MATTEMATERIAL;
+  // const glossyMaterial = GLOSSYMATERIAL;
   const contrastMaterialLookup = getAllContrastMaterial(averageGammaFactor);
 
   const downloadFunction = (data) => {
@@ -154,7 +154,6 @@ function getSet(seed, gammaRed, gammaGreen, gammaBlue, numSets = 1) {
           };
           const surfaceData = getSurfaceData(testData);
           surfaceData.then(downloadFunction);
-          console.log(testData);
         }
         // mathematica
         const testData = {

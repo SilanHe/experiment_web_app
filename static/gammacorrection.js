@@ -59,10 +59,7 @@ function CreateCanvas() {
 
 function linearToSRGB(l, gamma = 2.4) {
   normalizedL = l / 255;
-  if (normalizedL >= 0.0 && normalizedL <= 0.0031308) {
-    return 12.92 * normalizedL * 255;
-  }
-  return (1.055 * normalizedL ** (1 / gamma) - 0.055) * 255;
+  return (normalizedL ** (1 / 2.4)) * 255;
 }
 
 function CanvasFromLinearToSRGB(ctx, imageData, gamma) {
