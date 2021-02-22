@@ -59,7 +59,7 @@ function CreateCanvas() {
 
 function linearToSRGB(l, gamma = 2.4) {
   normalizedL = l / 255;
-  return (normalizedL ** (1 / 2.4)) * 255;
+  return (normalizedL ** (1 / gamma)) * 255;
 }
 
 function CanvasFromLinearToSRGB(ctx, imageData, gamma) {
@@ -75,98 +75,53 @@ function CanvasFromLinearToSRGB(ctx, imageData, gamma) {
   ctx.putImageData(newImageData, 0, 0);
 }
 
-function GammaCorrectionWidget(color1, color2, groupName, sliderName, labelName) {
+function GammaCorrectionWidget(color1, color2, groupName, sliderName, labelName, minusName, plusName) {
   const canvas = GammaCorrectionCanvas(color1, color2);
   const ctx = canvas.getContext("2d");
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const sliderGroup = document.getElementById(groupName);
   sliderGroup.appendChild(canvas);
 
-  const rangeslider = document.getElementById(sliderName);
-  const output = document.getElementById(labelName);
+  const rangeslider = $(`#${sliderName}`);
+  const minus = $(`#${minusName}`);
+  const plus = $(`#${plusName}`);
+  const output = $(`#${labelName}`);
   output.innerHTML = rangeslider.value;
 
-  rangeslider.oninput = function() {
-    output.innerHTML = this.value;
-    CanvasFromLinearToSRGB(ctx, imageData, this.value);
+  minus.onclick = function() {
+    rangeslider.val(parseFloat(rangeslider.val()) - 0.01);
+    rangeslider.oninput();
   };
 
-  return rangeslider;
-}
+  plus.onclick = function() {
+    rangeslider.val(parseFloat(rangeslider.val()) + 0.01);
+    rangeslider.oninput();
+  };
 
-function NormalizeContrast(ctx, targetMean, targetStd, gammaRed, gammaBlue, gammaGreen) {
-  const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
-  const data = Uint8ClampedArray.from(imageData.data);
-
-  // get average intensity
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  let count = 0;
-  for (let i = 0; i < data.length; i += 4) {
-    if (!((data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0)
-    || (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0))) {
-      r += data[i];
-      g += data[i + 1];
-      b += data[i + 2];
-      count += 1;
-    }
-  }
-  r /= count;
-  g /= count;
-  b /= count;
-
-  // get standard deviation of intensities
-  let sumR = 0;
-  let sumG = 0;
-  let sumB = 0;
-  for (let i = 0; i < data.length; i += 4) {
-    if (!((data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0)
-    || (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0))) {
-      sumR += (data[i] - r) ** 2;
-      sumG += (data[i + 1] - g) ** 2;
-      sumB += (data[i + 2] - b) ** 2;
-    }
-  }
-
-  const stdR = Math.sqrt(sumR / count);
-  const stdG = Math.sqrt(sumG / count);
-  const stdB = Math.sqrt(sumB / count);
-
-  let redIndex = 0;
-
-  for (let i = 0; i < data.length; i += 4) {
-    // remove green background and make it dark gray
-    if (data[i] === 0 && data[i + 1] === 255 && data[i + 2] === 0) {
-      data[i] = 17;
-      data[i + 1] = 17;
-      data[i + 2] = 17;
-      data[i + 3] = 255;
-    } else if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 0 && redIndex === 0) {
-      // eslint-disable-next-line no-continue
-      redIndex = i;
+  function zoom(direction) {
+    const step = parseFloat(rangeslider.attr('step'));
+    const currentSliderValue = parseFloat(rangeslider.val());
+    let newStepValue;
+    if (direction === "out") {
+      newStepValue = currentSliderValue - step;
     } else {
-      // contrast normalization
-      data[i] = Math.round(targetMean.r + targetStd.r * ((data[i] - r) / stdR));
-      data[i + 1] = Math.round(targetMean.g + targetStd.g * ((data[i + 1] - g) / stdG));
-      data[i + 2] = Math.round(targetMean.b + targetStd.b * ((data[i + 2] - b) / stdB));
-      // gamma correction
-      data[i] = linearToSRGB(data[i], gammaRed);
-      data[i + 1] = linearToSRGB(data[i + 1], gammaGreen);
-      data[i + 2] = linearToSRGB(data[i + 2], gammaBlue);
+      newStepValue = currentSliderValue + step;
     }
+    rangeslider.val(newStepValue).change();
   }
 
-  const newImageData = new ImageData(data, ctx.canvas.width);
-  ctx.putImageData(newImageData, 0, 0);
+  minus.click((event) => {
+    zoom("out");
+  });
 
-  const radius = Math.floor(ctx.canvas.width / 24);
-  const centerX = Math.floor(redIndex / 4 / ctx.canvas.width) - radius;
-  const centerY = (Math.floor(redIndex / 4) % ctx.canvas.width) - radius;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-  ctx.fillStyle = '#ff0000';
-  ctx.fill();
+  plus.click((event) => {
+    zoom("in");
+  });
 
-  return newImageData;
+  rangeslider.on('input change', (event) => {
+    output.text($(event.currentTarget).val());
+    CanvasFromLinearToSRGB(ctx, imageData, $(event.currentTarget).val());
+  });
+
+  return rangeslider;
 }

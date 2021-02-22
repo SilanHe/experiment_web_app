@@ -686,7 +686,7 @@ function getSurfaceData(testData) {
   });
 }
 
-function getSurfaceDataList(gammaRed, gammaGreen, gammaBlue, numSets = 1) {
+function getSurfaceDataList(gammaRed, gammaGreen, gammaBlue, numSets = 1, normalizeContrast = false) {
   const choices = Object.entries(CHOICE);
   const materials = Object.entries(MATERIALS);
   const averageGammaFactor = (gammaRed + gammaGreen + gammaBlue) / 3;
@@ -725,6 +725,7 @@ function getSurfaceDataList(gammaRed, gammaGreen, gammaBlue, numSets = 1) {
               matteMaterial,
               glossyMaterial,
               contrastMaterialLookup,
+              normalizeContrast,
             };
             // different amplitude values for different materials
             const surfaceDataDirectional = getSurfaceData(testDataDirectional);
@@ -745,28 +746,32 @@ function getSurfaceDataList(gammaRed, gammaGreen, gammaBlue, numSets = 1) {
             matteMaterial,
             glossyMaterial,
             contrastMaterialLookup,
+            normalizeContrast,
           };
           const surfaceData = getSurfaceData(testData);
           surfaceDataList.push(surfaceData);
         }
-        // mathematica
-        const seed = getRandomSeed();
-        const testData = {
-          amplitude: AMPLITUDES[surfaceSlant],
-          seed,
-          choice: choices[choiceIndex][1],
-          material: MATERIALS.MATTE,
-          light: LIGHTS.MATHEMATICA,
-          surfaceSlant,
-          gammaRed,
-          gammaGreen,
-          gammaBlue,
-          matteMaterial,
-          glossyMaterial,
-          contrastMaterialLookup,
-        };
-        const surfaceData = getSurfaceData(testData);
-        surfaceDataList.push(surfaceData);
+        if (!normalizeContrast) {
+          // mathematica
+          const seed = getRandomSeed();
+          const testData = {
+            amplitude: AMPLITUDES[surfaceSlant],
+            seed,
+            choice: choices[choiceIndex][1],
+            material: MATERIALS.MATTE,
+            light: LIGHTS.MATHEMATICA,
+            surfaceSlant,
+            gammaRed,
+            gammaGreen,
+            gammaBlue,
+            matteMaterial,
+            glossyMaterial,
+            contrastMaterialLookup,
+            normalizeContrast,
+          };
+          const surfaceData = getSurfaceData(testData);
+          surfaceDataList.push(surfaceData);
+        } 
       }
     }
   }
@@ -780,7 +785,7 @@ function getSurfaceInfoString(testData, additionalInfo) {
   return `${testData.light}_${testData.seed}_${testData.choice}_${testData.material}_${testData.surfaceSlant}_${additionalInfo}`;
 }
 
-function RenderImage(data, isPretest = false, normalizeContrast = true) {
+function RenderImage(data, isPretest = false, normalizeContrast = false) {
   // set our mesh geometry
   // change positions
   setMeshGeometryVerticesIndices(data.vertices);

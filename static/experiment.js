@@ -96,8 +96,8 @@ const pretest = {
 };
 
 const test = {
-  type: 'my-trial-keyboard-response',
-  stimulus_name: jsPsych.timelineVariable('stimulus1_name'),
+  type: 'my-canvas-keyboard-response',
+  stimulus_name: jsPsych.timelineVariable('stimulus2_name'),
   stimulus: jsPsych.timelineVariable('stimulus'),
   stimulus_height: screen.height,
   choices: ['v', 'h'],
@@ -185,8 +185,8 @@ function experiment(data) {
       createH1(document.body, 'Please do not close browser window yet, wait for submission confirmation message.');
       createH1(document.body, 'This may take a few minutes.');
 
-      const allData = JSON.parse(data.get().json());
-      const interactionData = JSON.parse(data.getInteractionData().json());
+      const allData = JSON.parse(jsPsych.data.get().json());
+      const interactionData = JSON.parse(jsPsych.data.getInteractionData().json());
 
       // publish data to dynamodb
       const experimentData = {};
@@ -260,7 +260,7 @@ function tutorial(gammaRed, gammaGreen, gammaBlue) {
     type: 'fullscreen',
     fullscreen_mode: true,
     on_load: () => {
-      pairedImagesPromise = generateImageData(gammaRed, gammaGreen, gammaBlue, 3);
+      pairedImagesPromise = generateImageData(gammaRed, gammaGreen, gammaBlue, 2);
     },
   });
 
@@ -450,19 +450,20 @@ function generateImageData(gammaRed, gammaGreen, gammaBlue, numSets = 1) {
 }
 
 // do gamma correction first
-const rangeSliderRed = GammaCorrectionWidget('#FF0000', '#7F0000', 'sliderGroupRed', 'sliderRangeRed', 'demoRed');
-const rangeSliderGreen = GammaCorrectionWidget('#00FF00', '#007F00', 'sliderGroupGreen', 'sliderRangeGreen', 'demoGreen');
-const rangeSliderBlue = GammaCorrectionWidget('#0000FF', '#00007F', 'sliderGroupBlue', 'sliderRangeBlue', 'demoBlue');
-rangeSliderRed.value = '1';
-rangeSliderGreen.value = '1';
-rangeSliderBlue.value = '1';
+const rangeSliderRed = GammaCorrectionWidget('#FF0000', '#7F0000', 'sliderGroupRed', 'sliderRangeRed',
+'demoRed', 'minusRed', 'plusRed');
+const rangeSliderGreen = GammaCorrectionWidget('#00FF00', '#007F00', 'sliderGroupGreen', 'sliderRangeGreen',
+'demoGreen', 'minusGreen', 'plusGreen');
+const rangeSliderBlue = GammaCorrectionWidget('#0000FF', '#00007F', 'sliderGroupBlue', 'sliderRangeBlue',
+'demoBlue', 'minusBlue', 'plusBlue');
 
 // on submit start tutorial
 const submitGammaCalibrationButton = document.getElementById('submitGammaCalibration');
 submitGammaCalibrationButton.onclick = function() {
-  const gammaRed = parseFloat(rangeSliderRed.value);
-  const gammaGreen = parseFloat(rangeSliderGreen.value);
-  const gammaBlue = parseFloat(rangeSliderBlue.value);
+  const gammaRed = parseFloat(rangeSliderRed.val());
+  const gammaGreen = parseFloat(rangeSliderGreen.val());
+  const gammaBlue = parseFloat(rangeSliderBlue.val());
+  console.log(`${gammaRed}, ${gammaGreen}, ${gammaBlue}`);
   clearDocumentBody();
   tutorial(gammaRed, gammaGreen, gammaBlue);
 };

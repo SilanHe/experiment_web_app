@@ -65,7 +65,7 @@ jsPsych.plugins['my-canvas-keyboard-response'] = (function () {
 
   plugin.trial = function (display_element, trial) {
     // const t0 = performance.now();
-    RenderImage(trial.stimulus, trial.is_pretest);
+    RenderImage(trial.stimulus, trial.is_pretest, trial.normalizeContrast);
     display_element.appendChild(RENDERERCANVAS);
     // const t1 = performance.now();
     // console.log("Call to render took " + (t1 - t0) + " milliseconds.");

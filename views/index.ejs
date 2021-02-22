@@ -18,25 +18,38 @@
     <div class="row">
       <div class="column">
         <div class="rangeslider center" id="sliderGroupRed"> 
-          <input type="range" min="1" max="3" value="1" step="0.01" class="myslider" id="sliderRangeRed"> 
+          <div class="row">
+            <button id="minusRed" class="rangeButton">-</button>
+            <input type="range" min="1" max="3" value="1" step="0.01" class="myslider" id="sliderRangeRed"> 
+            <button id="plusRed" class="rangeButton">+</button>
+          </div>
           <p>Value: <span id="demoRed"></span></p> 
         </div>
       </div>
       <div class="column">
         <div class="rangeslider center" id="sliderGroupGreen"> 
-          <input type="range" min="1" max="3" value="1" step="0.01" class="myslider" id="sliderRangeGreen"> 
+          <div class="row">
+            <button id="minusGreen" class="rangeButton">-</button>
+            <input type="range" min="1" max="3" value="1" step="0.01" class="myslider" id="sliderRangeGreen"> 
+            <button id="plusGreen" class="rangeButton">+</button>
+          </div>
           <p>Value: <span id="demoGreen"></span></p> 
         </div>
       </div>
       <div class="column">
         <div class="rangeslider center" id="sliderGroupBlue"> 
-          <input type="range" min="1" max="3" value="1" step="0.01" class="myslider" id="sliderRangeBlue"> 
+          <div class="row">
+            <button id="minusBlue" class="rangeButton">-</button>
+            <input type="range" min="1" max="3" value="1" step="0.01" class="myslider" id="sliderRangeBlue"> 
+            <button id="plusBlue" class="rangeButton">+</button>
+          </div>
           <p>Value: <span id="demoBlue"></span></p> 
         </div>
       </div>
     </div>
 
-    <input id="submitGammaCalibration" type="button" value="Submit Calibration"></input>
+    <input id="submitGammaCalibration" type="button" value="Submit Calibration" class="submitButton"></input>
+
     <script src="<%= static_path + "/jquery/jquery-1.11.3.min.js" %>"></script>
     <script src="<%= static_path + "/jspsych.js" %>"></script>
     <script src="<%= static_path + "/jspsych-image-keyboard-response.js" %>"></script>
@@ -45,12 +58,12 @@
     <script src="<%= static_path + "/my-jspsych-fullscreen.js" %>"></script>
     <script src="<%= static_path + "/my-jspsych-image-keyboard-response.js" %>"></script>
     <script src="<%= static_path + "/my-jspsych-html-submit-form.js" %>"></script>
-    <script src="<%= static_path + "/my-jsPsych-trial-keyboard-response.js" %>"></script>
+    <script src="<%= static_path + "/my-jspsych-canvas-keyboard-response.js" %>"></script>
     <script src="<%= static_path + "/three.js" %>"></script>
     <script src="<%= static_path + "/webgl.js" %>"></script>
     <script src="<%= static_path + "/gammacorrection.js" %>"></script>
-    <!-- <script src="<%= static_path + "/experiment.js" %>"></script> -->
-    <script src="<%= static_path + "/contrast.js" %>"></script>
+    <script src="<%= static_path + "/experiment.js" %>"></script>
+    <!-- <script src="<%= static_path + "/contrast.js" %>"></script> -->
     
   </body>
 </html>

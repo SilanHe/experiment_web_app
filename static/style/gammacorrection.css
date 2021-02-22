@@ -3,38 +3,44 @@
     text-align: left;
 } 
   
-.myslider { 
-    -webkit-appearance: none; 
-    background: #FCF3CF  ; 
-    width: 50%; 
-    height: 20px; 
-    opacity: 2; 
-   } 
+input[type=range] {
+    width: 50%;
+}
   
-  
-.myslider::-webkit-slider-thumb { 
-    -webkit-appearance: none; 
-    cursor: pointer; 
-    background: #34495E  ; 
-    width: 5%; 
-    height: 20px; 
-} 
-  
-  
-.myslider:hover { 
-    opacity: 1; 
-} 
+.rangeButton {
+    flex: 0 0 auto;
+    width: 35px;
+    height: 35px;
+    border-radius: 100%;
+    background: white;
+    font-size: 24px;
+    border: 1px solid lightgrey;
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin: 0 0px;
+}
+
+.submitButton {
+    flex: 0 0 auto;
+    height: 35px;
+    border-radius: 5%;
+    background: white;
+    border: 1px solid lightgrey;
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin: 0 0px;
+}
 
 .column {
     float: left;
     width: 33%;
-  }
+}
   
 /* Clear floats after the columns */
 .row:after {
-content: "";
-display: table;
-clear: both;
+    content: "";
+    display: table;
+    clear: both;
 }
 
 .center {
