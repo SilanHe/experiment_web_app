@@ -686,7 +686,7 @@ function getSurfaceData(testData) {
   });
 }
 
-function getSurfaceDataList(gammaRed, gammaGreen, gammaBlue, numSets = 1, normalizeContrast = false) {
+function getSurfaceDataList(gammaRed, gammaGreen, gammaBlue, numSets = 1, normalizeContrast = true) {
   const choices = Object.entries(CHOICE);
   const materials = Object.entries(MATERIALS);
   const averageGammaFactor = (gammaRed + gammaGreen + gammaBlue) / 3;
@@ -771,7 +771,7 @@ function getSurfaceDataList(gammaRed, gammaGreen, gammaBlue, numSets = 1, normal
           };
           const surfaceData = getSurfaceData(testData);
           surfaceDataList.push(surfaceData);
-        } 
+        }
       }
     }
   }
