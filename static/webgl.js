@@ -273,7 +273,7 @@ const CAMERA = (() => {
  */
 const SCENE = (() => {
   const scene = new THREE.Scene();
-  scene.background = GREEN;
+  scene.background = DARKGRAY;
 
   // add all the lights, they start out: visible = false;
   for (let i = 0; i < MATHEMATICALIGHTS.length; i += 1) {
@@ -428,8 +428,8 @@ function getAllContrastMaterial(gammaFactor) {
   materials[MATERIALS.GLOSSY][45] = {};
   materials[MATERIALS.GLOSSY][60] = {};
 
-  const targetStd = 10.378200810233588;
-  const meanTarget = 164.3208475484253;
+  const targetStd = 10.72103061240848;
+  const meanTarget = 163.99982305044207;
   let material;
 
   material = NewMatteMaterial();
@@ -519,7 +519,7 @@ function getAllContrastMaterial(gammaFactor) {
     meanTarget, 128.38620675746833, targetStd, 30.41003172618247); // matte matlab 45
   materials[MATERIALS.MATTE][45][LIGHTS.MATLAB] = material;
 
-  material = NewMatteMaterial();
+  material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
     meanTarget, 80.67410961715315, targetStd, 21.486156133899062); // glossy directional 30 45
   materials[MATERIALS.GLOSSY][45][30] = material;
@@ -573,7 +573,7 @@ function getAllContrastMaterial(gammaFactor) {
     meanTarget, 95.14940926217483, targetStd, 37.70841517974381); // matte matlab 60
   materials[MATERIALS.MATTE][60][LIGHTS.MATLAB] = material;
 
-  material = NewMatteMaterial();
+  material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
     meanTarget, 82.633774393133, targetStd, 15.678875011745667); // glossy directional 90 60
   materials[MATERIALS.GLOSSY][60][90] = material;
@@ -788,12 +788,12 @@ function getSurfaceInfoString(testData, additionalInfo) {
   return `${testData.light}_${testData.seed}_${testData.choice}_${testData.material}_${testData.surfaceSlant}_${additionalInfo}`;
 }
 
-function RenderImage(data, isPretest, normalizeContrast) {
+function RenderImage(data, isPretest) {
   // set our mesh geometry
   // change positions
   setMeshGeometryVerticesIndices(data.vertices);
   // change material
-  if (!normalizeContrast) {
+  if (!data.normalizeContrast) {
     if (data.material === MATERIALS.MATTE) {
       setMeshMaterial(data.matteMaterial);
       // setMeshMaterial(MATTEMATERIAL);
