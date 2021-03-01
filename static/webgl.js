@@ -407,7 +407,7 @@ function ContrastOnBeforeCompile(material, gammaFactor, meanTarget,
       'uniform float meanIntensity;',
     ].join('\n') + '\n' + shader.fragmentShader;
     shader.fragmentShader = shader.fragmentShader.replace(
-      '	gl_FragColor = vec4( outgoingLight, diffuseColor.a );',
+      '\tgl_FragColor = vec4( outgoingLight, diffuseColor.a );',
       [
         ' vec4 v = vec4( outgoingLight, diffuseColor.a );',
         ' vec4 normalized = normalizeContrast( meanTarget, meanIntensity, stdTarget, stdIntensity, v);',
@@ -428,171 +428,174 @@ function getAllContrastMaterial(gammaFactor) {
   materials[MATERIALS.GLOSSY][45] = {};
   materials[MATERIALS.GLOSSY][60] = {};
 
-  const targetStd = 10.378200810233588;
-  const meanTarget = 164.3208475484253;
+  const targetStd = 10.72103061240848;
+  const meanTarget = 163.99982305044207;
   let material;
 
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 156.78441751556545, targetStd, 15.378369292846338); // matte directional 20 30
+    meanTarget, 156.89074719919222, targetStd, 16.208578299583063); // matte directional 20 30
   materials[MATERIALS.MATTE][30][20] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 156.73204315863583, targetStd, 14.735199406339916); // matte directional 30 30
+    meanTarget, 156.96248838980495, targetStd, 14.81038251410397); // matte directional 30 30
   materials[MATERIALS.MATTE][30][30] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 152.43828727743295, targetStd, 19.189763292808713); // matte directional 40 30
+    meanTarget, 152.12475683916236, targetStd, 19.130463266002337); // matte directional 40 30
   materials[MATERIALS.MATTE][30][40] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 141.85212866714215, targetStd, 26.63428501073127); // matte directional 50 30
+    meanTarget, 142.95051950008562, targetStd, 26.00910052019239); // matte directional 50 30
   materials[MATERIALS.MATTE][30][50] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 128.97426185358717, targetStd, 33.95757496043813); // matte directional 60 30
+    meanTarget, 129.12352234236366, targetStd, 33.42277160989043); // matte directional 60 30
   materials[MATERIALS.MATTE][30][60] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 110.45247650436139, targetStd, 40.618685834439965); // matte directional 70 30
+    meanTarget, 111.47084348945026, targetStd, 40.59973205470522); // matte directional 70 30
   materials[MATERIALS.MATTE][30][70] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 145.24504151641847, targetStd, 68.19507984420792); // matte matlab 30
+    meanTarget, 144.4895745758443, targetStd, 65.86190400121608); // matte matlab 30
   materials[MATERIALS.MATTE][30][LIGHTS.MATLAB] = material;
 
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 77.66105048482835, targetStd, 20.840488892152457); // glossy directional 20 30
+    meanTarget, 78.17222247026238, targetStd, 21.126521884823248); // glossy directional 20 30
   materials[MATERIALS.GLOSSY][30][20] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 77.59462339901249, targetStd, 19.640071841171896); // glossy directiona 30 30
+    meanTarget, 77.78660140462931, targetStd, 19.695843817369067); // glossy directiona 30 30
   materials[MATERIALS.GLOSSY][30][30] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 75.66843347453761, targetStd, 20.51199028233263); // glossy directional 40 30
+    meanTarget, 75.27636349628351, targetStd, 20.03334850386301); // glossy directional 40 30
   materials[MATERIALS.GLOSSY][30][40] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 70.6609089975541, targetStd, 21.623171581600857); // glossy directional 50 30
+    meanTarget, 70.61938685953686, targetStd, 21.507465473731898); // glossy directional 50 30
   materials[MATERIALS.GLOSSY][30][50] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 63.91771310005013, targetStd, 23.762505138501464); // glossy directional 60 30
+    meanTarget, 64.00838005172429, targetStd, 23.647730187938915); // glossy directional 60 30
   materials[MATERIALS.GLOSSY][30][60] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 54.97124607349393, targetStd, 25.795451080781323); // glossy directional 70 30
+    meanTarget, 55.49003674223302, targetStd, 25.91973304812393); // glossy directional 70 30
   materials[MATERIALS.GLOSSY][30][70] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 130.73872104507092, targetStd, 59.37215513448607); // matlab glossy 30
+    meanTarget, 69.62082252550117, targetStd, 38.929581126567335); // matlab glossy 30
   materials[MATERIALS.GLOSSY][30][LIGHTS.MATLAB] = material;
 
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 161.82561866291567, targetStd, 13.962054755936498); // matte directional 30 45
+    meanTarget, 162.27847563482948, targetStd, 13.7705715074983); // matte directional 30 45
   materials[MATERIALS.MATTE][45][30] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 164.3208475484253, targetStd, 10.378200810233588); // matte directional 45 45
+    meanTarget, 163.99982305044207, targetStd, 10.72103061240848); // matte directional 45 45
   materials[MATERIALS.MATTE][45][45] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 154.0722337735319, targetStd, 17.928364448440046); // matte directional 60 45
+    meanTarget, 154.45962944696387, targetStd, 17.857797950451857); // matte directional 60 45
   materials[MATERIALS.MATTE][45][60] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 134.60153339832854, targetStd, 27.278002227705667); // matte directional 75 45
+    meanTarget, 134.42924504532925, targetStd, 27.34164478656146); // matte directional 75 45
   materials[MATERIALS.MATTE][45][75] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 104.8302295939948, targetStd, 36.12854919358175); // matte directional 90 45
+    meanTarget, 105.10427930402126, targetStd, 35.89099724216307); // matte directional 90 45
   materials[MATERIALS.MATTE][45][90] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 82.12687053802051, targetStd, 40.47684195258709); // matte directional 100 45
+    meanTarget, 82.0405792208735, targetStd, 40.42318202432559); // matte directional 100 45
   materials[MATERIALS.MATTE][45][100] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 145.24504151641847, targetStd, 68.19507984420792); // matte matlab 45
+    meanTarget, 128.38620675746833, targetStd, 30.41003172618247); // matte matlab 45
   materials[MATERIALS.MATTE][45][LIGHTS.MATLAB] = material;
 
+  material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 80.07235680735263, targetStd, 20.569933157284137); // glossy directional 30 45
+    meanTarget, 80.67410961715315, targetStd, 21.486156133899062); // glossy directional 30 45
   materials[MATERIALS.GLOSSY][45][30] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 83.68543601651187, targetStd, 19.997361940379772); // glossy directional 45 45
+    meanTarget, 84.06798375638787, targetStd, 20.09538092119383); // glossy directional 45 45
   materials[MATERIALS.GLOSSY][45][45] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 80.15986836188678, targetStd, 19.093637881040486); // glossy directional 60 45
+    meanTarget, 80.10148280957698, targetStd, 19.230309183655773); // glossy directional 60 45
   materials[MATERIALS.GLOSSY][45][60] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 70.53981766860578, targetStd, 21.5397875591238); // glossy directional 75 45
+    meanTarget, 70.05027456262175, targetStd, 21.658354941959622); // glossy directional 75 45
   materials[MATERIALS.GLOSSY][45][75] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 56.4184812174614, targetStd, 25.029834592078473); // glossy directional 90 45
+    meanTarget, 55.39038677074784, targetStd, 24.887494216157094); // glossy directional 90 45
   materials[MATERIALS.GLOSSY][45][90] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 43.447956597920445, targetStd, 26.144498613697245); // glossy directional 100 45
+    meanTarget, 43.7235970217545, targetStd, 26.670268374830513); // glossy directional 100 45
   materials[MATERIALS.GLOSSY][45][100] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 58.20756089925286, targetStd, 27.61137254246659); // matlab glossy 45
+    meanTarget, 58.06062331089508, targetStd, 27.854157245568896); // matlab glossy 45
   materials[MATERIALS.GLOSSY][45][LIGHTS.MATLAB] = material;
 
+  material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 146.0033590060164, targetStd, 15.576613308598121); // matte directional 90 60
+    meanTarget, 146.19637808877985, targetStd, 15.30435683265712); // matte directional 90 60
   materials[MATERIALS.MATTE][60][90] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 128.80968662312245, targetStd, 18.215480673699382); // matte directional 100 60
+    meanTarget, 128.0583656964773, targetStd, 19.040296156804736); // matte directional 100 60
   materials[MATERIALS.MATTE][60][100] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 107.72125271939024, targetStd, 22.50830654458899); // matte directional 110 60
+    meanTarget, 108.07640946646472, targetStd, 22.118342713163397); // matte directional 110 60
   materials[MATERIALS.MATTE][60][110] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 88.87329198357965, targetStd, 23.551441632503828); // matte directional 120 60
+    meanTarget, 89.07068416037905, targetStd, 24.235515643059227); // matte directional 120 60
   materials[MATERIALS.MATTE][60][120] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 72.3866582420558, targetStd, 26.407158004661255); // matte directional 130 60
+    meanTarget, 72.54042986694358, targetStd, 25.80424683931231); // matte directional 130 60
   materials[MATERIALS.MATTE][60][130] = material;
   material = NewMatteMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 94.97364785265025, targetStd, 37.38996556166459); // matte matlab 60
+    meanTarget, 95.14940926217483, targetStd, 37.70841517974381); // matte matlab 60
   materials[MATERIALS.MATTE][60][LIGHTS.MATLAB] = material;
 
+  material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 82.49597690993694, targetStd, 15.157563565430284); // glossy directional 90 60
+    meanTarget, 82.633774393133, targetStd, 15.678875011745667); // glossy directional 90 60
   materials[MATERIALS.GLOSSY][60][90] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 77.42224868629461, targetStd, 16.813043349637788); // glossy directional 100 60
+    meanTarget, 77.97344704795329, targetStd, 16.938380573362632); // glossy directional 100 60
   materials[MATERIALS.GLOSSY][60][100] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 70.01247472927017, targetStd, 20.151593700659085); // glossy directional 110 60
+    meanTarget, 69.71560036729588, targetStd, 19.975185046832323); // glossy directional 110 60
   materials[MATERIALS.GLOSSY][60][110] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 59.885340016839315, targetStd, 23.570160825318506); // glossy directional 120 60
+    meanTarget, 60.04124336067544, targetStd, 23.34132944766546); // glossy directional 120 60
   materials[MATERIALS.GLOSSY][60][120] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 50.43846485047754, targetStd, 25.852402488807098); // glossy directional 130 60
+    meanTarget, 50.66677165849578, targetStd, 25.762793829227157); // glossy directional 130 60
   materials[MATERIALS.GLOSSY][60][130] = material;
   material = NewGlossyMaterial();
   ContrastOnBeforeCompile(material, gammaFactor,
-    meanTarget, 42.512636280303475, targetStd, 16.567008149745796); // matlab glossy 60
+    meanTarget, 42.39173459189744, targetStd, 16.935887536149323); // matlab glossy 60
   materials[MATERIALS.GLOSSY][60][LIGHTS.MATLAB] = material;
 
   return materials;
@@ -686,7 +689,7 @@ function getSurfaceData(testData) {
   });
 }
 
-function getSurfaceDataList(gammaRed, gammaGreen, gammaBlue, numSets = 1, normalizeContrast = false) {
+function getSurfaceDataList(gammaRed, gammaGreen, gammaBlue, numSets = 1, normalizeContrast = true) {
   const choices = Object.entries(CHOICE);
   const materials = Object.entries(MATERIALS);
   const averageGammaFactor = (gammaRed + gammaGreen + gammaBlue) / 3;
@@ -771,7 +774,7 @@ function getSurfaceDataList(gammaRed, gammaGreen, gammaBlue, numSets = 1, normal
           };
           const surfaceData = getSurfaceData(testData);
           surfaceDataList.push(surfaceData);
-        } 
+        }
       }
     }
   }
@@ -785,12 +788,12 @@ function getSurfaceInfoString(testData, additionalInfo) {
   return `${testData.light}_${testData.seed}_${testData.choice}_${testData.material}_${testData.surfaceSlant}_${additionalInfo}`;
 }
 
-function RenderImage(data, isPretest = false, normalizeContrast = false) {
+function RenderImage(data, isPretest) {
   // set our mesh geometry
   // change positions
   setMeshGeometryVerticesIndices(data.vertices);
   // change material
-  if (!normalizeContrast) {
+  if (!data.normalizeContrast) {
     if (data.material === MATERIALS.MATTE) {
       setMeshMaterial(data.matteMaterial);
       // setMeshMaterial(MATTEMATERIAL);
@@ -802,8 +805,10 @@ function RenderImage(data, isPretest = false, normalizeContrast = false) {
     }
   } else if (data.light === LIGHTS.MATLAB) {
     setMeshMaterial(data.contrastMaterialLookup[data.material][data.surfaceSlant][data.light]);
+    data.contrastMaterialLookup[data.material][data.surfaceSlant][data.light].needsUpdate = true;
   } else if (data.light === LIGHTS.DIRECTIONAL) {
     setMeshMaterial(data.contrastMaterialLookup[data.material][data.surfaceSlant][data.lightSlant]);
+    data.contrastMaterialLookup[data.material][data.surfaceSlant][data.lightSlant].needsUpdate = true;
   } else {
     //mathematica
     return;
@@ -864,6 +869,4 @@ function ResetRenderImage(data) {
       .get(data.lightSlant)
       .visible = false;
   }
-
-  RENDERER.render(SCENE, CAMERA);
 }
